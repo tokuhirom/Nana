@@ -40,23 +40,25 @@ sub expression {
     {
         my $c = $src;
         ($c, my $lhs) = term($c) or goto n1;
-        $c =~ s/^\+// or goto n1;
+        ($c) = match($c, '+') or goto n1;
         ($c, my $rhs) = expression($c) or goto n1;
         return ($c, [$lhs, '+', $rhs]);
-    }
-    {
-        my $c = $src;
-        ($c, my $lhs) = term($c) or goto n1;
-        $c =~ s/^\-// or goto n1;
-        ($c, my $rhs) = expression($c) or goto n1;
-        return ($c, [$lhs, '-', $rhs]);
     }
 n1:
     {
         my $c = $src;
-        ($c, my $ret) = term($c) or goto n1;
+        ($c, my $lhs) = term($c) or goto n2;
+        ($c) = match($c, '-') or goto n2;
+        ($c, my $rhs) = expression($c) or goto n2;
+        return ($c, [$lhs, '-', $rhs]);
+    }
+n2:
+    {
+        my $c = $src;
+        ($c, my $ret) = term($c) or goto err;
         return ($c, $ret);
     }
+err:
 
     die "Parse Error";
 }
@@ -66,7 +68,7 @@ sub term {
     {
         my $c = $src;
         ($c, my $lhs) = primary($c) or goto n1;
-        $c =~ s/^\*// or goto n1;
+        ($c) = match($c, '*') or goto n1;
         ($c, my $rhs) = term($c) or goto n1;
         return ($c, [$lhs, '*', $rhs]);
     }
@@ -74,7 +76,7 @@ n1:
     {
         my $c = $src;
         ($c, my $lhs) = primary($c) or goto n2;
-        $c =~ s!^\/!! or goto n2;
+        ($c) = match($c, '/') or goto n2;
         ($c, my $rhs) = term($c) or goto n2;
         return ($c, [$lhs, '/', $rhs]);
     }
@@ -86,6 +88,16 @@ n2:
     }
 err:
     die "Parse failed";
+}
+
+sub match {
+    my ($c, $word) = @_;
+    $word = quotemeta($word);
+    $c =~ s/^\s*//;
+    $c =~ s/^$word//
+        or return ();
+        warn "O";
+    return ($c);
 }
 
 sub primary {
