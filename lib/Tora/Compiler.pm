@@ -49,6 +49,11 @@ sub _compile {
         return '';
     } elsif ($node->[0] eq 'INT') {
         return $node->[1];
+    } elsif ($node->[0] eq 'CLASS') {
+        my $ret = '{package ' . _compile($node->[1]) . ';';
+        $ret .= _compile($node->[2]);
+        $ret .= "}";
+        return $ret;
     } elsif ($node->[0] eq 'DOUBLE') {
         return $node->[1];
     } elsif ($node->[0] eq 'VARIABLE') {

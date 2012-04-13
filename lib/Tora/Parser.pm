@@ -9,7 +9,7 @@ sub new { bless {}, shift }
 
 sub parse {
     my ($class, $src) = @_;
-    my ($rest, $ret) = expression($src);
+    my ($rest, $ret) = program($src);
     if ($rest =~ /[^\n \t]/) {
         die "Parse failed: " . Dumper($rest);
     }
@@ -37,6 +37,18 @@ sub statements {
     my $src = shift;
     $src =~ s/^\s*//s;
 
+    my @b = sub {
+        my $c = $src;
+        ($c) = match($c, 'class')
+            or return;
+        ($c, my $name) = identifier($c)
+            or die "identifier expected after 'class' keyword";
+        ($c, my $block) = block($c)
+            or return;
+        ($c, ['CLASS', $name, $block]);
+    }->();
+    return @b if @b;
+
     my @a = sub {
         my $c = $src;
         ($c, my $ret) = expression($c);
@@ -63,10 +75,9 @@ sub expression {
                 $c = $c2;
             }
 
-            ($c)           = match($c, '{')   or die "Parsing error";
-            ($c, my $body) = expression($c)   or return;
-            ($c)           = match($c, '}')   or return;
-            return ($c, ['SUB', $name, $params, $body]);
+            ($c, my $block) = block($c)
+                or die "expected block after sub.";
+            return ($c, ['SUB', $name, $params, $block]);
         }->();
         return @ret if @ret;
     }
@@ -97,6 +108,14 @@ err:
         my $c = $src;
         return ($c, ['NOP']);
     }
+}
+
+sub block {
+    my $c = shift;
+    ($c)           = match($c, '{') or return;
+    ($c, my $body) = expression($c) or return;
+    ($c)           = match($c, '}') or return;
+    return ($c, $body);
 }
 
 sub term {
@@ -158,8 +177,9 @@ sub parameter_list {
     my $ret = [];
 
     while (1) {
-        ($src, my $var) = variable($src)
+        (my $src2, my $var) = variable($src)
             or return ($src, $ret);
+        $src = $src2;
         push @$ret, $var;
 
         ($src) = (match($src, ',')
@@ -178,7 +198,8 @@ sub variable {
     my $src = shift;
     confess unless defined $src;
     $src =~ s/^\s*//;
-    $src =~ s!^(\$[A-Za-z_]+)!!;
+    $src =~ s!^(\$[A-Za-z_]+)!!
+        or return;
     return ($src, ['VARIABLE', $1]);
 }
 

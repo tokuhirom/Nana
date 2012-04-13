@@ -4,6 +4,7 @@ use utf8;
 use Test::More;
 use Tora::Parser;
 use Carp;
+use Data::Dumper;
 
 $SIG{INT} = \&confess;
 
@@ -25,6 +26,19 @@ is_deeply($parser->parse('qw(1 2 3)'),
 
 is_deeply($parser->parse(''),
     ['NOP']
+);
+
+is_deeply($parser->parse(<<'...'),
+class Foo {
+    sub new() {
+    }
+}
+...
+    [
+        'CLASS',
+        [ 'IDENT', 'Foo' ],
+        [ 'SUB', [ 'IDENT', 'new' ], [ ], [ 'NOP' ] ]
+    ]
 );
 
 done_testing;

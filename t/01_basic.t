@@ -15,6 +15,7 @@ test('sub foo { 4 }', 'sub foo { 4 }');
 test('sub foo { 3+2 }', 'sub foo { 3+2 }');
 test('sub foo($var) { 3+2 }', 'sub foo { my $var=shift;3+2 }');
 test('sub foo($var, $boo) { 3+2 }', 'sub foo { my $var=shift;my $boo=shift;3+2 }');
+test('class Foo { sub new() { } }', '{package Foo;sub new {  }}');
 
 done_testing;
 
