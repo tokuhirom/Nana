@@ -4,11 +4,11 @@ use utf8;
 use Test::More;
 use Data::Dumper;
 
-use Tora::Compiler;
-use Tora::Parser;
+use Nana::Compiler;
+use Nana::Parser;
 
-my $compiler = Tora::Compiler->new();
-my $parser   = Tora::Parser->new();
+my $compiler = Nana::Compiler->new();
+my $parser   = Nana::Parser->new();
 
 test("1+2", "1+2");
 test('sub foo { 4 }', 'sub foo { 4 }');

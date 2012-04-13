@@ -1,4 +1,4 @@
-package Tora::Parser;
+package Nana::Parser;
 use strict;
 use warnings;
 use warnings FATAL => 'recursion';
@@ -354,8 +354,8 @@ __END__
 
 =head1 SYNOPSIS
 
-    use Tora::Parser;
+    use Nana::Parser;
 
-    my $parser = Tora::Parser->new();
+    my $parser = Nana::Parser->new();
     my $ast = $parser->parse();
 

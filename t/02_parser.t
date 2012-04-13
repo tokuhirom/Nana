@@ -2,13 +2,13 @@ use strict;
 use warnings;
 use utf8;
 use Test::More;
-use Tora::Parser;
+use Nana::Parser;
 use Carp;
 use Data::Dumper;
 
 $SIG{INT} = \&confess;
 
-my $parser = Tora::Parser->new();
+my $parser = Nana::Parser->new();
 is_deeply($parser->parse('sub foo($a, $b, $c) { 1 }'), [
     'SUB',
     ['IDENT', 'foo'],

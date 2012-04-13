@@ -1,4 +1,4 @@
-package Tora::Compiler;
+package Nana::Compiler;
 use strict;
 use warnings;
 use utf8;
@@ -80,9 +80,9 @@ __END__
 
 =head1 SYNOPSIS
 
-    use Tora::Compiler;
+    use Nana::Compiler;
 
-    my $compiler = Tora::Compiler->new();
+    my $compiler = Nana::Compiler->new();
     my $perl = $compiler->compile($ast);
     eval $perl;
 

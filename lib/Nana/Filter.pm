@@ -1,13 +1,13 @@
-package Tora::Filter;
+package Nana::Filter;
 use strict;
 use warnings;
 use utf8;
 use Module::Compile -base;
-use Tora::Parser;
-use Tora::Compiler;
+use Nana::Parser;
+use Nana::Compiler;
 
-my $compiler = Tora::Compiler->new();
-my $parser = Tora::Parser->new();
+my $compiler = Nana::Compiler->new();
+my $parser = Nana::Parser->new();
 
 sub pmc_compile {
     my ($class, $src, $extra) = @_;
