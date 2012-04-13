@@ -10,7 +10,7 @@ use Test::Differences;
 $SIG{INT} = \&confess;
 
 my $parser = Nana::Parser->new();
-is_deeply(
+eq_or_diff(
     $parser->parse('sub foo($a, $b, $c) { 1 }'),
     [
         'STMTS', 1, [
@@ -18,7 +18,7 @@ is_deeply(
                 'SUB', 1,
                 [ 'IDENT', 1, 'foo' ],
                 [ map { [ 'VARIABLE', 1, $_ ] } qw($a $b $c) ],
-                [ 'INT', 1, 1 ]
+                [ 'STMTS', 1, [[ 'INT', 1, '1' ]]],
             ]
         ]
     ]
@@ -36,7 +36,7 @@ is_deeply($parser->parse(''),
     ['STMTS', 1, []]
 );
 
-is_deeply($parser->parse(<<'...'),
+eq_or_diff($parser->parse(<<'...'),
 class Foo {
     sub new() {
     }
@@ -46,7 +46,9 @@ class Foo {
         [
             'CLASS', 1,
             [ 'IDENT', 1, 'Foo' ],
-            [ 'SUB', 2, [ 'IDENT', 2, 'new' ], [ ], [ 'NOP', 3 ] ]
+            ['STMTS', 2, [
+                [ 'SUB', 2, [ 'IDENT', 2, 'new' ], [ ], ['STMTS', 3, []] ]
+            ]]
         ]
     ] ]
 );

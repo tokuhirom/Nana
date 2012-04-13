@@ -189,11 +189,8 @@ sub block {
     ($src) = match($src, '{')
         or return;
 
-    my $body;
-    if ((my $src2, $body) = expression($src)) {
-        # optional
-        $src = $src2;
-    }
+    ($src, my $body) = statement_list($src)
+        or return;
 
     ($src) = match($src, '}')
         or return;
