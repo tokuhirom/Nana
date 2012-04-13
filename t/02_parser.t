@@ -41,5 +41,9 @@ class Foo {
     ]
 );
 
+is_deeply($parser->parse('say()'),
+    ['CALL', ['IDENT', 'say'],]
+);
+
 done_testing;
 

@@ -1,6 +1,7 @@
 package Tora::Parser;
 use strict;
 use warnings;
+use warnings FATAL => 'recursion';
 use utf8;
 use Carp;
 use Data::Dumper;
@@ -9,6 +10,9 @@ sub new { bless {}, shift }
 
 sub parse {
     my ($class, $src) = @_;
+    confess unless defined $src;
+    local $Data::Dumper::Terse = 1;
+
     my ($rest, $ret) = program($src);
     if ($rest =~ /[^\n \t]/) {
         die "Parse failed: " . Dumper($rest);
@@ -22,7 +26,8 @@ sub program {
 
     my @a = sub {
         my $c = $src;
-        ($c, my $ret) = statements($c);
+        ($c, my $ret) = statements($c)
+            or return;
         ($c, $ret);
     }->();
     return @a if @a;
@@ -51,7 +56,8 @@ sub statements {
 
     my @a = sub {
         my $c = $src;
-        ($c, my $ret) = expression($c);
+        ($c, my $ret) = expression($c)
+            or return;
         ($c, $ret);
     }->();
     return @a if @a;
@@ -81,6 +87,33 @@ sub expression {
         }->();
         return @ret if @ret;
     }
+
+    # say(1)
+    {
+        my @a = sub {
+            my $c = $src;
+            # say()
+            ($c, my $lhs) = addive_expression($c) or return;
+            ($c, my $args) = arguments($c) or return;
+            return ($c, ['CALL', $lhs, $args]);
+        }->();
+        return @a if @a;
+    }
+
+    my @a = sub {
+        my $c = $src;
+        ($c, my $ret) = addive_expression($c)
+            or return;
+        return ($c, $ret);
+    }->();
+    return @a if @a;
+
+err:
+    return;
+}
+
+sub addive_expression {
+    my $src = shift;
 n3:
     {
         my $c = $src;
@@ -103,11 +136,7 @@ n2:
         ($c, my $ret) = term($c) or goto err;
         return ($c, $ret);
     }
-err:
-    {
-        my $c = $src;
-        return ($c, ['NOP']);
-    }
+    return;
 }
 
 sub block {
@@ -187,6 +216,37 @@ sub parameter_list {
     }
 }
 
+sub arguments {
+    my $src = shift;
+
+    ($src) = match($src, "(") or return;
+    confess unless defined $src;
+
+    ($src, my $ret) = argument_list($src);
+    confess unless defined $src;
+
+    ($src) = match($src, ")")
+        or die "Parse failed: missing ')'";
+
+    return ($src, $ret);
+}
+
+sub argument_list {
+    my $src = shift;
+
+    my $ret = [];
+
+    while (1) {
+        (my $src2, my $var) = expression($src)
+            or return ($src, $ret);
+        $src = $src2;
+        push @$ret, $var;
+
+        ($src) = (match($src, ',')
+            or return ($src, $ret));
+    }
+}
+
 sub identifier {
     local $_ = shift;
     s/^\s*//;
@@ -236,6 +296,15 @@ sub primary {
         ($c, $ret);
     }->();
     return @d if @d;
+
+    {
+        my @d = sub {
+            my $c = $src;
+            ($c, my $ret) = identifier($c) or return;
+            ($c, $ret);
+        }->();
+        return @d if @d;
+    }
 
     return;
 }

@@ -10,15 +10,27 @@ use Data::Dumper;
 
 GetOptions(
     'Dtrace' => \my $trace,
+    'Dtree'  => \my $tree,
+    'Dsrc'   => \my $dump_src,
+    'e|eval=s' => \my $eval,
 );
 
 my $parser = Tora::Parser->new;
 my $compiler = Tora::Compiler->new();
-if (@ARGV) {
+if (defined $eval) {
+    my $ast = $parser->parse($eval);
+    say(Dumper($ast)) if $tree;
+    my $perl = $compiler->compile($ast);
+    say($perl) if $dump_src;
+    eval $perl;
+    die $@ if $@;
+} elsif (@ARGV) {
     my $fname = shift @ARGV;
     open my $fh, '<', $fname;
     my $src = $parser->parse(do { local $/; <$fh>; });
     $compiler->compile($src);
+    eval $src;
+    die $@ if $@;
 } else {
     if (-t STDIN && -t STDOUT) {
         while (1) {
