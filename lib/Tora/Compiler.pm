@@ -13,7 +13,7 @@ sub compile {
 
     my $res = '';
     unless ($no_header) {
-        $res .= 'use strict;use warnings;use warnings FATAL => "recursion";use utf8;\n';
+        $res .= 'use strict;use warnings;use warnings FATAL => "recursion";use utf8;' . "\n";
     }
     $res .= _compile($ast);
 }
@@ -45,6 +45,8 @@ sub _compile {
         $ret .= _compile($node->[3]) . ' }';
     } elsif ($node->[0] eq 'IDENT') {
         return $node->[1];
+    } elsif ($node->[0] eq 'NOP') {
+        return '';
     } elsif ($node->[0] eq 'INT') {
         return $node->[1];
     } elsif ($node->[0] eq 'DOUBLE') {

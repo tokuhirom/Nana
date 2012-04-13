@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use autodie;
+use 5.10.1;
+use Tora::Compiler;
+use Tora::Parser;
+use Getopt::Long;
+use Data::Dumper;
+
+GetOptions(
+    'Dtrace' => \my $trace,
+);
+
+my $parser = Tora::Parser->new;
+my $compiler = Tora::Compiler->new();
+if (@ARGV) {
+    my $fname = shift @ARGV;
+    open my $fh, '<', $fname;
+    my $src = $parser->parse(do { local $/; <$fh>; });
+    $compiler->compile($src);
+} else {
+    if (-t STDIN && -t STDOUT) {
+        while (1) {
+            print(">> ");
+            last if eof(STDIN);
+            my $input = <>;
+
+            my $ast = $parser->parse($input);
+            my $perl = $compiler->compile($ast);
+            say("PERL: $perl") if $trace;
+            my $ret = eval $perl;
+            die $@ if $@;
+            local $Data::Dumper::Terse = 1;
+            warn Dumper($ret);
+        }
+    } else {
+        my $input = join('', <>);
+        my $ast = $parser->parse($input);
+        my $perl = $compiler->compile($ast);
+        eval $perl;
+        die $@ if $@;
+    }
+}
+

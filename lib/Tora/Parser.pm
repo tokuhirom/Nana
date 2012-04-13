@@ -3,21 +3,53 @@ use strict;
 use warnings;
 use utf8;
 use Carp;
+use Data::Dumper;
 
 sub new { bless {}, shift }
 
 sub parse {
     my ($class, $src) = @_;
     my ($rest, $ret) = expression($src);
-    if ($rest) {
-        die "Parse failed: $rest";
+    if ($rest =~ /[^\n \t]/) {
+        die "Parse failed: " . Dumper($rest);
     }
     $ret;
 }
 
+sub program {
+    my $src = $_[0];
+    $src =~ s/^\s*//s;
+
+    my @a = sub {
+        my $c = $src;
+        ($c, my $ret) = statements($c);
+        ($c, $ret);
+    }->();
+    return @a if @a;
+
+    {
+        my $c = $src;
+        return ($c, ['NOP']);
+    }
+}
+
+sub statements {
+    my $src = shift;
+    $src =~ s/^\s*//s;
+
+    my @a = sub {
+        my $c = $src;
+        ($c, my $ret) = expression($c);
+        ($c, $ret);
+    }->();
+    return @a if @a;
+
+    return ();
+}
+
 sub expression {
     my $src = $_[0];
-    $src =~ s/^\s*//;
+    $src =~ s/^\s*//s;
 
     {
         my @ret = sub {
@@ -61,8 +93,10 @@ n2:
         return ($c, $ret);
     }
 err:
-
-    die "Parse Error";
+    {
+        my $c = $src;
+        return ($c, ['NOP']);
+    }
 }
 
 sub term {
@@ -89,7 +123,7 @@ n2:
         return ($c, $ret);
     }
 err:
-    die "Parse failed";
+    return;
 }
 
 sub match {
@@ -182,7 +216,7 @@ sub primary {
     }->();
     return @d if @d;
 
-    die "Parse failed. : $src";
+    return;
 }
 
 sub _qw_literal {

@@ -1,0 +1,12 @@
+spec note for class
+===================
+
+    class Foo {
+    }
+
+    my $Class_Foo = Foo->new(
+        'Foo', {
+            meth => sub {
+            }
+        }
+    );
