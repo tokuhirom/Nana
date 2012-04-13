@@ -6,12 +6,17 @@ use utf8;
 use Carp;
 use Data::Dumper;
 
+our $LINENO;
+our $START;
+
 sub new { bless {}, shift }
+
 
 sub parse {
     my ($class, $src) = @_;
     confess unless defined $src;
     local $Data::Dumper::Terse = 1;
+    local $LINENO = 1;
 
     my ($rest, $ret) = program($src);
     if ($rest =~ /[^\n \t]/) {
@@ -20,164 +25,212 @@ sub parse {
     $ret;
 }
 
+sub _node {
+    my ($type, @rest) = @_;
+    [$type, $LINENO, @rest];
+}
+
+sub _node2 {
+    my ($type, $lineno, @rest) = @_;
+    [$type, $lineno, @rest];
+}
+
 sub program {
-    my $src = $_[0];
-    $src =~ s/^\s*//s;
+    my $src = skip_ws(shift);
 
-    my @a = sub {
-        my $c = $src;
-        ($c, my $ret) = statements($c)
-            or return;
-        ($c, $ret);
-    }->();
-    return @a if @a;
+    any(
+        sub {
+            my $c = $src;
+            ($c, my $ret) = statement_list($c)
+                or return;
+            ($c, $ret);
+        },
+        sub {
+            return ($src, _node('NOP'));
+        },
+    );
+}
 
-    {
-        my $c = $src;
-        return ($c, ['NOP']);
+sub statement_list {
+    my $src = skip_ws(shift);
+
+    my $start = $LINENO;
+    my $ret = [];
+    LOOP: while (1) {
+        my ($tmp, $stmt) = statement($src)
+            or return ($src, _node2('STMTS', $start, $ret));
+        $src = $tmp;
+        push @$ret, $stmt;
+
+        # skip spaces.
+        $src =~ s/^[ \t\f]*//s;
+        # read next statement if found ';' or '\n'
+        $src =~ s/^;//s
+            and next;
+        $src =~ s/^\n//s
+            and do { ++$LINENO; next LOOP; };
+        # there is no more statements, just return!
+        return ($src, _node('STMTS', $ret));
     }
 }
 
-sub statements {
-    my $src = shift;
-    $src =~ s/^\s*//s;
+sub statement {
+    my $src = skip_ws(shift);
 
-    my @b = sub {
-        my $c = $src;
-        ($c) = match($c, 'class')
-            or return;
-        ($c, my $name) = identifier($c)
-            or die "identifier expected after 'class' keyword";
-        ($c, my $block) = block($c)
-            or return;
-        ($c, ['CLASS', $name, $block]);
-    }->();
-    return @b if @b;
+    any(
+        sub {
+            my $c = $src;
+            ($c) = match($c, 'class')
+                or return;
+            ($c, my $name) = identifier($c)
+                or die "identifier expected after 'class' keyword";
+            ($c, my $block) = block($c)
+                or return;
+            return ($c, _node2('CLASS', $START, $name, $block));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = expression($c)
+                or return;
+            return ($c, $ret);
+        },
+    );
+}
 
-    my @a = sub {
-        my $c = $src;
-        ($c, my $ret) = expression($c)
-            or return;
-        ($c, $ret);
-    }->();
-    return @a if @a;
-
-    return ();
+# skip whitespace with line counting
+sub skip_ws {
+    local $_ = shift;
+    s/^[ \t\f]//;
+    s/^\n/++$LINENO;''/ge;
+    $_;
 }
 
 sub expression {
-    my $src = $_[0];
-    $src =~ s/^\s*//s;
+    my $src = skip_ws(shift);
 
-    {
-        my @ret = sub {
+    any(
+        sub {
             my $c = $src;
+
             ($c)           = match($c, 'sub') or return;
             ($c, my $name) = identifier($c)   or die "Parsing error";
 
             my $params;
-            if ((my $c2, $params) = parameters($c, "(")) {
+            if ((my $c2, $params) = parameters($c)) {
                 # optional
                 $c = $c2;
             }
 
             ($c, my $block) = block($c)
                 or die "expected block after sub in $name->[1] : " . substr($c, 1024);
-            return ($c, ['SUB', $name, $params, $block]);
-        }->();
-        return @ret if @ret;
-    }
-
-    # say(1)
-    {
-        my @a = sub {
-            my $c = $src;
+            return ($c, _node2('SUB', $START, $name, $params, $block));
+        },
+        sub {
             # say()
+            my $c = $src;
             ($c, my $lhs) = addive_expression($c) or return;
             ($c, my $args) = arguments($c) or return;
-            return ($c, ['CALL', $lhs, $args]);
-        }->();
+            return ($c, _node('CALL', $lhs, $args));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = addive_expression($c)
+                or return;
+            return ($c, $ret);
+        }
+    );
+}
+
+sub any {
+    local $START = $LINENO;
+    for (@_) {
+        local $LINENO = $LINENO;
+        my @a = $_->();
         return @a if @a;
     }
-
-    my @a = sub {
-        my $c = $src;
-        ($c, my $ret) = addive_expression($c)
-            or return;
-        return ($c, $ret);
-    }->();
-    return @a if @a;
-
-err:
-    return;
+    return ();
 }
 
 sub addive_expression {
-    my $src = shift;
-n3:
-    {
-        my $c = $src;
-        ($c, my $lhs) = term($c) or goto n1;
-        ($c) = match($c, '+') or goto n1;
-        ($c, my $rhs) = expression($c) or goto n1;
-        return ($c, ['+', $lhs, $rhs]);
-    }
-n1:
-    {
-        my $c = $src;
-        ($c, my $lhs) = term($c) or goto n2;
-        ($c) = match($c, '-') or goto n2;
-        ($c, my $rhs) = expression($c) or goto n2;
-        return ($c, ['-', $lhs, $rhs]);
-    }
-n2:
-    {
-        my $c = $src;
-        ($c, my $ret) = term($c) or goto err;
-        return ($c, $ret);
-    }
-    return;
+    my $src = skip_ws(shift);
+
+    any(
+        sub {
+            my $c = $src;
+            ($c, my $lhs) = term($c)
+                or return;
+            ($c) = match($c, '+')
+                or return;
+            ($c, my $rhs) = expression($c)
+                or return;
+            return ($c, _node('+', $lhs, $rhs));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $lhs) = term($c)
+                or return;
+            ($c) = match($c, '-')
+                or return;
+            ($c, my $rhs) = expression($c)
+                or return;
+            return ($c, _node('-', $lhs, $rhs));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = term($c)
+                or return;
+            return ($c, $ret);
+        }
+    );
 }
 
 sub block {
-    my $c = shift;
-    ($c)           = match($c, '{') or return;
+    my $src = skip_ws(shift);
+    ($src) = match($src, '{')
+        or return;
 
     my $body;
-    if ((my $c2, $body) = expression($c)) {
+    if ((my $src2, $body) = expression($src)) {
         # optional
-        $c = $c2;
+        $src = $src2;
     }
 
-    ($c)           = match($c, '}') or return;
-    return ($c, $body || ['NOP']);
+    ($src) = match($src, '}')
+        or return;
+    return ($src, $body || _node('NOP'));
 }
 
 sub term {
-    my $src = shift;
-    {
-        my $c = $src;
-        ($c, my $lhs) = primary($c) or goto n1;
-        ($c) = match($c, '*') or goto n1;
-        ($c, my $rhs) = term($c) or goto n1;
-        return ($c, ['*', $lhs, $rhs]);
-    }
-n1:
-    {
-        my $c = $src;
-        ($c, my $lhs) = primary($c) or goto n2;
-        ($c) = match($c, '/') or goto n2;
-        ($c, my $rhs) = term($c) or goto n2;
-        return ($c, ['/', $lhs, $rhs]);
-    }
-n2:
-    {
-        my $c = $src;
-        ($c, my $ret) = primary($c) or goto err;
-        return ($c, $ret);
-    }
-err:
-    return;
+    my $src = skip_ws(shift);
+
+    any(
+        sub {
+            my $c = $src;
+            ($c, my $lhs) = primary($c)
+                or return;
+            ($c) = match($c, '*')
+                or return;
+            ($c, my $rhs) = term($c)
+                or return;
+            return ($c, _node('*', $lhs, $rhs));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $lhs) = primary($c)
+                or return;
+            ($c) = match($c, '/')
+                or return;
+            ($c, my $rhs) = term($c)
+                or return;
+            return ($c, _node('/', $lhs, $rhs));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = primary($c)
+                or return;
+            return ($c, $ret);
+        },
+    );
 }
 
 sub match {
@@ -191,9 +244,10 @@ sub match {
 }
 
 sub parameters {
-    my $src = shift;
+    my $src = skip_ws(shift);
 
-    ($src) = match($src, "(") or return;
+    ($src) = match($src, "(")
+        or return;
     confess unless defined $src;
 
     ($src, my $ret) = parameter_list($src);
@@ -206,7 +260,7 @@ sub parameters {
 }
 
 sub parameter_list {
-    my $src = shift;
+    my $src = skip_ws(shift);
     confess unless defined $src;
 
     my $ret = [];
@@ -223,7 +277,7 @@ sub parameter_list {
 }
 
 sub arguments {
-    my $src = shift;
+    my $src = skip_ws(shift);
 
     ($src) = match($src, "(") or return;
     confess unless defined $src;
@@ -238,7 +292,7 @@ sub arguments {
 }
 
 sub argument_list {
-    my $src = shift;
+    my $src = skip_ws(shift);
 
     my $ret = [];
 
@@ -257,66 +311,64 @@ sub identifier {
     local $_ = shift;
     s/^\s*//;
     s/^([A-Za-z_][A-Za-z0-9_]*)// or return;
-    ($_, ['IDENT', $1]);
+    return ($_, _node('IDENT', $1));
 }
 
 sub variable {
-    my $src = shift;
+    my $src = skip_ws(shift);
     confess unless defined $src;
-    $src =~ s/^\s*//;
     $src =~ s!^(\$[A-Za-z_]+)!!
         or return;
-    return ($src, ['VARIABLE', $1]);
+    return ($src, _node('VARIABLE', $1));
 }
 
 sub primary {
-    my $src = shift;
-    $src =~ s/^\s*//;
+    my $src = skip_ws(shift);
 
-    my @a = sub {
-        # int
-        my $c = $src;
-        $c =~ s/^([1-9][0-9]*)// or return;
-        ($c, ['INT', $1]);
-    }->();
-    return @a if @a;
-
-    my @c = sub {
-        # NV
-        my $c = $src;
-        $c =~ s/^([1-9][0-9]*\.[0-9]*)// or return;
-        ($c, ['DOUBLE', $1]);
-    }->();
-    return @c if @c;
-
-    my @b = sub {
-        my $c = $src;
-        ($c, my $ret) = string($c) or return;
-        ($c, ['STR', $ret]);
-    }->();
-    return @b if @b;
-
-    my @d = sub {
-        my $c = $src;
-        ($c, my $ret) = _qw_literal($c) or return;
-        ($c, $ret);
-    }->();
-    return @d if @d;
-
-    {
-        my @d = sub {
+    any(
+        sub {
+            # int
             my $c = $src;
-            ($c, my $ret) = identifier($c) or return;
+            $c =~ s/^([1-9][0-9]*)//
+                or return;
+            return ($c, _node('INT', $1));
+        },
+        sub {
+            # NV
+            my $c = $src;
+            $c =~ s/^([1-9][0-9]*\.[0-9]*)// or return;
+            return ($c, _node('DOUBLE', $1));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = string($c)
+                or return;
+            return ($c, _node('STR', $ret));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = _qw_literal($c)
+                or return;
             ($c, $ret);
-        }->();
-        return @d if @d;
-    }
-
-    return;
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = identifier($c)
+                or return;
+            ($c, $ret);
+        },
+        sub {
+            my $c = $src;
+            $c =~ s/^__LINE__//
+                or return;
+            return ($c, _node('INT', $LINENO));
+        },
+    );
 }
 
 sub _qw_literal {
-    my $src = shift;
+    my $src = skip_ws(shift);
+
     $src =~ s!^qw([\(\[\!\{])!!smx or return;
     my $close = quotemeta +{
         '(' => ')',
@@ -330,7 +382,7 @@ sub _qw_literal {
         if ($src =~ s!^([A-Za-z0-9_]+)!!) {
             push @$ret, $1;
         } elsif ($src =~ s!^$close!!smx) {
-            return ($src, ['QW', $ret]);
+            return ($src, _node('QW', $ret));
         } else {
             die "Parse failed in qw() literal: $src";
         }
@@ -339,14 +391,10 @@ sub _qw_literal {
 
 sub string {
     # escape chars, etc.
-    my $src = shift;
+    my $src = skip_ws(shift);
+
     $src =~ s/^"([^"]+?)"// or return;
     return ($src, $1);
-}
-
-sub space {
-    s/^\s*//;
-    1;
 }
 
 1;

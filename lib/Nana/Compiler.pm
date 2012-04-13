@@ -22,54 +22,60 @@ sub _compile {
     my ($node) = @_;
 
     if ($node->[0] eq '+') {
-        return _compile($node->[1]) . '+' . _compile($node->[2]);
+        return _compile($node->[2]) . '+' . _compile($node->[3]);
     } elsif ($node->[0] eq '-') {
-        return _compile($node->[1]) . '-' . _compile($node->[2]);
+        return _compile($node->[2]) . '-' . _compile($node->[3]);
     } elsif ($node->[0] eq '*') {
-        return _compile($node->[1]) . '*' . _compile($node->[2]);
+        return _compile($node->[2]) . '*' . _compile($node->[3]);
     } elsif ($node->[0] eq '/') {
-        return _compile($node->[1]) . '/' . _compile($node->[2]);
+        return _compile($node->[2]) . '/' . _compile($node->[3]);
     } elsif ($node->[0] eq '~') {
         # string concat operator
-        return _compile($node->[1]) . '.' . _compile($node->[2]);
+        return _compile($node->[2]) . '.' . _compile($node->[3]);
     } elsif ($node->[0] eq 'SUB') {
-        my $ret = 'sub ' . _compile($node->[1]);
+        my $ret = 'sub ' . _compile($node->[2]);
         $ret .= ' { ';
-        if ($node->[2]) {
-            for (@{$node->[2]}) {
+        if ($node->[3]) {
+            for (@{$node->[3]}) {
                 $ret .= "my ";
                 $ret .= _compile($_);
                 $ret .= "=shift;";
             }
         }
-        $ret .= _compile($node->[3]) . ' }';
+        $ret .= _compile($node->[4]) . ' }';
         return $ret;
     } elsif ($node->[0] eq 'CALL') {
-        if ($node->[1]->[0] eq 'IDENT') {
-            my $ret = '' . $node->[1]->[1] . '(';
-            $ret .= join(',', map { sprintf('scalar(%s)', _compile($_)) } @{$node->[2]});
+        if ($node->[2]->[0] eq 'IDENT') {
+            my $ret = '' . $node->[2]->[2] . '(';
+            $ret .= join(',', map { sprintf('scalar(%s)', _compile($_)) } @{$node->[3]});
             $ret .= ')';
             return $ret;
         } else {
             die "Compilation failed.";
         }
     } elsif ($node->[0] eq 'IDENT') {
-        return $node->[1];
+        return $node->[2];
     } elsif ($node->[0] eq 'NOP') {
         return '';
     } elsif ($node->[0] eq 'STR') {
-        return '"' . $node->[1] . '"';
+        return '"' . $node->[2] . '"';
     } elsif ($node->[0] eq 'INT') {
-        return $node->[1];
+        return $node->[2];
     } elsif ($node->[0] eq 'CLASS') {
-        my $ret = '{package ' . _compile($node->[1]) . ';';
-        $ret .= _compile($node->[2]);
+        my $ret = '{package ' . _compile($node->[2]) . ';';
+        $ret .= _compile($node->[3]);
         $ret .= "}";
         return $ret;
+    } elsif ($node->[0] eq 'STMTS') {
+        my $ret = '';
+        for (@{$node->[2]}) {
+            $ret .= _compile($_);
+        }
+        return $ret;
     } elsif ($node->[0] eq 'DOUBLE') {
-        return $node->[1];
+        return $node->[2];
     } elsif ($node->[0] eq 'VARIABLE') {
-        return $node->[1];
+        return $node->[2];
     } else {
         die "Unknown node type " . Dumper($node);
     }
