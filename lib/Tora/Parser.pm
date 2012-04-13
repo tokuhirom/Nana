@@ -110,9 +110,18 @@ start:
     if ((my $src2) = match($src, ")")) {
         return ($src2, $ret);
     }
-    ($src, my $var) = variable($src) or die "Parse failed in parameters";
+    ($src, my $var) = variable($src)
+        or die "Parse failed in parameters";
     push @$ret, $var;
-    goto start;
+
+    if ((my $src2) = match($src, ",")) {
+        $src = $src2;
+        goto start;
+    }
+    if ((my $src2) = match($src, ")")) {
+        return ($src2, $ret);
+    }
+    die "Parse failed";
 }
 
 sub identifier {
@@ -141,6 +150,14 @@ sub primary {
         ($c, ['INT', $1]);
     }->();
     return @a if @a;
+
+    my @c = sub {
+        # NV
+        my $c = $src;
+        $c =~ s/^([1-9][0-9]*\.[0-9]*)// or return;
+        ($c, ['DOUBLE', $1]);
+    }->();
+    return @c if @c;
 
     my @b = sub {
         my $c = $src;

@@ -43,6 +43,8 @@ sub _compile {
         return $node->[1];
     } elsif ($node->[0] eq 'INT') {
         return $node->[1];
+    } elsif ($node->[0] eq 'DOUBLE') {
+        return $node->[1];
     } elsif ($node->[0] eq 'VARIABLE') {
         return $node->[1];
     } else {
