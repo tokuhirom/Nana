@@ -82,7 +82,7 @@ sub expression {
             }
 
             ($c, my $block) = block($c)
-                or die "expected block after sub.";
+                or die "expected block after sub in $name->[1] : " . substr($c, 1024);
             return ($c, ['SUB', $name, $params, $block]);
         }->();
         return @ret if @ret;
@@ -142,9 +142,15 @@ n2:
 sub block {
     my $c = shift;
     ($c)           = match($c, '{') or return;
-    ($c, my $body) = expression($c) or return;
+
+    my $body;
+    if ((my $c2, $body) = expression($c)) {
+        # optional
+        $c = $c2;
+    }
+
     ($c)           = match($c, '}') or return;
-    return ($c, $body);
+    return ($c, $body || ['NOP']);
 }
 
 sub term {
