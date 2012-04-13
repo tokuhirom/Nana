@@ -104,24 +104,33 @@ sub match {
 
 sub parameters {
     my $src = shift;
-    my $ret = [];
-    ($src) = match($src, "(") or return;
-start:
-    if ((my $src2) = match($src, ")")) {
-        return ($src2, $ret);
-    }
-    ($src, my $var) = variable($src)
-        or die "Parse failed in parameters";
-    push @$ret, $var;
 
-    if ((my $src2) = match($src, ",")) {
-        $src = $src2;
-        goto start;
+    ($src) = match($src, "(") or return;
+    confess unless defined $src;
+
+    ($src, my $ret) = parameter_list($src);
+    confess unless defined $src;
+
+    ($src) = match($src, ")")
+        or die "Parse failed: missing ')'";
+
+    return ($src, $ret);
+}
+
+sub parameter_list {
+    my $src = shift;
+    confess unless defined $src;
+
+    my $ret = [];
+
+    while (1) {
+        ($src, my $var) = variable($src)
+            or return ($src, $ret);
+        push @$ret, $var;
+
+        ($src) = (match($src, ',')
+            or return ($src, $ret));
     }
-    if ((my $src2) = match($src, ")")) {
-        return ($src2, $ret);
-    }
-    die "Parse failed";
 }
 
 sub identifier {
@@ -166,7 +175,36 @@ sub primary {
     }->();
     return @b if @b;
 
+    my @d = sub {
+        my $c = $src;
+        ($c, my $ret) = _qw_literal($c) or return;
+        ($c, $ret);
+    }->();
+    return @d if @d;
+
     die "Parse failed. : $src";
+}
+
+sub _qw_literal {
+    my $src = shift;
+    $src =~ s!^qw([\(\[\!\{])!!smx or return;
+    my $close = quotemeta +{
+        '(' => ')',
+        '[' => ']',
+        '{' => '}',
+        '!' => '!',
+    }->{$1};
+    my $ret = [];
+    while (1) {
+        $src =~ s/^\s*//;
+        if ($src =~ s!^([A-Za-z0-9_]+)!!) {
+            push @$ret, $1;
+        } elsif ($src =~ s!^$close!!smx) {
+            return ($src, ['QW', $ret]);
+        } else {
+            die "Parse failed in qw() literal: $src";
+        }
+    }
 }
 
 sub string {

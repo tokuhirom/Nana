@@ -15,5 +15,13 @@ is_deeply($parser->parse('sub foo($a, $b, $c) { 1 }'), [
     ['INT', 1]
 ]);
 
+is_deeply($parser->parse('qw()'),
+    ['QW', []],
+);
+
+is_deeply($parser->parse('qw(1 2 3)'),
+    ['QW', [qw(1 2 3)]],
+);
+
 done_testing;
 

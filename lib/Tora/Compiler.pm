@@ -9,9 +9,13 @@ sub new {
 }
 
 sub compile {
-    my ($self, $ast) = @_;
+    my ($self, $ast, $no_header) = @_;
 
-    _compile($ast);
+    my $res = '';
+    unless ($no_header) {
+        $res .= 'use strict;use warnings;use warnings FATAL => "recursion";use utf8;\n';
+    }
+    $res .= _compile($ast);
 }
 
 sub _compile {
