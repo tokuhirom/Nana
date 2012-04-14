@@ -20,6 +20,14 @@ test('if 1 { }', 'if (1) {}');
 test('if 1 { 4 }', 'if (1) {4}');
 test('if 1 { 4 } else { }', 'if (1) {4} else {}');
 test('if 1 { 4 } elsif 3 { } else { }', 'if (1) {4} elsif (3) {} else {}');
+test('while 1 {}', 'while (1) {}');
+test('"Hello, " ~ $name', '"Hello, ".$name');
+test('return 3', 'return (3);');
+test(<<'...', 'sub hello { my $name=shift;return ("Hello, ".$name); }');
+sub hello($name) {
+    return "Hello, " ~ $name;
+}
+...
 
 done_testing;
 

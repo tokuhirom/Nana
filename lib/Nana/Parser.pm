@@ -90,6 +90,14 @@ sub statement {
         },
         sub {
             my $c = $src;
+            ($c) = match($c, 'return')
+                or return;
+            ($c, my $expression) = expression($c)
+                or die "expression expected after 'return' keyword";
+            return ($c, _node2('RETURN', $START, $expression));
+        },
+        sub {
+            my $c = $src;
             ($c) = match($c, 'if')
                 or return;
             ($c, my $expression) = expression($c)
@@ -101,6 +109,16 @@ sub statement {
                 $c = $c2;
             }
             return ($c, _node2('IF', $START, $expression, $block, $else));
+        },
+        sub {
+            my $c = $src;
+            ($c) = match($c, 'while')
+                or return;
+            ($c, my $expression) = expression($c)
+                or die "expression is required after 'while' keyword";
+            ($c, my $block) = block($c)
+                or die "block is required after while keyword.";
+            return ($c, _node2('WHILE', $START, $expression, $block));
         },
         sub {
             my $c = $src;
@@ -403,6 +421,12 @@ sub primary {
         sub {
             my $c = $src;
             ($c, my $ret) = identifier($c)
+                or return;
+            ($c, $ret);
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = variable($c)
                 or return;
             ($c, $ret);
         },
