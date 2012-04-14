@@ -331,7 +331,7 @@ rule('block', [
 rule('term', [
     sub {
         my $c = shift;
-        ($c, my $lhs) = method_call($c)
+        ($c, my $lhs) = incdec($c)
             or return;
         ($c) = match($c, '*')
             or return;
@@ -341,7 +341,7 @@ rule('term', [
     },
     sub {
         my $c = shift;
-        ($c, my $lhs) = method_call($c)
+        ($c, my $lhs) = incdec($c)
             or return;
         ($c) = match($c, '/')
             or return;
@@ -349,12 +349,47 @@ rule('term', [
             or return;
         return ($c, _node('/', $lhs, $rhs));
     },
+    \&incdec,
+]);
+
+rule('incdec', [
     sub {
+        # $i++
         my $c = shift;
-        ($c, my $ret) = method_call($c)
+        ($c, my $object) = primary($c)
             or return;
-        return ($c, $ret);
+        ($c) = match($c, '++')
+            or return;
+        return ($c, _node2("POSTINC", $START, $object));
     },
+    sub {
+        # $i--
+        my $c = shift;
+        ($c, my $object) = primary($c)
+            or return;
+        ($c) = match($c, '--')
+            or return;
+        return ($c, _node2("POSTDEC", $START, $object));
+    },
+    sub {
+        # ++$i
+        my $c = shift;
+        ($c) = match($c, '++')
+            or return;
+        ($c, my $object) = primary($c)
+            or return;
+        return ($c, _node2("PREINC", $START, $object));
+    },
+    sub {
+        # --$i
+        my $c = shift;
+        ($c) = match($c, '--')
+            or return;
+        ($c, my $object) = primary($c)
+            or return;
+        return ($c, _node2("PREDEC", $START, $object));
+    },
+    \&method_call
 ]);
 
 rule('method_call', [
@@ -370,12 +405,7 @@ rule('method_call', [
             or return;
         return ($c, _node2('METHOD_CALL', $START, $object, $method, $param));
     },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = primary($c)
-            or return;
-        return ($c, $ret);
-    },
+    \&primary
 ]);
 
 rule('parameters', [

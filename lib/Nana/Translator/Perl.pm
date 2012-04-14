@@ -32,6 +32,14 @@ sub _compile {
     } elsif ($node->[0] eq '~') {
         # string concat operator
         return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';
+    } elsif ($node->[0] eq 'PREINC') {
+        return '++(' . _compile($node->[2]) . ')';
+    } elsif ($node->[0] eq 'PREDEC') {
+        return '--(' . _compile($node->[2]) . ')';
+    } elsif ($node->[0] eq 'POSTINC') {
+        return '(' . _compile($node->[2]) . ')++';
+    } elsif ($node->[0] eq 'POSTDEC') {
+        return '(' . _compile($node->[2]) . ')--';
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf("#line %d\n", $node->[1]);
         $ret .= 'sub ' . _compile($node->[2]);

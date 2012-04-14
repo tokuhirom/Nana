@@ -32,6 +32,10 @@ sub hello($name) {
     return "Hello, " ~ $name;
 }
 ...
+test('$i++', '($i)++');
+test('$i--', '($i)--');
+test('++$i', '++($i)');
+test('--$i', '--($i)');
 
 done_testing;
 
