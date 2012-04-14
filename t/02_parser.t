@@ -27,6 +27,9 @@ eq_or_diff(
 is_deeply($parser->parse('qw()'),
     ['STMTS', 1, [['QW', 1, []]]],
 );
+is_deeply($parser->parse('[]'),
+    ['STMTS', 1, [['ARRAY', 1, ['EXPRESSIONS', 1, []]]]],
+);
 
 is_deeply($parser->parse('qw(1 2 3)'),
     ['STMTS', 1, [['QW', 1, [qw(1 2 3)]]]],

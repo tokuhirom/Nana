@@ -74,6 +74,27 @@ sub statement_list {
     }
 }
 
+sub expression_list {
+    my $src = skip_ws(shift);
+
+    my $start = $LINENO;
+    my $ret = [];
+    LOOP: while (1) {
+        my ($tmp, $stmt) = expression($src)
+            or return ($src, _node2('EXPRESSIONS', $start, $ret));
+        $src = $tmp;
+        push @$ret, $stmt;
+
+        # skip spaces.
+        $src = skip_ws($src);
+        # read next statement if found ','
+        $src =~ s/^,//s
+            and next;
+        # there is no more statements, just return!
+        return ($src, _node('EXPRESSIONS', $ret));
+    }
+}
+
 sub statement {
     my $src = skip_ws(shift);
 
@@ -273,7 +294,7 @@ sub term {
     any(
         sub {
             my $c = $src;
-            ($c, my $lhs) = primary($c)
+            ($c, my $lhs) = method_call($c)
                 or return;
             ($c) = match($c, '*')
                 or return;
@@ -283,13 +304,37 @@ sub term {
         },
         sub {
             my $c = $src;
-            ($c, my $lhs) = primary($c)
+            ($c, my $lhs) = method_call($c)
                 or return;
             ($c) = match($c, '/')
                 or return;
             ($c, my $rhs) = term($c)
                 or return;
             return ($c, _node('/', $lhs, $rhs));
+        },
+        sub {
+            my $c = $src;
+            ($c, my $ret) = method_call($c)
+                or return;
+            return ($c, $ret);
+        },
+    );
+}
+
+sub method_call {
+    my $src = skip_ws(shift);
+    any(
+        sub {
+            my $c = $src;
+            ($c, my $object) = primary($c)
+                or return;
+            ($c) = match($c, '.')
+                or return;
+            ($c, my $method) = identifier($c)
+                or return;
+            ($c, my $param) = arguments($c)
+                or return;
+            return ($c, _node2('METHOD_CALL', $START, $object, $method, $param));
         },
         sub {
             my $c = $src;
@@ -302,6 +347,7 @@ sub term {
 
 sub match {
     my ($c, $word) = @_;
+    die "[BUG]" unless @_ == 2;
     confess unless defined $c;
     $word = quotemeta($word);
     $c =~ s/^\s*//;
@@ -435,6 +481,15 @@ sub primary {
             $c =~ s/^__LINE__//
                 or return;
             return ($c, _node('INT', $LINENO));
+        },
+        sub {
+            my $c = $src;
+            ($c) = match($c, "[")
+                or return;
+            ($c, my $body) = expression_list($c);
+            ($c) = match($c, "]")
+                or return;
+            return ($c, _node2('ARRAY', $START, $body));
         },
     );
 }

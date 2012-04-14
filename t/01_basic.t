@@ -23,6 +23,8 @@ test('if 1 { 4 } elsif 3 { } else { }', 'if (1) {4} elsif (3) {} else {}');
 test('while 1 {}', 'while (1) {}');
 test('"Hello, " ~ $name', '"Hello, ".$name');
 test('return 3', 'return (3);');
+test('[1,2,3]', '[1,2,3]');
+test('[1,2,3].push(4)', '[1,2,3]->push(4)');
 test(<<'...', 'sub hello { my $name=shift;return ("Hello, ".$name); }');
 sub hello($name) {
     return "Hello, " ~ $name;

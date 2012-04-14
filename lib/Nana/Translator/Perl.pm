@@ -13,7 +13,7 @@ sub compile {
 
     my $res = '';
     unless ($no_header) {
-        $res .= 'use 5.12.0;use strict;use warnings;use warnings FATAL => "recursion";use utf8;use autobox;my $ENV=\%ENV;use File::stat;' . "\n";
+        $res .= 'use 5.12.0;use strict;use warnings;use warnings FATAL => "recursion";use utf8;use autobox;my $ENV=\%ENV;use File::stat;use Nana::Translator::Perl::Type::ARRAY;use autobox ARRAY => q{Nana::Translator::Perl::Type::ARRAY};' . "\n";
     }
     $res .= _compile($ast);
 }
@@ -85,6 +85,8 @@ sub _compile {
         $ret .= _compile($node->[3]);
         $ret .= ";no Mouse;}";
         return $ret;
+    } elsif ($node->[0] eq 'METHOD_CALL') {
+        return _compile($node->[2]) . '->' . _compile($node->[3]) . '(' . join(',', map { _compile($_) } @{$node->[4]}) . ')';
     } elsif ($node->[0] eq 'STMTS') {
         my $ret = '';
         for (@{$node->[2]}) {
@@ -93,6 +95,9 @@ sub _compile {
         return $ret;
     } elsif ($node->[0] eq 'DOUBLE') {
         return $node->[2];
+    } elsif ($node->[0] eq 'EXPRESSIONS') {
+    } elsif ($node->[0] eq 'ARRAY') {
+        return '[' . join(',', map { _compile($_) } @{$node->[2]->[2]}) . ']';
     } elsif ($node->[0] eq 'VARIABLE') {
         return $node->[2];
     } else {
