@@ -90,9 +90,51 @@ sub statement {
         },
         sub {
             my $c = $src;
+            ($c) = match($c, 'if')
+                or return;
+            ($c, my $expression) = expression($c)
+                or die "expression is required after 'if' keyword";
+            ($c, my $block) = block($c)
+                or die "block is required after if keyword.";
+            my $else;
+            if ((my $c2, $else) = else_clause($c)) { # optional
+                $c = $c2;
+            }
+            return ($c, _node2('IF', $START, $expression, $block, $else));
+        },
+        sub {
+            my $c = $src;
             ($c, my $ret) = expression($c)
                 or return;
             return ($c, $ret);
+        },
+    );
+}
+
+sub else_clause {
+    my $src = skip_ws(shift);
+    any(
+        sub {
+            my $c = $src;
+            ($c) = match($c, 'elsif')
+                or return;
+            ($c, my $expression) = expression($c)
+                or die "expression is required after 'elsif' keyword";
+            ($c, my $block) = block($c)
+                or die "block is required after elsif keyword.";
+            my $else;
+            if ((my $c2, $else) = else_clause($c)) { # optional
+                $c = $c2;
+            }
+            return ($c, _node2('ELSIF', $START, $expression, $block, $else));
+        },
+        sub {
+            my $c = $src;
+            ($c) = match($c, 'else')
+                or return;
+            ($c, my $block) = block($c)
+                or die "block is required after elsif keyword.";
+            return ($c, _node2('ELSE', $START, $block));
         },
     );
 }

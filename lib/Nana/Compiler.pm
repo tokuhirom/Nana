@@ -62,6 +62,20 @@ sub _compile {
         return '"' . $node->[2] . '"';
     } elsif ($node->[0] eq 'INT') {
         return $node->[2];
+    } elsif ($node->[0] eq 'IF') {
+        my $ret = 'if (' . _compile($node->[2]) . ') {' . _compile($node->[3]) . '}';
+        if ($node->[4]) {
+            $ret .= _compile($node->[4]);
+        }
+        return $ret;
+    } elsif ($node->[0] eq 'ELSIF') {
+        my $ret = ' elsif ('. _compile($node->[2]) . ') {' . _compile($node->[3]) . '}';
+        if ($node->[4]) {
+            $ret .= _compile($node->[4]);
+        }
+        return $ret;
+    } elsif ($node->[0] eq 'ELSE') {
+        return ' else {' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'CLASS') {
         my $ret = '{package ' . _compile($node->[2]) . ';';
         $ret .= _compile($node->[3]);

@@ -109,5 +109,45 @@ say("hoge"~"fuga")
     ]]
 );
 
+eq_or_diff($parser->parse(<<'...'),
+if 1 { }
+...
+    ['STMTS', 1, [
+        ['IF', 1,
+            [
+                'INT',
+                1,
+                '1',
+            ],
+            [
+                'STMTS', 1, [ ]
+            ],
+            undef
+        ]
+    ]]
+);
+
+eq_or_diff($parser->parse(<<'...'),
+if 1 { } else { }
+...
+    ['STMTS', 1, [
+        ['IF', 1,
+            [
+                'INT',
+                1,
+                '1',
+            ],
+            [
+                'STMTS', 1, [ ]
+            ],
+            [
+                'ELSE', 1, [
+                    'STMTS', 1, [ ]
+                ]
+            ]
+        ]
+    ]]
+);
+
 done_testing;
 
