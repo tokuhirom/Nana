@@ -522,6 +522,15 @@ rule('primary', [
             or return;
         return ($c, _node2('ARRAY', $START, $body));
     },
+    sub {
+        my $c = shift;
+        ($c) = match($c, "(")
+            or return;
+        ($c, my $body) = expression($c);
+        ($c) = match($c, ")")
+            or return;
+        return ($c, $body);
+    },
 ]);
 
 rule('_qw_literal', [

@@ -22,16 +22,16 @@ sub _compile {
     my ($node) = @_;
 
     if ($node->[0] eq '+') {
-        return _compile($node->[2]) . '+' . _compile($node->[3]);
+        return '('. _compile($node->[2]) . '+' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '-') {
-        return _compile($node->[2]) . '-' . _compile($node->[3]);
+        return '('. _compile($node->[2]) . '-' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '*') {
-        return _compile($node->[2]) . '*' . _compile($node->[3]);
+        return '('. _compile($node->[2]) . '*' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '/') {
-        return _compile($node->[2]) . '/' . _compile($node->[3]);
+        return '('. _compile($node->[2]) . '/' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '~') {
         # string concat operator
-        return _compile($node->[2]) . '.' . _compile($node->[3]);
+        return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf("#line %d\n", $node->[1]);
         $ret .= 'sub ' . _compile($node->[2]);
