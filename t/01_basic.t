@@ -4,10 +4,10 @@ use utf8;
 use Test::More;
 use Data::Dumper;
 
-use Nana::Compiler;
+use Nana::Translator::Perl;
 use Nana::Parser;
 
-my $compiler = Nana::Compiler->new();
+my $compiler = Nana::Translator::Perl->new();
 my $parser   = Nana::Parser->new();
 
 test("1+2", "1+2");
@@ -15,7 +15,7 @@ test('sub foo { 4 }', 'sub foo { 4 }');
 test('sub foo { 3+2 }', 'sub foo { 3+2 }');
 test('sub foo($var) { 3+2 }', 'sub foo { my $var=shift;3+2 }');
 test('sub foo($var, $boo) { 3+2 }', 'sub foo { my $var=shift;my $boo=shift;3+2 }');
-test('class Foo { sub new() { } }', '{package Foo;sub new {  }}');
+test('class Foo { sub new() { } }', '{package Foo;use Mouse;sub new {  };no Mouse;}');
 test('if 1 { }', 'if (1) {}');
 test('if 1 { 4 }', 'if (1) {4}');
 test('if 1 { 4 } else { }', 'if (1) {4} else {}');

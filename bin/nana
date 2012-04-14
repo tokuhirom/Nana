@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use autodie;
 use 5.10.1;
-use Nana::Compiler;
+use Nana::Translator::Perl;
 use Nana::Parser;
 use Getopt::Long;
 use Data::Dumper;
@@ -16,7 +16,7 @@ GetOptions(
 );
 
 my $parser = Nana::Parser->new;
-my $compiler = Nana::Compiler->new();
+my $compiler = Nana::Translator::Perl->new();
 if (defined $eval) {
     my $ast = $parser->parse($eval);
     say(Dumper($ast)) if $tree;

@@ -1,4 +1,4 @@
-package Nana::Compiler;
+package Nana::Translator::Perl;
 use strict;
 use warnings;
 use utf8;
@@ -81,9 +81,9 @@ sub _compile {
     } elsif ($node->[0] eq 'ELSE') {
         return ' else {' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'CLASS') {
-        my $ret = '{package ' . _compile($node->[2]) . ';';
+        my $ret = '{package ' . _compile($node->[2]) . ';use Mouse;';
         $ret .= _compile($node->[3]);
-        $ret .= "}";
+        $ret .= ";no Mouse;}";
         return $ret;
     } elsif ($node->[0] eq 'STMTS') {
         my $ret = '';
@@ -105,9 +105,9 @@ __END__
 
 =head1 SYNOPSIS
 
-    use Nana::Compiler;
+    use Nana::Translator::Perl;
 
-    my $compiler = Nana::Compiler->new();
+    my $compiler = Nana::Translator::Perl->new();
     my $perl = $compiler->compile($ast);
     eval $perl;
 

@@ -4,9 +4,9 @@ use warnings;
 use utf8;
 use Module::Compile -base;
 use Nana::Parser;
-use Nana::Compiler;
+use Nana::Translator::Perl;
 
-my $compiler = Nana::Compiler->new();
+my $compiler = Nana::Translator::Perl->new();
 my $parser = Nana::Parser->new();
 
 sub pmc_compile {
