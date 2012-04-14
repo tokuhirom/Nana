@@ -33,7 +33,8 @@ sub _compile {
         # string concat operator
         return _compile($node->[2]) . '.' . _compile($node->[3]);
     } elsif ($node->[0] eq 'SUB') {
-        my $ret = 'sub ' . _compile($node->[2]);
+        my $ret = sprintf("#line %d\n", $node->[1]);
+        $ret .= 'sub ' . _compile($node->[2]);
         $ret .= ' { ';
         if ($node->[3]) {
             for (@{$node->[3]}) {

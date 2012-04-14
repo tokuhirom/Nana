@@ -78,5 +78,36 @@ eq_or_diff($parser->parse(<<'...'),
     ]
 );
 
+eq_or_diff($parser->parse(<<'...'),
+"hoge"~"fuga"
+...
+    ['STMTS', 1, [
+        ['~', 1,
+            ['STR', 1, 'hoge'],
+            ['STR', 1, 'fuga'],
+        ]
+    ]]
+);
+
+eq_or_diff($parser->parse(<<'...'),
+say("hoge"~"fuga")
+...
+    ['STMTS', 1, [
+        ['CALL', 1,
+            [
+                'IDENT',
+                1,
+                'say',
+            ],
+            [
+                ['~', 1,
+                    ['STR', 1, 'hoge'],
+                    ['STR', 1, 'fuga'],
+                ]
+            ]
+        ]
+    ]]
+);
+
 done_testing;
 

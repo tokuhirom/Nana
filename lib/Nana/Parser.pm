@@ -177,6 +177,16 @@ sub addive_expression {
         },
         sub {
             my $c = $src;
+            ($c, my $lhs) = term($c)
+                or return;
+            ($c) = match($c, '~')
+                or return;
+            ($c, my $rhs) = expression($c)
+                or return;
+            return ($c, _node('~', $lhs, $rhs));
+        },
+        sub {
+            my $c = $src;
             ($c, my $ret) = term($c)
                 or return;
             return ($c, $ret);
@@ -283,7 +293,7 @@ sub arguments {
     confess unless defined $src;
 
     ($src) = match($src, ")")
-        or die "Parse failed: missing ')'";
+        or die "Parse failed: missing ')' line $LINENO";
 
     return ($src, $ret);
 }

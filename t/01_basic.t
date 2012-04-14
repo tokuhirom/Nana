@@ -25,6 +25,7 @@ sub test {
     subtest $src, sub {
         my $ast = $parser->parse($src);
         my $perl = $compiler->compile($ast, my $no_header = 1);
+        $perl =~ s/#line .+\n//;
         is($perl, $expected);
     };
 }

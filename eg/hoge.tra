@@ -1,3 +1,8 @@
 use Nana::Filter;
 
+sub hello($name) {
+    say("Hello, " ~ $name);
+}
+
+hello("John");
 say(1+2);
