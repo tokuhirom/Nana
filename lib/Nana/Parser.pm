@@ -21,19 +21,21 @@ sub rule {
     *{"@{[ __PACKAGE__ ]}::$name"} = sub {
         local $START = $LINENO;
         my $src = skip_ws(shift);
+        if (my $cache = $CACHE->{$name}->{length($src)}) {
+            return @$cache;
+        }
         for (@$patterns) {
         $MATCH++;
-#           if (my $cache = $CACHE->{refaddr $_}->{length($src)}) {
-#               return @$cache;
-#           }
 
             local $LINENO = $LINENO;
             my @a = $_->($src);
 
-#           $CACHE->{refaddr $_}->{length($src)} = \@a;
-
-            return @a if @a;
+            if (@a) {
+                $CACHE->{$name}->{length($src)} = \@a;
+                return @a;
+            }
         }
+        $CACHE->{$name}->{length($src)} = [];
         return ();
     };
 }
@@ -254,7 +256,7 @@ rule('expression', [
         }
 
         ($c, my $block) = block($c)
-            or die "expected block after sub in $name->[1] : " . substr($c, 1024);
+            or die "expected block after sub in $name->[1]";
         return ($c, _node2('SUB', $START, $name, $params, $block));
     },
     sub {
