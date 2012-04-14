@@ -16,6 +16,7 @@ test('sub foo { 3+2 }', 'sub foo { 3+2 }');
 test('sub foo($var) { 3+2 }', 'sub foo { my $var=shift;3+2 }');
 test('sub foo($var, $boo) { 3+2 }', 'sub foo { my $var=shift;my $boo=shift;3+2 }');
 test('class Foo { sub new() { } }', '{package Foo;use Mouse;sub new {  };no Mouse;}');
+test(q!class Foo isa Bar { sub new() { } }!, q!{package Foo;use Mouse;BEGIN{extends 'Bar';}sub new {  };no Mouse;}!);
 test('if 1 { }', 'if (1) {}');
 test('if 1 { 4 }', 'if (1) {4}');
 test('if 1 { 4 } else { }', 'if (1) {4} else {}');

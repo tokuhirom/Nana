@@ -82,7 +82,8 @@ sub _compile {
         return ' else {' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'CLASS') {
         my $ret = '{package ' . _compile($node->[2]) . ';use Mouse;';
-        $ret .= _compile($node->[3]);
+        $ret .= join(',', map { sprintf "BEGIN{extends '%s';}", _compile($_) } @{$node->[3]});
+        $ret .= _compile($node->[4]);
         $ret .= ";no Mouse;}";
         return $ret;
     } elsif ($node->[0] eq 'METHOD_CALL') {

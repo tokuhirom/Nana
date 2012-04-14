@@ -101,13 +101,21 @@ sub statement {
     any(
         sub {
             my $c = $src;
+            # class Name [isa Parent] {}
             ($c) = match($c, 'class')
                 or return;
             ($c, my $name) = identifier($c)
                 or die "identifier expected after 'class' keyword";
+            my @base;
+            if ((my $c2) = match($c, 'isa')) {
+                $c = $c2;
+                ($c, my $base) = identifier($c)
+                    or die "identifier expected after 'isa' keyword";
+                push @base, $base;
+            }
             ($c, my $block) = block($c)
                 or return;
-            return ($c, _node2('CLASS', $START, $name, $block));
+            return ($c, _node2('CLASS', $START, $name, \@base, $block));
         },
         sub {
             my $c = $src;
