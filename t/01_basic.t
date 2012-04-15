@@ -68,6 +68,10 @@ test('1 | 2', '(1|2)');
 test('1 & 2', '(1&2)');
 test('for 1..10 -> { }', 'for ((1..10)) {}');
 test('for 1..10 -> $i { }', 'for my $i((1..10)) {}');
+test('has()', 'has()');
+test('has(1)', 'has(scalar(1))');
+test('has(1,2)', 'has(scalar(1),scalar(2))');
+test('has("foo")', 'has(scalar("foo"))');
 
 done_testing;
 

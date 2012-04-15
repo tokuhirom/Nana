@@ -11,6 +11,7 @@ use Sub::Name;
 # TODO:
 # qr() q() qq()
 # "" ''
+# #{ } in string literal
 # <<'...' <<"..."
 # method call
 # class call
@@ -311,6 +312,7 @@ sub skip_ws {
 
 std:
     s/^[ \t\f]// && goto std;
+    s/^#[^\n]+\n/++$LINENO;''/ge && goto std;
     s/^\n/++$LINENO;''/ge && goto std;
 
     $_;
@@ -591,31 +593,19 @@ rule('arguments', [
         ($src) = match($src, "(") or return;
         confess unless defined $src;
 
-        ($src, my $ret) = argument_list($src);
-        confess unless defined $src;
+        my @args;
+        while (my ($c2, $arg) = assign_expression($src)) {
+            $src = $c2;
+            push @args, $arg;
+            (my $c3) = match($src, ',')
+                or last;
+            $src = $c3;
+        }
 
         ($src) = match($src, ")")
             or die "Parse failed: missing ')' line $LINENO";
 
-        return ($src, $ret);
-    }
-]);
-
-rule('argument_list', [
-    sub {
-        my $src = shift;
-
-        my $ret = [];
-
-        while (1) {
-            (my $src2, my $var) = assign_expression($src)
-                or return ($src, $ret);
-            $src = $src2;
-            push @$ret, $var;
-
-            ($src) = (match($src, ',')
-                or return ($src, $ret));
-        }
+        return ($src, \@args);
     }
 ]);
 
