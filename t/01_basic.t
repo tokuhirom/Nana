@@ -27,6 +27,7 @@ test('return 3', 'return (3);');
 test('[1,2,3]', '[1,2,3]');
 test('(1+2)*3', '(((1+2))*3)');
 test('1-2-3', '((1-2)-3)');
+test('1-2+3', '((1-2)+3)');
 test('[1,2,3].push(4)', '[1,2,3]->push(4)');
 test(<<'...', 'sub hello { my $name=shift;return (("Hello, ".$name)); }');
 sub hello($name) {

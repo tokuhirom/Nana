@@ -51,14 +51,17 @@ sub any {
 }
 
 sub match {
-    my ($c, $word) = @_;
-    die "[BUG]" unless @_ == 2;
+    my ($c, @words) = @_;
+    croak "[BUG]" if @_ == 1;
     confess unless defined $c;
-    $word = quotemeta($word);
     $c =~ s/^\s*//;
-    $c =~ s/^$word//
-        or return ();
-    return ($c);
+    for my $word (@words) {
+        my $qword = quotemeta($word);
+        if ($c =~ s/^$qword//) {
+            return ($c, $word);
+        }
+    }
+    return;
 }
 
 sub parse {
@@ -271,41 +274,20 @@ rule('expression', [
 
 rule('addive_expression', [
     sub {
-        my $c = shift;
-        ($c, my $lhs) = term($c)
-            or return;
-        ($c) = match($c, '+')
-            or return;
-        ($c, my $rhs) = expression($c)
-            or return;
-        return ($c, _node('+', $lhs, $rhs));
-    },
-    sub {
         # see http://en.wikipedia.org/wiki/Parsing_expression_grammar#Indirect_left_recursion
         my $c = shift;
         my $ret;
         ($c, my $lhs) = term($c)
             or return;
         $ret = $lhs;
-        while (1) {
-            ($c) = (match($c, '-')
-                or last);
+        while ((my $c2, my $op) = match($c, '-', '+', '~')) {
+            $c = $c2;
             ($c, my $rhs) = term($c)
-                or die "addive_expression is required after '-' operator";
-            $ret = _node('-', $ret, $rhs);
+                or die "term is required after '$op' operator";
+            $ret = _node($op, $ret, $rhs);
         }
         return () if "$ret" eq "$lhs";
         return ($c, $ret);
-    },
-    sub {
-        my $c = shift;
-        ($c, my $lhs) = term($c)
-            or return;
-        ($c) = match($c, '~')
-            or return;
-        ($c, my $rhs) = expression($c)
-            or return;
-        return ($c, _node('~', $lhs, $rhs));
     },
     \&term
 ]);
@@ -445,15 +427,15 @@ rule('parameter_list', [
 
         my $ret = [];
 
-        while (1) {
-            (my $src2, my $var) = variable($src)
-                or return ($src, $ret);
+        while (my ($src2, $var) = variable($src)) {
             $src = $src2;
             push @$ret, $var;
 
-            ($src) = (match($src, ',')
-                or return ($src, $ret));
+            (my $src3) = match($src, ',')
+                or return ($src, $ret);
+            $src = $src3;
         }
+        return ($src, $ret);
     }
 ]);
 
