@@ -86,6 +86,10 @@ sub _compile {
         } else {
             return 'my ' . _compile($node->[2]);
         }
+    } elsif ($node->[0] eq 'DO') {
+        my $ret = 'do {';
+        $ret .= _compile($node->[2]) . '}';
+        return $ret;
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf("#line %d\n", $node->[1]);
         $ret .= 'sub ' . _compile($node->[2]);
@@ -147,7 +151,7 @@ sub _compile {
     } elsif ($node->[0] eq 'STMTS') {
         my $ret = '';
         for (@{$node->[2]}) {
-            $ret .= _compile($_);
+            $ret .= _compile($_) . ';';
         }
         return $ret;
     } elsif ($node->[0] eq 'UNDEF') {

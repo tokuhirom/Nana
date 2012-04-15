@@ -234,6 +234,14 @@ rule('statement', [
             or die "block is required after while keyword.";
         return ($c, _node2('WHILE', $START, $expression, $block));
     },
+    sub {
+        my $c = shift;
+        ($c) = match($c, 'do')
+            or return;
+        ($c, my $block) = block($c)
+            or die "block is required after while keyword.";
+        return ($c, _node2('DO', $START, $block));
+    },
     \&expression,
 ]);
 
