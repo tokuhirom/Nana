@@ -5,23 +5,26 @@ use autodie;
 use 5.10.1;
 use Nana::Translator::Perl;
 use Nana::Parser;
-use Getopt::Long;
+use Getopt::Long::Descriptive;
 use Data::Dumper;
 
-GetOptions(
-    'Dtrace' => \my $trace,
-    'Dtree'  => \my $tree,
-    'Dsrc'   => \my $dump_src,
-    'e|eval=s' => \my $eval,
+my ($opt, $usage) = describe_options(
+    'nana %o <some-arg>',
+    [ 'Dperl', "Dump perl code"   ],
+    [],
+    [ 'Dtree|Dt',   "Dump AST" ],
+    [ 'eval|e=s',   "Eval expression" ],
+    [ 'help|h',       "print usage message and exit" ],
 );
+print($usage) if $opt->help;
 
 my $parser = Nana::Parser->new;
 my $compiler = Nana::Translator::Perl->new();
-if (defined $eval) {
-    my $ast = $parser->parse($eval);
-    say(Dumper($ast)) if $tree;
+if (defined $opt->eval) {
+    my $ast = $parser->parse($opt->eval);
+    say(Dumper($ast)) if $opt->dtree;
     my $perl = $compiler->compile($ast);
-    say($perl) if $dump_src;
+    say($perl) if $opt->dperl;
     eval $perl;
     die $@ if $@;
 } elsif (@ARGV) {
@@ -40,7 +43,7 @@ if (defined $eval) {
 
             my $ast = $parser->parse($input);
             my $perl = $compiler->compile($ast);
-            say("PERL: $perl") if $trace;
+            say("PERL: $perl") if $opt->dperl;
             my $ret = eval $perl;
             die $@ if $@;
             local $Data::Dumper::Terse = 1;
