@@ -29,9 +29,13 @@ sub _compile {
         return '('. _compile($node->[2]) . '*' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '/') {
         return '('. _compile($node->[2]) . '/' . _compile($node->[3]).')';
+    } elsif ($node->[0] eq '**') {
+        return '('. _compile($node->[2]) . '**' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '~') {
         # string concat operator
         return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';
+    } elsif ($node->[0] eq '()') {
+        return '('. _compile($node->[2]) .')';
     } elsif ($node->[0] eq 'PREINC') {
         return '++(' . _compile($node->[2]) . ')';
     } elsif ($node->[0] eq 'PREDEC') {

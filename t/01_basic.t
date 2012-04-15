@@ -25,7 +25,8 @@ test('while 1 {}', 'while (1) {}');
 test('"Hello, " ~ $name', '("Hello, ".$name)');
 test('return 3', 'return (3);');
 test('[1,2,3]', '[1,2,3]');
-test('(1+2)*3', '((1+2)*3)');
+test('(1+2)*3', '(((1+2))*3)');
+test('1-2-3', '((1-2)-3)');
 test('[1,2,3].push(4)', '[1,2,3]->push(4)');
 test(<<'...', 'sub hello { my $name=shift;return (("Hello, ".$name)); }');
 sub hello($name) {
@@ -36,6 +37,7 @@ test('$i++', '($i)++');
 test('$i--', '($i)--');
 test('++$i', '++($i)');
 test('--$i', '--($i)');
+test('$i**$j', '($i**$j)');
 
 done_testing;
 

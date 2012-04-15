@@ -266,12 +266,7 @@ rule('expression', [
         ($c, my $args) = arguments($c) or return;
         return ($c, _node('CALL', $lhs, $args));
     },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = addive_expression($c)
-            or return;
-        return ($c, $ret);
-    }
+    \&addive_expression
 ]);
 
 rule('addive_expression', [
@@ -286,14 +281,21 @@ rule('addive_expression', [
         return ($c, _node('+', $lhs, $rhs));
     },
     sub {
+        # see http://en.wikipedia.org/wiki/Parsing_expression_grammar#Indirect_left_recursion
         my $c = shift;
+        my $ret;
         ($c, my $lhs) = term($c)
             or return;
-        ($c) = match($c, '-')
-            or return;
-        ($c, my $rhs) = expression($c)
-            or return;
-        return ($c, _node('-', $lhs, $rhs));
+        $ret = $lhs;
+        while (1) {
+            ($c) = (match($c, '-')
+                or last);
+            ($c, my $rhs) = term($c)
+                or die "addive_expression is required after '-' operator";
+            $ret = _node('-', $ret, $rhs);
+        }
+        return () if "$ret" eq "$lhs";
+        return ($c, $ret);
     },
     sub {
         my $c = shift;
@@ -305,12 +307,7 @@ rule('addive_expression', [
             or return;
         return ($c, _node('~', $lhs, $rhs));
     },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = term($c)
-            or return;
-        return ($c, $ret);
-    }
+    \&term
 ]);
 
 rule('block', [
@@ -331,7 +328,7 @@ rule('block', [
 rule('term', [
     sub {
         my $c = shift;
-        ($c, my $lhs) = incdec($c)
+        ($c, my $lhs) = pow($c)
             or return;
         ($c) = match($c, '*')
             or return;
@@ -341,7 +338,7 @@ rule('term', [
     },
     sub {
         my $c = shift;
-        ($c, my $lhs) = incdec($c)
+        ($c, my $lhs) = pow($c)
             or return;
         ($c) = match($c, '/')
             or return;
@@ -349,14 +346,29 @@ rule('term', [
             or return;
         return ($c, _node('/', $lhs, $rhs));
     },
-    \&incdec,
+    \&pow,
+]);
+
+rule('pow', [
+    sub {
+        # $i ** $j
+        my $c = shift;
+        ($c, my $lhs) = incdec($c)
+            or return;
+        ($c) = match($c, "**")
+            or return;
+        ($c, my $rhs) = incdec($c)
+            or return;
+        return ($c, _node2('**', $START, $lhs, $rhs));
+    },
+    \&incdec
 ]);
 
 rule('incdec', [
     sub {
         # $i++
         my $c = shift;
-        ($c, my $object) = primary($c)
+        ($c, my $object) = method_call($c)
             or return;
         ($c) = match($c, '++')
             or return;
@@ -365,7 +377,7 @@ rule('incdec', [
     sub {
         # $i--
         my $c = shift;
-        ($c, my $object) = primary($c)
+        ($c, my $object) = method_call($c)
             or return;
         ($c) = match($c, '--')
             or return;
@@ -376,7 +388,7 @@ rule('incdec', [
         my $c = shift;
         ($c) = match($c, '++')
             or return;
-        ($c, my $object) = primary($c)
+        ($c, my $object) = method_call($c)
             or return;
         return ($c, _node2("PREINC", $START, $object));
     },
@@ -385,7 +397,7 @@ rule('incdec', [
         my $c = shift;
         ($c) = match($c, '--')
             or return;
-        ($c, my $object) = primary($c)
+        ($c, my $object) = method_call($c)
             or return;
         return ($c, _node2("PREDEC", $START, $object));
     },
@@ -559,7 +571,7 @@ rule('primary', [
         ($c, my $body) = expression($c);
         ($c) = match($c, ")")
             or return;
-        return ($c, $body);
+        return ($c, _node2('()', $START, $body));
     },
 ]);
 
