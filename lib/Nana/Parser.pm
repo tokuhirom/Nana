@@ -15,6 +15,8 @@ use Sub::Name;
 # <<'...' <<"..."
 # method call
 # class call
+# -> { } lambda.
+# arguments with types
 
 our $LINENO;
 our $START;
@@ -50,10 +52,11 @@ sub rule {
 }
 
 sub any {
+    my $src = shift;
     local $START = $LINENO;
     for (@_) {
         local $LINENO = $LINENO;
-        my @a = $_->();
+        my @a = $_->($src);
         return @a if @a;
     }
     return ();
@@ -199,6 +202,16 @@ rule('statement', [
     },
     sub {
         my $c = shift;
+        ($c) = match($c, 'unless')
+            or return;
+        ($c, my $expression) = expression($c)
+            or die "expression is required after 'if' keyword";
+        ($c, my $block) = block($c)
+            or die "block is required after if keyword.";
+        return ($c, _node2('UNLESS', $START, $expression, $block));
+    },
+    sub {
+        my $c = shift;
         ($c) = match($c, 'if')
             or return;
         ($c, my $expression) = expression($c)
@@ -252,6 +265,7 @@ rule('else_clause', [
 # skip whitespace with line counting
 sub skip_ws {
     local $_ = shift;
+    confess "[BUG]" unless defined $_;
 
 std:
     s/^[ \t\f]// && goto std;
@@ -601,6 +615,38 @@ rule('primary', [
     },
     sub {
         my $c = shift;
+        $c =~ s/^my\b//
+            or return;
+        ($c, my @body) = any(
+            $c,
+            sub {
+                my $c = shift;
+                ($c, my $body) = variable($c)
+                    or return;
+                return ($c, $body);
+            },
+            sub {
+                my $c = shift;
+                ($c) = match($c, '(')
+                    or return;
+                my @body;
+                while ((my $c2, my $body) = variable($c)) {
+                    $c = $c2;
+                    push @body, $body;
+                    (my $c3) = match($c, ',')
+                        or last;
+                    $c = $c3;
+                }
+                ($c) = match($c, ')')
+                    or die "Missing ')' in my expression.";
+                return ($c, @body);
+            }
+        );
+        return unless defined $c;
+        return ($c, _node2('MY', $START, \@body));
+    },
+    sub {
+        my $c = shift;
         ($c, my $ret) = identifier($c)
             or return;
         ($c, $ret);
@@ -663,6 +709,12 @@ rule('primary', [
         ($c) = match($c, ")")
             or return;
         return ($c, _node2('()', $START, $body));
+    },
+    sub {
+        my $c = shift;
+        $c =~ s/^undef\b//
+            or return;
+        return ($c, _node2('UNDEF', $START));
     },
 ]);
 

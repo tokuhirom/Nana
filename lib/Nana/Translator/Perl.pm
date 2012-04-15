@@ -14,7 +14,18 @@ sub compile {
 
     my $res = '';
     unless ($no_header) {
-        $res .= 'use 5.12.0;use strict;use warnings;use warnings FATAL => "recursion";use utf8;use autobox;my $ENV=\%ENV;use File::stat;use Nana::Translator::Perl::Type::ARRAY;use autobox ARRAY => q{Nana::Translator::Perl::Type::ARRAY};' . "\n";
+        $res .= join('',
+            'use 5.12.0;',
+            'use strict;',
+            'use warnings;',
+            'use warnings FATAL => "recursion";',
+            'use utf8;',
+            'use autobox;',
+            'my $ENV=\%ENV;',
+            'use File::stat;',
+            'use Nana::Translator::Perl::Type::ARRAY;',
+            'use autobox ARRAY => q{Nana::Translator::Perl::Type::ARRAY};',
+        ) . "\n";
     }
     $res .= _compile($ast);
 }
@@ -69,6 +80,12 @@ sub _compile {
         return '(' . _compile($node->[2]) . ')++';
     } elsif ($node->[0] eq 'POSTDEC') {
         return '(' . _compile($node->[2]) . ')--';
+    } elsif ($node->[0] eq 'MY') {
+        if (ref $node->[2] eq 'ARRAY') {
+            return 'my (' . join(', ', map { _compile($_) } @{$node->[2]}) . ')';
+        } else {
+            return 'my ' . _compile($node->[2]);
+        }
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf("#line %d\n", $node->[1]);
         $ret .= 'sub ' . _compile($node->[2]);
@@ -101,6 +118,8 @@ sub _compile {
         return $node->[2];
     } elsif ($node->[0] eq 'RETURN') {
         return 'return (' . _compile($node->[2]) . ');';
+    } elsif ($node->[0] eq 'UNLESS') {
+        return 'unless (' . _compile($node->[2]) . ') {' . _compile($node->[3]) . '}';
     } elsif ($node->[0] eq 'IF') {
         my $ret = 'if (' . _compile($node->[2]) . ') {' . _compile($node->[3]) . '}';
         if ($node->[4]) {
@@ -131,6 +150,8 @@ sub _compile {
             $ret .= _compile($_);
         }
         return $ret;
+    } elsif ($node->[0] eq 'UNDEF') {
+        return 'undef';
     } elsif ($node->[0] eq 'DOUBLE') {
         return $node->[2];
     } elsif ($node->[0] eq 'EXPRESSIONS') {

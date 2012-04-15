@@ -53,6 +53,10 @@ test('$i--', '($i)--');
 test('++$i', '++($i)');
 test('--$i', '--($i)');
 test('$i**$j', '($i**$j)');
+test('unless undef { 3 }', 'unless (undef) {3}');
+test('(my $x, my $y)', '((my ($x),my ($y)))');
+test('my $x', 'my ($x)');
+test('my ($x, $y, $z)', 'my ($x, $y, $z)');
 
 done_testing;
 
