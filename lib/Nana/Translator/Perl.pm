@@ -25,17 +25,24 @@ sub _compile {
     confess "Bad AST" unless $node;
     confess "Bad AST" unless @$node > 0;
 
-    if ($node->[0] eq '+') {
-        return '('. _compile($node->[2]) . '+' . _compile($node->[3]).')';
-    } elsif ($node->[0] eq '-') {
-        return '('. _compile($node->[2]) . '-' . _compile($node->[3]).')';
-    } elsif ($node->[0] eq '*') {
-        return '('. _compile($node->[2]) . '*' . _compile($node->[3]).')';
-    } elsif ($node->[0] eq '/') {
-        return '('. _compile($node->[2]) . '/' . _compile($node->[3]).')';
-    } elsif ($node->[0] eq '**') {
-        return '('. _compile($node->[2]) . '**' . _compile($node->[3]).')';
-    } elsif ($node->[0] eq '~') {
+    for my $op (qw(
+        **
+        * % x /
+        + -
+        >> <<
+        < > <= >= lt gt le ge
+        == != <=> eq ne cmp ~~
+        &
+        | ^
+        &&
+        || //
+    )) {
+        if ($node->[0] eq $op) {
+            return '('. _compile($node->[2]) . $op . _compile($node->[3]).')';
+        }
+    }
+
+    if ($node->[0] eq '~') {
         # string concat operator
         return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '()') {

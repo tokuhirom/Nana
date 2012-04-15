@@ -290,11 +290,8 @@ rule('expression', [
         ($c, my $args) = arguments($c) or return;
         return ($c, _node('CALL', $lhs, $args));
     },
-    \&addive_expression
-]);
-
-rule('addive_expression', [
-    left_op(\&term, ['-', '+', '~'])
+    \&oror_expression,
+    \&block,
 ]);
 
 rule('block', [
@@ -312,8 +309,60 @@ rule('block', [
     }
 ]);
 
+rule('oror_expression', [
+    left_op(\&andand_expression, ['||', '//'])
+]);
+
+rule('andand_expression', [
+    left_op(\&or_expression, ['&&'])
+]);
+
+rule('or_expression', [
+    left_op(\&and_expression, ['|', '^'])
+]);
+
+rule('and_expression', [
+    left_op(\&equality_expression, ['&'])
+]);
+
+rule('equality_expression', [
+    sub {
+        my $c = shift;
+        ($c, my $lhs) = cmp_expression($c)
+            or return;
+        ($c, my $op) = match($c, qw(== != <=> eq ne cmp ~~))
+            or return;
+        ($c, my $rhs) = cmp_expression($c)
+            or die "Expression required after $op line $LINENO";
+        return ($c, _node2($op, $START, $lhs, $rhs));
+    },
+    \&cmp_expression
+]);
+
+rule('cmp_expression', [
+    sub {
+        my $c = shift;
+        ($c, my $lhs) = shift_expression($c)
+            or return;
+        ($c, my $op) = match($c, qw(< > <= >= lt gt le ge))
+            or return;
+        ($c, my $rhs) = shift_expression($c)
+            or die "Expression required after $op line $LINENO";
+        return ($c, _node2($op, $START, $lhs, $rhs));
+    },
+    \&shift_expression
+]);
+
+rule('shift_expression', [
+    left_op(\&addive_expression, ['<<', '>>'])
+]);
+
+rule('addive_expression', [
+    left_op(\&term, ['-', '+', '~'])
+]);
+
 rule('term', [
-    left_op(\&regexp_match, ['*', '/'])
+    left_op(\&regexp_match, ['*', '/', '%', 'x'])
 ]);
 
 rule('regexp_match', [
