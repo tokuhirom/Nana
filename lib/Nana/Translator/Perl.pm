@@ -36,7 +36,9 @@ sub _compile {
         | ^
         &&
         || //
-    )) {
+        .. ...
+        = *= += /= %= x= -= <<= >>= **= &= |= ^=
+    ), ',') {
         if ($node->[0] eq $op) {
             return '('. _compile($node->[2]) . $op . _compile($node->[3]).')';
         }
@@ -45,6 +47,18 @@ sub _compile {
     if ($node->[0] eq '~') {
         # string concat operator
         return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';
+    } elsif ($node->[0] eq '?:') {
+        return join(
+            '',
+
+            '((',
+            _compile($node->[2]),
+            ')?(',
+            _compile($node->[3]),
+            '):(',
+            _compile($node->[4]),
+            '))'
+        );
     } elsif ($node->[0] eq '()') {
         return '('. _compile($node->[2]) .')';
     } elsif ($node->[0] eq 'PREINC') {
@@ -121,8 +135,10 @@ sub _compile {
         return $node->[2];
     } elsif ($node->[0] eq 'EXPRESSIONS') {
         die;
+    } elsif ($node->[0] eq '{}') {
+        return '{' . join(',', map { _compile($_) } @{$node->[2]}) . '}';
     } elsif ($node->[0] eq 'ARRAY') {
-        return '[' . join(',', map { _compile($_) } @{$node->[2]->[2]}) . ']';
+        return '[' . join(',', map { _compile($_) } @{$node->[2]}) . ']';
     } elsif ($node->[0] eq 'VARIABLE') {
         return $node->[2];
     } elsif ($node->[0] eq 'UNARY+') {

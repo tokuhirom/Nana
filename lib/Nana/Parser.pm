@@ -8,6 +8,14 @@ use Data::Dumper;
 use Scalar::Util qw(refaddr);
 use Sub::Name;
 
+# TODO:
+# and or xor
+# qr() q() qq()
+# "" ''
+# <<'...' <<"..."
+# method call
+# class call
+
 our $LINENO;
 our $START;
 our $CACHE;
@@ -70,6 +78,20 @@ sub left_op {
     },
 }
 
+sub nonassoc_op {
+    my ($upper, $ops) = @_;
+
+    sub {
+        my $c = shift;
+        ($c, my $lhs) = $upper->($c)
+            or return;
+        ($c, my $op) = match($c, @$ops)
+            or return;
+        ($c, my $rhs) = $upper->($c)
+            or die "Expression required after $op line $LINENO";
+        return ($c, _node2($op, $START, $lhs, $rhs));
+    },
+}
 
 sub match {
     my ($c, @words) = @_;
@@ -78,7 +100,7 @@ sub match {
     $c =~ s/^\s*//;
     for my $word (@words) {
         my $qword = quotemeta($word);
-        if ($c =~ s/^$qword(?![+-])//) {
+        if ($c =~ s/^$qword(?![+>-])//) {
             return ($c, $word);
         }
     }
@@ -148,29 +170,6 @@ rule('statement_list', [
     }
 ]);
 
-rule('expression_list', [
-    sub {
-        my $src = shift;
-
-        my $start = $LINENO;
-        my $ret = [];
-        LOOP: while (1) {
-            my ($tmp, $stmt) = expression($src)
-                or return ($src, _node2('EXPRESSIONS', $start, $ret));
-            $src = $tmp;
-            push @$ret, $stmt;
-
-            # skip spaces.
-            $src = skip_ws($src);
-            # read next statement if found ','
-            $src =~ s/^,//s
-                and next;
-            # there is no more statements, just return!
-            return ($src, _node('EXPRESSIONS', $ret));
-        }
-    }
-]);
-
 rule('statement', [
     sub {
         my $c = shift;
@@ -222,12 +221,7 @@ rule('statement', [
             or die "block is required after while keyword.";
         return ($c, _node2('WHILE', $START, $expression, $block));
     },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = expression($c)
-            or return;
-        return ($c, $ret);
-    },
+    \&expression,
 ]);
 
 rule('else_clause', [
@@ -290,7 +284,7 @@ rule('expression', [
         ($c, my $args) = arguments($c) or return;
         return ($c, _node('CALL', $lhs, $args));
     },
-    \&oror_expression,
+    \&not_expression,
     \&block,
 ]);
 
@@ -307,6 +301,60 @@ rule('block', [
             or return;
         return ($src, $body || _node('NOP'));
     }
+]);
+
+rule('not_expression', [
+    sub {
+        my $src = shift;
+        ($src) = match($src, 'not')
+            or return;
+        ($src, my $body) = not_expression($src)
+            or die "Cannot get expression after 'not'";
+        return ($src, _node('not', $body));
+    },
+    \&comma_expression,
+]);
+
+rule('comma_expression', [
+    left_op(\&assign_expression, [','])
+]);
+
+# %right
+rule('assign_expression', [
+    sub {
+        my $c = shift;
+        ($c, my $rhs) = three_expression($c)
+            or return;
+        ($c, my $op) = match($c, qw(= *= += /= %= x= -= <<= >>= **= &= |= ^=))
+            or return;
+        ($c, my $lhs) = assign_expression($c)
+            or die "Cannot get expression after $op";
+        return ($c, _node($op, $rhs, $lhs));
+    },
+    \&three_expression
+]);
+
+# %right
+rule('three_expression', [
+    sub {
+        my $c = shift;
+        ($c, my $t1) = dotdot_expression($c)
+            or return;
+        ($c) = match($c, '?')
+            or return;
+        ($c, my $t2) = three_expression($c)
+            or return;
+        ($c) = match($c, ':')
+            or return;
+        ($c, my $t3) = three_expression($c)
+            or return;
+        return ($c, _node('?:', $t1, $t2, $t3));
+    },
+    \&dotdot_expression
+]);
+
+rule('dotdot_expression', [
+    left_op(\&oror_expression, ['..', '...'])
 ]);
 
 rule('oror_expression', [
@@ -326,30 +374,12 @@ rule('and_expression', [
 ]);
 
 rule('equality_expression', [
-    sub {
-        my $c = shift;
-        ($c, my $lhs) = cmp_expression($c)
-            or return;
-        ($c, my $op) = match($c, qw(== != <=> eq ne cmp ~~))
-            or return;
-        ($c, my $rhs) = cmp_expression($c)
-            or die "Expression required after $op line $LINENO";
-        return ($c, _node2($op, $START, $lhs, $rhs));
-    },
+    nonassoc_op(\&cmp_expression, [qw(== != <=> eq ne cmp ~~)]),
     \&cmp_expression
 ]);
 
 rule('cmp_expression', [
-    sub {
-        my $c = shift;
-        ($c, my $lhs) = shift_expression($c)
-            or return;
-        ($c, my $op) = match($c, qw(< > <= >= lt gt le ge))
-            or return;
-        ($c, my $rhs) = shift_expression($c)
-            or die "Expression required after $op line $LINENO";
-        return ($c, _node2($op, $START, $lhs, $rhs));
-    },
+    nonassoc_op(\&shift_expression, [qw(< > <= >= lt gt le ge)]),
     \&shift_expression
 ]);
 
@@ -513,7 +543,7 @@ rule('argument_list', [
         my $ret = [];
 
         while (1) {
-            (my $src2, my $var) = expression($src)
+            (my $src2, my $var) = assign_expression($src)
                 or return ($src, $ret);
             $src = $src2;
             push @$ret, $var;
@@ -591,10 +621,39 @@ rule('primary', [
         my $c = shift;
         ($c) = match($c, "[")
             or return;
-        ($c, my $body) = expression_list($c);
+        my @body;
+        while (my ($c2, $part) = assign_expression($c)) {
+            $c = $c2;
+            push @body, $part;
+
+            my ($c3) = match($c, ',');
+            last unless defined $c3;
+            $c = $c3;
+        }
         ($c) = match($c, "]")
             or return;
-        return ($c, _node2('ARRAY', $START, $body));
+        return ($c, _node2('ARRAY', $START, \@body));
+    },
+    sub {
+        my $c = shift;
+        ($c) = match($c, "{")
+            or return;
+        my @content;
+        while (my ($c2, $lhs) = assign_expression($c)) {
+            push @content, $lhs;
+            $c = $c2;
+            ($c) = match($c, '=>')
+                or die "Missing => in hash creation line $LINENO\n";
+            ($c, my $rhs) = assign_expression($c);
+            push @content, $rhs;
+
+            my ($c3) = match($c, ',');
+            last unless defined $c3;
+            $c = $c3;
+        }
+        ($c) = match($c, "}")
+            or die "} not found on hash at line $LINENO";
+        return ($c, _node2('{}', $START, \@content));
     },
     sub {
         my $c = shift;
@@ -611,16 +670,17 @@ rule('_qw_literal', [
     sub {
         my $src = shift;
 
-        $src =~ s!^qw([\(\[\!\{])!!smx or return;
+        $src =~ s!^qw([\(\[\!\{"])!!smx or return;
         my $close = quotemeta +{
             '(' => ')',
             '[' => ']',
             '{' => '}',
             '!' => '!',
+            '"' => '"',
         }->{$1};
         my $ret = [];
         while (1) {
-            $src =~ s/^\s*//;
+            $src = skip_ws($src);
             if ($src =~ s!^([A-Za-z0-9_]+)!!) {
                 push @$ret, $1;
             } elsif ($src =~ s!^$close!!smx) {

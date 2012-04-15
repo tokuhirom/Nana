@@ -28,7 +28,7 @@ is_deeply($parser->parse('qw()'),
     ['STMTS', 1, [['QW', 1, []]]],
 );
 is_deeply($parser->parse('[]'),
-    ['STMTS', 1, [['ARRAY', 1, ['EXPRESSIONS', 1, []]]]],
+    ['STMTS', 1, [['ARRAY', 1, []]]],
 );
 
 is_deeply($parser->parse('qw(1 2 3)'),

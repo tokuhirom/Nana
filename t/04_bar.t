@@ -16,7 +16,10 @@ is(eval_nana("+3"), +3);
 is(eval_nana("~3"), ~3);
 is(eval_nana("2*3*4"), 2*3*4);
 is(eval_nana("2%3%4"), 2%3%4);
-is(eval_nana("2>>3>>4"), 2>>3>>4);
+is(eval_nana("2>>3>>4"), 2>>3>>4, '2>>3>>4');
+is_deeply(eval_nana("{1=>2}"), {1=>2});
+is_deeply(eval_nana("{1=>2,}"), {1=>2,});
+is_deeply(eval_nana("{1=>2,3=>4}"), {1=>2,3=>4});
 
 done_testing;
 
