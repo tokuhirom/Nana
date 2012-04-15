@@ -50,6 +50,26 @@ sub any {
     return ();
 }
 
+# see http://en.wikipedia.org/wiki/Parsing_expression_grammar#Indirect_left_recursion
+sub left_op {
+    my ($upper, $ops) = @_;
+    sub {
+        # $i ** $j
+        my $c = shift;
+        ($c, my $lhs) = $upper->($c)
+            or return;
+        my $ret = $lhs;
+        while (my ($c2, $op) = match($c, @$ops)) {
+            $c = $c2;
+            ($c, my $rhs) = $upper->($c)
+                or die "syntax error  after '$op' line $LINENO";
+            $ret = _node($op, $ret, $rhs);
+        }
+        return ($c, $ret);
+    },
+}
+
+
 sub match {
     my ($c, @words) = @_;
     croak "[BUG]" if @_ == 1;
@@ -273,20 +293,7 @@ rule('expression', [
 ]);
 
 rule('addive_expression', [
-    sub {
-        # see http://en.wikipedia.org/wiki/Parsing_expression_grammar#Indirect_left_recursion
-        my $c = shift;
-        ($c, my $lhs) = term($c)
-            or return;
-        my $ret = $lhs;
-        while ((my $c2, my $op) = match($c, '-', '+', '~')) {
-            $c = $c2;
-            ($c, my $rhs) = term($c)
-                or die "term is required after '$op' operator";
-            $ret = _node($op, $ret, $rhs);
-        }
-        return ($c, $ret);
-    },
+    left_op(\&term, ['-', '+', '~'])
 ]);
 
 rule('block', [
@@ -305,34 +312,12 @@ rule('block', [
 ]);
 
 rule('term', [
-    sub {
-        my $c = shift;
-        ($c, my $lhs) = pow($c)
-            or return;
-        my $ret = $lhs;
-        while (my ($c2, $op) = match($c, '*', '/')) {
-            $c = $c2;
-            ($c, my $rhs) = pow($c)
-                or die "term is expected after '$op'";
-            $ret = _node($op, $ret, $rhs);
-        }
-        return ($c, $ret);
-    },
+    left_op(\&pow, ['*', '/'])
 ]);
 
+# $i ** $j
 rule('pow', [
-    sub {
-        # $i ** $j
-        my $c = shift;
-        ($c, my $lhs) = incdec($c)
-            or return;
-        ($c) = match($c, "**")
-            or return;
-        ($c, my $rhs) = incdec($c)
-            or return;
-        return ($c, _node2('**', $START, $lhs, $rhs));
-    },
-    \&incdec
+    left_op(\&incdec, ['**'])
 ]);
 
 rule('incdec', [
