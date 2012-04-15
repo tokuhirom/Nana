@@ -166,11 +166,10 @@ rule('statement_list', [
     sub {
         my $src = skip_ws(shift);
 
-        my $start = $LINENO;
         my $ret = [];
         LOOP: while (1) {
             my ($tmp, $stmt) = statement($src)
-                or return ($src, _node2('STMTS', $start, $ret));
+                or return ($src, _node2('STMTS', $START, $ret));
             $src = $tmp;
             push @$ret, $stmt;
 
