@@ -276,20 +276,17 @@ rule('addive_expression', [
     sub {
         # see http://en.wikipedia.org/wiki/Parsing_expression_grammar#Indirect_left_recursion
         my $c = shift;
-        my $ret;
         ($c, my $lhs) = term($c)
             or return;
-        $ret = $lhs;
+        my $ret = $lhs;
         while ((my $c2, my $op) = match($c, '-', '+', '~')) {
             $c = $c2;
             ($c, my $rhs) = term($c)
                 or die "term is required after '$op' operator";
             $ret = _node($op, $ret, $rhs);
         }
-        return () if "$ret" eq "$lhs";
         return ($c, $ret);
     },
-    \&term
 ]);
 
 rule('block', [
@@ -312,23 +309,15 @@ rule('term', [
         my $c = shift;
         ($c, my $lhs) = pow($c)
             or return;
-        ($c) = match($c, '*')
-            or return;
-        ($c, my $rhs) = term($c)
-            or return;
-        return ($c, _node('*', $lhs, $rhs));
+        my $ret = $lhs;
+        while (my ($c2, $op) = match($c, '*', '/')) {
+            $c = $c2;
+            ($c, my $rhs) = pow($c)
+                or die "term is expected after '$op'";
+            $ret = _node($op, $ret, $rhs);
+        }
+        return ($c, $ret);
     },
-    sub {
-        my $c = shift;
-        ($c, my $lhs) = pow($c)
-            or return;
-        ($c) = match($c, '/')
-            or return;
-        ($c, my $rhs) = term($c)
-            or return;
-        return ($c, _node('/', $lhs, $rhs));
-    },
-    \&pow,
 ]);
 
 rule('pow', [
