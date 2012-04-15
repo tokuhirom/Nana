@@ -161,6 +161,12 @@ sub _compile {
             $ret .= _compile($_) . ';';
         }
         return $ret;
+    } elsif ($node->[0] eq 'FOR') {
+        my $ret = 'for ';
+        if (@{$node->[3]}) {
+            $ret .= join(',', map { 'my ' . _compile($_) } @{$node->[3]});
+        }
+        $ret .= '(' . _compile($node->[2]) . ') {' . _compile($node->[4]) . '}';
     } elsif ($node->[0] eq 'UNDEF') {
         return 'undef';
     } elsif ($node->[0] eq 'DOUBLE') {

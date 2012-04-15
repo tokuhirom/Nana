@@ -10,8 +10,8 @@ use Data::Dumper;
 
 my ($opt, $usage) = describe_options(
     'nana %o <some-arg>',
-    [ 'Dperl', "Dump perl code"   ],
     [],
+    [ 'Dperl', "Dump perl code"   ],
     [ 'Dtree|Dt',   "Dump AST" ],
     [ 'eval|e=s',   "Eval expression" ],
     [ 'help|h',       "print usage message and exit" ],
@@ -31,8 +31,9 @@ if (defined $opt->eval) {
     my $fname = shift @ARGV;
     open my $fh, '<', $fname;
     my $src = $parser->parse(do { local $/; <$fh>; });
-    $compiler->compile($src);
-    eval $src;
+    my $perl = $compiler->compile($src);
+    say($perl) if $opt->dperl;
+    eval $perl;
     die $@ if $@;
 } else {
     if (-t STDIN && -t STDOUT) {

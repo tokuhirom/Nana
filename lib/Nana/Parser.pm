@@ -18,6 +18,10 @@ use Sub::Name;
 # arguments with types
 # do-while?
 # //x
+# postfix for
+# postfix if
+# postfix while
+# postfix unless
 
 our $LINENO;
 our $START;
@@ -111,7 +115,7 @@ sub match {
             }
         } else {
             my $qword = quotemeta($word);
-            if ($c =~ s/^$qword(?![+>-])//) {
+            if ($c =~ s/^$qword(?![&|+>-])//) {
                 return ($c, $word);
             }
         }
@@ -214,9 +218,9 @@ rule('statement', [
         ($c) = match($c, 'unless')
             or return;
         ($c, my $expression) = expression($c)
-            or die "expression is required after 'if' keyword";
+            or die "expression is required after 'unless' keyword";
         ($c, my $block) = block($c)
-            or die "block is required after if keyword.";
+            or die "block is required after unless keyword.";
         return ($c, _node2('UNLESS', $START, $expression, $block));
     },
     sub {
@@ -224,9 +228,9 @@ rule('statement', [
         ($c) = match($c, 'if')
             or return;
         ($c, my $expression) = expression($c)
-            or die "expression is required after 'if' keyword";
+            or die "expression is required after 'if' keyword line $LINENO";
         ($c, my $block) = block($c)
-            or die "block is required after if keyword.";
+            or die "block is required after if keyword line $LINENO.";
         my $else;
         if ((my $c2, $else) = else_clause($c)) { # optional
             $c = $c2;
@@ -245,10 +249,30 @@ rule('statement', [
     },
     sub {
         my $c = shift;
+        ($c) = match($c, 'for')
+            or return;
+        ($c, my $expression) = expression($c)
+            or die "expression is required after 'for' keyword";
+        ($c) = match($c, '->')
+            or die "'->' missing after for keyword";
+        my @vars;
+        while (my ($c2, $var) = variable($c)) {
+            push @vars, $var;
+            $c = $c2;
+            (my $c3) = match($c, ',')
+                or last;
+            $c = $c3;
+        }
+        ($c, my $block) = block($c)
+            or die "block is required after 'for' keyword.";
+        return ($c, _node2('FOR', $START, $expression, \@vars, $block));
+    },
+    sub {
+        my $c = shift;
         ($c) = match($c, 'do')
             or return;
         ($c, my $block) = block($c)
-            or die "block is required after while keyword.";
+            or die "block is required after 'do' keyword.";
         return ($c, _node2('DO', $START, $block));
     },
     \&expression,
@@ -618,7 +642,7 @@ rule('primary', [
     sub {
         # int
         my $c = shift;
-        $c =~ s/^(0|[1-9][0-9]*)//
+        $c =~ s/^(0x[0-9a-fA-F]+|0|[1-9][0-9]*)//
             or return;
         return ($c, _node('INT', $1));
     },
