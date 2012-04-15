@@ -93,6 +93,13 @@ sub _compile {
         } else {
             return 'my ' . _compile($node->[2]);
         }
+    } elsif ($node->[0] eq 'QW') {
+        my $make_string = sub {
+            local $_ = shift;
+            s/'/\\'/g;
+            q{'} . $_ . q{'};
+        };
+        return '[' . join(', ', map { $make_string->($_) } @{$node->[2]}) .']';
     } elsif ($node->[0] eq 'DO') {
         my $ret = 'do {';
         $ret .= _compile($node->[2]) . '}';

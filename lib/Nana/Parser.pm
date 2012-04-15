@@ -784,7 +784,7 @@ rule('_qw_literal', [
         my $ret = [];
         while (1) {
             $src = skip_ws($src);
-            if ($src =~ s!^([A-Za-z0-9_]+)!!) {
+            if ($src =~ s!^([^ \t\Q$close\E]+)!!) {
                 push @$ret, $1;
             } elsif ($src =~ s!^$close!!smx) {
                 return ($src, _node('QW', $ret));
