@@ -9,7 +9,6 @@ use Scalar::Util qw(refaddr);
 use Sub::Name;
 
 # TODO:
-# and or xor
 # qr() q() qq()
 # "" ''
 # <<'...' <<"..."
@@ -17,6 +16,8 @@ use Sub::Name;
 # class call
 # -> { } lambda.
 # arguments with types
+# do-while?
+# //x
 
 our $LINENO;
 our $START;
@@ -63,10 +64,12 @@ sub any {
 }
 
 # see http://en.wikipedia.org/wiki/Parsing_expression_grammar#Indirect_left_recursion
+# %left operator.
 sub left_op {
     my ($upper, $ops) = @_;
+    confess "\$ops must be ArrayRef" unless ref $ops eq 'ARRAY';
+
     sub {
-        # $i ** $j
         my $c = shift;
         ($c, my $lhs) = $upper->($c)
             or return;
@@ -100,11 +103,17 @@ sub match {
     my ($c, @words) = @_;
     croak "[BUG]" if @_ == 1;
     confess unless defined $c;
-    $c =~ s/^\s*//;
+    $c = skip_ws($c);
     for my $word (@words) {
-        my $qword = quotemeta($word);
-        if ($c =~ s/^$qword(?![+>-])//) {
-            return ($c, $word);
+        if (ref $word eq 'ARRAY') {
+            if ($c =~ s/$word->[0]//) {
+                return ($c, $word->[1]);
+            }
+        } else {
+            my $qword = quotemeta($word);
+            if ($c =~ s/^$qword(?![+>-])//) {
+                return ($c, $word);
+            }
         }
     }
     return;
@@ -243,6 +252,7 @@ rule('statement', [
         return ($c, _node2('DO', $START, $block));
     },
     \&expression,
+    \&block,
 ]);
 
 rule('else_clause', [
@@ -306,8 +316,7 @@ rule('expression', [
         ($c, my $args) = arguments($c) or return;
         return ($c, _node('CALL', $lhs, $args));
     },
-    \&not_expression,
-    \&block,
+    \&str_or_expression,
 ]);
 
 rule('block', [
@@ -323,6 +332,14 @@ rule('block', [
             or return;
         return ($src, $body || _node('NOP'));
     }
+]);
+
+rule('str_or_expression', [
+    left_op(\&str_and_expression, ['or', 'xor']),
+]);
+
+rule('str_and_expression', [
+    left_op(\&not_expression, ['and']),
 ]);
 
 rule('not_expression', [
@@ -414,7 +431,9 @@ rule('addive_expression', [
 ]);
 
 rule('term', [
-    left_op(\&regexp_match, ['*', '/', '%', 'x'])
+    left_op(\&regexp_match, ['*', '/', '%', [
+        qr{^x(?![a-zA-Z])}, 'x'
+    ]]),
 ]);
 
 rule('regexp_match', [
@@ -599,7 +618,7 @@ rule('primary', [
     sub {
         # int
         my $c = shift;
-        $c =~ s/^([1-9][0-9]*)//
+        $c =~ s/^(0|[1-9][0-9]*)//
             or return;
         return ($c, _node('INT', $1));
     },

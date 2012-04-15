@@ -36,7 +36,7 @@ sub _compile {
     confess "Bad AST" unless $node;
     confess "Bad AST" unless @$node > 0;
 
-    for my $op (qw(
+    for (qw(
         **
         * % x /
         + -
@@ -49,8 +49,15 @@ sub _compile {
         || //
         .. ...
         = *= += /= %= x= -= <<= >>= **= &= |= ^=
+        and
+        or xor
     ), ',') {
+        my $op = $_;
         if ($node->[0] eq $op) {
+            if ($op =~ /[a-z]/) {
+                # 'cmp' to ' cmp '
+                $op = " $op ";
+            }
             return '('. _compile($node->[2]) . $op . _compile($node->[3]).')';
         }
     }
