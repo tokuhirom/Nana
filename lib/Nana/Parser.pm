@@ -6,6 +6,7 @@ use utf8;
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw(refaddr);
+use Sub::Name;
 
 our $LINENO;
 our $START;
@@ -18,7 +19,7 @@ sub new { bless {}, shift }
 sub rule {
     my ($name, $patterns) = @_;
     no strict 'refs';
-    *{"@{[ __PACKAGE__ ]}::$name"} = sub {
+    *{"@{[ __PACKAGE__ ]}::$name"} = subname $name, sub {
         local $START = $LINENO;
         my $src = skip_ws(shift);
         if (my $cache = $CACHE->{$name}->{length($src)}) {
@@ -77,7 +78,7 @@ sub match {
     $c =~ s/^\s*//;
     for my $word (@words) {
         my $qword = quotemeta($word);
-        if ($c =~ s/^$qword//) {
+        if ($c =~ s/^$qword(?![+-])//) {
             return ($c, $word);
         }
     }
@@ -312,12 +313,38 @@ rule('block', [
 ]);
 
 rule('term', [
-    left_op(\&pow, ['*', '/'])
+    left_op(\&regexp_match, ['*', '/'])
+]);
+
+rule('regexp_match', [
+    left_op(\&unary, ['=~', '!~'])
+]);
+
+rule('unary', [
+    sub {
+        my $c = shift;
+        ($c, my $op) = match($c, '!', '~', '\\', '+', '-')
+            or return;
+        ($c, my $ex) = pow($c);
+        return ($c, _node("UNARY$op", $ex));
+    },
+    \&pow
 ]);
 
 # $i ** $j
+# right.
 rule('pow', [
-    left_op(\&incdec, ['**'])
+    sub {
+        my $c = shift;
+        ($c, my $lhs) = incdec($c)
+            or return;
+        ($c) = match($c, '**')
+            or return;
+        ($c, my $rhs) = pow($c)
+            or die "Missing expression after '**'";
+        return ($c, _node("**", $lhs, $rhs));
+    },
+    \&incdec,
 ]);
 
 rule('incdec', [

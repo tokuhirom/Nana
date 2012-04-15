@@ -11,6 +11,9 @@ is(eval_nana("1-2-3"), 1-2-3);
 is(eval_nana("1-2+3"), 1-2+3);
 is(eval_nana("1/2/3"), 1/2/3);
 is(eval_nana("1**2**3"), 1**2**3);
+is(eval_nana("-3"), -3);
+is(eval_nana("+3"), +3);
+is(eval_nana("~3"), ~3);
 
 done_testing;
 

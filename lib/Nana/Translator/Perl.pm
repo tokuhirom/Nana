@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use utf8;
 use Data::Dumper;
+use Carp;
 
 sub new {
     my $self = shift;
@@ -20,6 +21,9 @@ sub compile {
 
 sub _compile {
     my ($node) = @_;
+
+    confess "Bad AST" unless $node;
+    confess "Bad AST" unless @$node > 0;
 
     if ($node->[0] eq '+') {
         return '('. _compile($node->[2]) . '+' . _compile($node->[3]).')';
@@ -109,10 +113,23 @@ sub _compile {
     } elsif ($node->[0] eq 'DOUBLE') {
         return $node->[2];
     } elsif ($node->[0] eq 'EXPRESSIONS') {
+        die;
     } elsif ($node->[0] eq 'ARRAY') {
         return '[' . join(',', map { _compile($_) } @{$node->[2]->[2]}) . ']';
     } elsif ($node->[0] eq 'VARIABLE') {
         return $node->[2];
+    } elsif ($node->[0] eq 'UNARY+') {
+        return '+' . _compile($node->[2]);
+    } elsif ($node->[0] eq 'UNARY-') {
+        return '-' . _compile($node->[2]);
+    } elsif ($node->[0] eq 'UNARY!') {
+        return '!' . _compile($node->[2]);
+    } elsif ($node->[0] eq 'UNARY~') {
+        return '~' . _compile($node->[2]);
+    } elsif ($node->[0] eq 'UNARY\\') {
+        return '\\' . _compile($node->[2]);
+    } elsif ($node->[0] eq '=~') {
+        return '('. _compile($node->[2]) . '=~' . _compile($node->[3]) .')';
     } else {
         die "Unknown node type " . Dumper($node);
     }
