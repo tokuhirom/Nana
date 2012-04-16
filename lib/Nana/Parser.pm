@@ -205,7 +205,7 @@ rule('statement_list', [
                     ++$LINENO;
                 START:
                     if (defined(my $marker = shift @HEREDOC_MARKERS)) {
-                        while ($src =~ s/^(([^\n]+)\n)//) {
+                        while ($src =~ s/^(([^\n]+)(\n|$))//) {
                             if ($2 eq $marker) {
                                 shift @HEREDOC_BUFS;
                                 goto START;
@@ -900,9 +900,11 @@ rule('regexp', [
                 die 'should not reach here';
             }
         }
-        $src =~ s/^([sxmi]+)(?![a-z0-9_-])//;
-        my $option = $1 || '';
-        return ($src, _node('REGEXP', $buf, $option));
+        my $flags = '';
+        if ($src =~ s/^([sxmi]+)(?![a-z0-9_-])//) {
+            $flags = $1;
+        }
+        return ($src, _node('REGEXP', $buf, $flags));
     },
 ]);
 
