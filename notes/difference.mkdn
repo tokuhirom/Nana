@@ -1,0 +1,8 @@
+What's difference between tora and nana
+=======================================
+
+ * Nana respects perl5's Namespace.
+ * Nana respects Perl5's boolean policy
+  * it means 0 is true value
+  * Since detect '0' and 0 is difficult in perl5's sv system.
+

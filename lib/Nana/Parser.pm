@@ -834,6 +834,10 @@ rule('string', [
 1;
 __END__
 
+=head1 NAME
+
+Nana::Parser - parser for Nana
+
 =head1 SYNOPSIS
 
     use Nana::Parser;

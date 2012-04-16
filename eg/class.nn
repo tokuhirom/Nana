@@ -1,0 +1,6 @@
+class Foo {
+    has('x', 'is', 'ro');
+}
+
+my $f = Foo.new();
+
