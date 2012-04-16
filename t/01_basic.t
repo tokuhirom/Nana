@@ -73,6 +73,9 @@ test('has(1)', 'has(scalar(1))');
 test('has(1,2)', 'has(scalar(1),scalar(2))');
 test('has("foo")', 'has(scalar("foo"))');
 test('classA()', 'classA()');
+test('//', '//');
+test('/\//', '/\//');
+test('/hoge/xsmi', '/hoge/xsmi');
 
 done_testing;
 

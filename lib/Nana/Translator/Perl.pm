@@ -130,6 +130,10 @@ sub _compile {
         return $node->[2];
     } elsif ($node->[0] eq 'NOP') {
         return '';
+    } elsif ($node->[0] eq 'REGEXP') {
+        my $re = $node->[2];
+        $re =~ s!/!\\/!g;
+        return "/$re/$node->[3]";
     } elsif ($node->[0] eq 'STR') {
         return '"' . $node->[2] . '"';
     } elsif ($node->[0] eq 'INT') {

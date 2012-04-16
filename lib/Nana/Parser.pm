@@ -37,6 +37,7 @@ our @KEYWORDS = qw(
     or xor and
     lt gt eq cmp le ge ne
     isa
+    undef
 );
 my %KEYWORDS = map { $_ => 1 } @KEYWORDS;
 
@@ -660,12 +661,8 @@ rule('primary', [
         $c =~ s/^([1-9][0-9]*\.[0-9]*)// or return;
         return ($c, _node('DOUBLE', $1));
     },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = string($c)
-            or return;
-        return ($c, _node('STR', $ret));
-    },
+    \&string,
+    \&regexp,
     sub {
         my $c = shift;
         ($c, my $ret) = _qw_literal($c)
@@ -771,7 +768,7 @@ rule('primary', [
     },
     sub {
         my $c = shift;
-        $c =~ s/^undef\b//
+        ($c) = match($c, 'undef')
             or return;
         return ($c, _node2('UNDEF', $START));
     },
@@ -803,6 +800,35 @@ rule('_qw_literal', [
     }
 ]);
 
+rule('regexp', [
+    sub {
+        my $src = shift;
+
+        ($src) = match($src, q{/})
+            or return;
+        my $buf = '';
+        while (1) {
+            if ($src =~ s!^/!!) {
+                last;
+            } elsif (length($src) == 0) {
+                die "Unexpected EOF in regexp literal line $START";
+            } elsif ($src =~ s!^\\/!!) {
+                $buf .= q{/};
+            } elsif ($src =~ s/^(.)//) {
+                $buf .= $1;
+            } elsif ($src =~ s/^\n//) {
+                $buf .= "\n";
+                $LINENO++;
+            } else {
+                die 'should not reach here';
+            }
+        }
+        $src =~ s/^([sxmi]+)(?![a-z0-9_-])//;
+        my $option = $1 || '';
+        return ($src, _node('REGEXP', $buf, $option));
+    },
+]);
+
 rule('string', [
     sub {
         # TODO: escape chars, etc.
@@ -824,7 +850,7 @@ rule('string', [
                 die 'should not reach here';
             }
         }
-        return ($src, $buf);
+        return ($src, _node('STR', $buf));
     },
     sub {
         # TODO: escape chars, etc.
@@ -846,7 +872,7 @@ rule('string', [
                 die 'should not reach here';
             }
         }
-        return ($src, $buf);
+        return ($src, _node('STR', $buf));
     },
 ]);
 
