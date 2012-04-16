@@ -10,6 +10,10 @@ use Nana::Parser;
 my $compiler = Nana::Translator::Perl->new();
 my $parser   = Nana::Parser->new();
 
+test('foo() if bar()', 'if (bar()) {foo()}') or die;
+test('foo() unless bar()', 'unless (bar()) {foo()}') or die;
+test('foo() for bar()', 'for (bar()) {foo()}') or die;
+test('foo() while bar()', 'while (bar()) {foo()}') or die;
 test("1+2", "(1+2)");
 test('sub foo { 4 }', 'sub foo { 4; }');
 test('sub foo { 3+2 }', 'sub foo { (3+2); }');

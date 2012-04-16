@@ -19,10 +19,6 @@ use Sub::Name;
 # arguments with types
 # do-while?
 # //x
-# postfix for
-# postfix if
-# postfix while
-# postfix unless
 
 our $LINENO;
 our $START;
@@ -292,6 +288,50 @@ rule('statement', [
         ($c, my $block) = block($c)
             or die "block is required after 'do' keyword.";
         return ($c, _node2('DO', $START, $block));
+    },
+    sub {
+        # foo if bar
+        my $c = shift;
+        ($c, my $block) = expression($c)
+            or return;
+        ($c) = match($c, 'if')
+            or return;
+        ($c, my $expression) = expression($c)
+            or die "expression required after postfix-if statement";
+        return ($c, _node2('IF', $START, $expression, $block, undef));
+    },
+    sub {
+        # foo if bar
+        my $c = shift;
+        ($c, my $block) = expression($c)
+            or return;
+        ($c) = match($c, 'unless')
+            or return;
+        ($c, my $expression) = expression($c)
+            or die "expression required after postfix-if statement";
+        return ($c, _node2('UNLESS', $START, $expression, $block, undef));
+    },
+    sub {
+        # foo if bar
+        my $c = shift;
+        ($c, my $block) = expression($c)
+            or return;
+        ($c) = match($c, 'for')
+            or return;
+        ($c, my $expression) = expression($c)
+            or die "expression required after postfix-if statement";
+        return ($c, _node2('FOR', $START, $expression, [], $block));
+    },
+    sub {
+        # foo while bar
+        my $c = shift;
+        ($c, my $block) = expression($c)
+            or return;
+        ($c) = match($c, 'while')
+            or return;
+        ($c, my $expression) = expression($c)
+            or die "expression required after postfix-if statement";
+        return ($c, _node2('WHILE', $START, $expression, $block));
     },
     \&expression,
     \&block,
