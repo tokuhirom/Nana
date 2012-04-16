@@ -5,9 +5,12 @@ use utf8;
 use parent qw(Exporter);
 use 5.10.0;
 
-our @EXPORT = qw(%TORA_BUILTINS);
+our @EXPORT = qw(
+    %TORA_BUILTIN_FUNCTIONS
+    %TORA_BUILTIN_CLASSES
+);
 
-our %TORA_BUILTINS = (
+our %TORA_BUILTIN_FUNCTIONS = (
     'say' => sub {
         say(@_);
     },
@@ -18,6 +21,16 @@ our %TORA_BUILTINS = (
         ...
     },
 );
+
+our %TORA_BUILTIN_CLASSES = (
+    'Array' => {
+        push => sub {
+            CORE::push(@{$_[0]}, $_[1]);
+            $_[0];
+        },
+    },
+);
+
 
 1;
 

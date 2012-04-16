@@ -10,6 +10,7 @@ sub new {
 }
 
 our $FILENAME;
+our $IN_CLASS;
 
 sub compile {
     my ($self, $ast, $no_header, $filename) = @_;
@@ -25,9 +26,7 @@ sub compile {
             'use warnings FATAL => "recursion";',
             'use utf8;',
             'use Nana::Translator::Perl::Runtime;',
-            'use Nana::Translator::Perl::Type::ARRAY;',
-            'use autobox ARRAY => q{Nana::Translator::Perl::Type::ARRAY};',
-            'my %TORA_PACKAGE;',
+            'my $TORA_PACKAGE;',
         ) . "\n";
     }
     $res .= _compile($ast);
@@ -109,7 +108,8 @@ sub _compile {
         return $ret;
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
-        $ret .= '$TORA_PACKAGE{' . _compile($node->[2]) . "} = sub {\n";
+        my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';
+        $ret .= $pkg . "->{" . _compile($node->[2]) . "} = sub {\n";
         if ($node->[3]) {
             for (@{$node->[3]}) {
                 $ret .= "my ";
@@ -121,7 +121,7 @@ sub _compile {
         return $ret;
     } elsif ($node->[0] eq 'CALL') {
         if ($node->[2]->[0] eq 'IDENT') {
-            my $ret = 'tora_call_func(\%TORA_PACKAGE, q{' . $node->[2]->[2] . '}, (';
+            my $ret = 'tora_call_func($TORA_PACKAGE, q{' . $node->[2]->[2] . '}, (';
             $ret .= join(',', map { sprintf('scalar(%s)', _compile($_)) } @{$node->[3]});
             $ret .= '))';
             return $ret;
@@ -129,7 +129,7 @@ sub _compile {
             die "Compilation failed.";
         }
     } elsif ($node->[0] eq 'IDENT') {
-        return $node->[2];
+        return 'q{' . $node->[2] . '}';
     } elsif ($node->[0] eq 'NOP') {
         return '';
     } elsif ($node->[0] eq 'REGEXP') {
@@ -165,13 +165,15 @@ sub _compile {
     } elsif ($node->[0] eq 'ELSE') {
         return ' else {' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'CLASS') {
-        my $ret = '{package ' . _compile($node->[2]) . ';use Mouse;';
+        my $ret = '{my $TORA_CLASS=($TORA_PACKAGE->{' . _compile($node->[2]) . '} = +{});';
         $ret .= join(',', map { sprintf "BEGIN{extends '%s';}", _compile($_) } @{$node->[3]});
+        $ret .= "\n";
+        local $IN_CLASS=1;
         $ret .= _compile($node->[4]);
-        $ret .= ";no Mouse;}";
+        $ret .= ";}";
         return $ret;
     } elsif ($node->[0] eq 'METHOD_CALL') {
-        return _compile($node->[2]) . '->' . _compile($node->[3]) . '(' . join(',', map { _compile($_) } @{$node->[4]}) . ')';
+        return 'tora_call_method($TORA_PACKAGE, '._compile($node->[2]) . ', ' . _compile($node->[3]) . ', (' . join(',', map { _compile($_) } @{$node->[4]}) . '))';
     } elsif ($node->[0] eq 'STMTS') {
         my $ret = '';
         for (@{$node->[2]}) {
@@ -184,7 +186,7 @@ sub _compile {
         if (@{$node->[3]}) {
             $ret .= join(',', map { 'my ' . _compile($_) } @{$node->[3]});
         }
-        $ret .= '(' . _compile($node->[2]) . ') {' . _compile($node->[4]) . '}';
+        $ret .= '(ref(' . _compile($node->[2]) . ') eq "ARRAY" ? @{'._compile($node->[2]).'} : '._compile($node->[2]).') {' . _compile($node->[4]) . '}';
     } elsif ($node->[0] eq 'UNDEF') {
         return 'undef';
     } elsif ($node->[0] eq 'DOUBLE') {

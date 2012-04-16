@@ -16,7 +16,6 @@ my $build = Module::Build->new(
         'Module::Compile' => '0',
         'Sub::Name' => '0',
         'Scalar::Util' => '0',
-        'autobox' => '2',
         'File::stat' => '0',
         'Exporter'           => '5.58'
     },
