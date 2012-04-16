@@ -15,7 +15,7 @@ sub eval_nana {
     my $parser   = Nana::Parser->new();
     my $compiler = Nana::Translator::Perl->new();
     my $ast = $parser->parse($src);
-    my $perl = $compiler->compile($ast);
+    my $perl = $compiler->compile($ast, 0);
     warn Dumper($ast) if $ENV{DEBUG};
     warn $perl if $ENV{DEBUG};
     my $ret = eval $perl;

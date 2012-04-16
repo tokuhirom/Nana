@@ -1,6 +1,6 @@
 package Nana::Translator::Perl::Runtime;
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use utf8;
 
 use parent qw(Exporter);
@@ -10,12 +10,16 @@ use Carp qw(croak);
 our @EXPORT = qw(tora_call_func);
 
 sub tora_call_func {
-    my ($funname, @args) = @_;
-    my $func = $TORA_BUILTINS{$funname};
-    if ($func) {
-        $func->(@args);
+    my ($pkg, $funname, @args) = @_;
+    if (my $func = $pkg->{$funname}) {
+        return $func->(@args);
     } else {
-        croak "Unknown function $funname";
+        my $func = $TORA_BUILTINS{$funname};
+        if ($func) {
+            return $func->(@args);
+        } else {
+            croak "Unknown function $funname";
+        }
     }
 }
 

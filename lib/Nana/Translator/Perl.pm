@@ -9,8 +9,12 @@ sub new {
     my $self = shift;
 }
 
+our $FILENAME;
+
 sub compile {
-    my ($self, $ast, $no_header) = @_;
+    my ($self, $ast, $no_header, $filename) = @_;
+
+    local $FILENAME = $filename || "<eval>";
 
     my $res = '';
     unless ($no_header) {
@@ -20,7 +24,6 @@ sub compile {
             'use warnings;',
             'use warnings FATAL => "recursion";',
             'use utf8;',
-            'my $ENV=\%ENV;',
             'use Nana::Translator::Perl::Runtime;',
             'use Nana::Translator::Perl::Type::ARRAY;',
             'use autobox ARRAY => q{Nana::Translator::Perl::Type::ARRAY};',
@@ -101,13 +104,12 @@ sub _compile {
         };
         return '[' . join(', ', map { $make_string->($_) } @{$node->[2]}) .']';
     } elsif ($node->[0] eq 'DO') {
-        my $ret = 'do {';
+        my $ret = "do {\n";
         $ret .= _compile($node->[2]) . '}';
         return $ret;
     } elsif ($node->[0] eq 'SUB') {
-        my $ret = sprintf("#line %d\n", $node->[1]);
-        $ret .= 'sub ' . _compile($node->[2]);
-        $ret .= ' { ';
+        my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
+        $ret .= '$TORA_PACKAGE{' . _compile($node->[2]) . "} = sub {\n";
         if ($node->[3]) {
             for (@{$node->[3]}) {
                 $ret .= "my ";
@@ -119,7 +121,7 @@ sub _compile {
         return $ret;
     } elsif ($node->[0] eq 'CALL') {
         if ($node->[2]->[0] eq 'IDENT') {
-            my $ret = 'tora_call_func(q{' . $node->[2]->[2] . '}, (';
+            my $ret = 'tora_call_func(\%TORA_PACKAGE, q{' . $node->[2]->[2] . '}, (';
             $ret .= join(',', map { sprintf('scalar(%s)', _compile($_)) } @{$node->[3]});
             $ret .= '))';
             return $ret;
@@ -173,7 +175,8 @@ sub _compile {
     } elsif ($node->[0] eq 'STMTS') {
         my $ret = '';
         for (@{$node->[2]}) {
-            $ret .= _compile($_) . ';';
+            $ret .= sprintf(qq{#line %d "$FILENAME"\n}, $_->[1]);
+            $ret .= _compile($_) . ";\n";
         }
         return $ret;
     } elsif ($node->[0] eq 'FOR') {
