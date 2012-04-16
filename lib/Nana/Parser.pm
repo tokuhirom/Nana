@@ -786,12 +786,19 @@ rule('_qw_literal', [
 
 rule('string', [
     sub {
-        # escape chars, etc.
+        # TODO: escape chars, etc.
         my $src = shift;
 
         $src =~ s/^"([^"]+?)"// or return;
         return ($src, $1);
-    }
+    },
+    sub {
+        # TODO: escape chars, etc.
+        my $src = shift;
+
+        $src =~ s/^'([^']+?)'// or return;
+        return ($src, $1);
+    },
 ]);
 
 1;
