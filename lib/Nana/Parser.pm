@@ -337,7 +337,7 @@ rule('expression', [
     sub {
         # say()
         my $c = shift;
-        ($c, my $lhs) = addive_expression($c) or return;
+        ($c, my $lhs) = additive_expression($c) or return;
         ($c, my $args) = arguments($c) or return;
         return ($c, _node('CALL', $lhs, $args));
     },
@@ -448,10 +448,10 @@ rule('cmp_expression', [
 ]);
 
 rule('shift_expression', [
-    left_op(\&addive_expression, ['<<', '>>'])
+    left_op(\&additive_expression, ['<<', '>>'])
 ]);
 
-rule('addive_expression', [
+rule('additive_expression', [
     left_op(\&term, ['-', '+', '~'])
 ]);
 
