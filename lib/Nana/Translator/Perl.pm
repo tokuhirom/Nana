@@ -20,11 +20,11 @@ sub compile {
             'use warnings;',
             'use warnings FATAL => "recursion";',
             'use utf8;',
-            'use autobox;',
             'my $ENV=\%ENV;',
-            'use File::stat;',
+            'use Nana::Translator::Perl::Runtime;',
             'use Nana::Translator::Perl::Type::ARRAY;',
             'use autobox ARRAY => q{Nana::Translator::Perl::Type::ARRAY};',
+            'my %TORA_PACKAGE;',
         ) . "\n";
     }
     $res .= _compile($ast);
@@ -119,9 +119,9 @@ sub _compile {
         return $ret;
     } elsif ($node->[0] eq 'CALL') {
         if ($node->[2]->[0] eq 'IDENT') {
-            my $ret = '' . $node->[2]->[2] . '(';
+            my $ret = 'tora_call_func(q{' . $node->[2]->[2] . '}, (';
             $ret .= join(',', map { sprintf('scalar(%s)', _compile($_)) } @{$node->[3]});
-            $ret .= ')';
+            $ret .= '))';
             return $ret;
         } else {
             die "Compilation failed.";

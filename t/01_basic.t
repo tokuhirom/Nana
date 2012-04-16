@@ -20,15 +20,15 @@ PPP
 fufu
 MMM
 QQQ
-say(scalar('hoho
+tora_call_func(q{say}, (scalar('hoho
 '),scalar('fufu
-'))
+')))
 FFF
 
-test('foo() if bar()', 'if (bar()) {foo()}') or die;
-test('foo() unless bar()', 'unless (bar()) {foo()}') or die;
-test('foo() for bar()', 'for (bar()) {foo()}') or die;
-test('foo() while bar()', 'while (bar()) {foo()}') or die;
+test('foo() if bar()', 'if (tora_call_func(q{bar}, ())) {tora_call_func(q{foo}, ())}') or die;
+test('foo() unless bar()', 'unless (tora_call_func(q{bar}, ())) {tora_call_func(q{foo}, ())}') or die;
+test('foo() for bar()', 'for (tora_call_func(q{bar}, ())) {tora_call_func(q{foo}, ())}') or die;
+test('foo() while bar()', 'while (tora_call_func(q{bar}, ())) {tora_call_func(q{foo}, ())}') or die;
 test("1+2", "(1+2)");
 test('sub foo { 4 }', 'sub foo { 4; }');
 test('sub foo { 3+2 }', 'sub foo { (3+2); }');
@@ -87,11 +87,11 @@ test('1 | 2', '(1|2)');
 test('1 & 2', '(1&2)');
 test('for 1..10 -> { }', 'for ((1..10)) {}');
 test('for 1..10 -> $i { }', 'for my $i((1..10)) {}');
-test('has()', 'has()');
-test('has(1)', 'has(scalar(1))');
-test('has(1,2)', 'has(scalar(1),scalar(2))');
-test('has("foo")', 'has(scalar("foo"))');
-test('classA()', 'classA()');
+test('has()', 'tora_call_func(q{has}, ())');
+test('has(1)', 'tora_call_func(q{has}, (scalar(1)))');
+test('has(1,2)', 'tora_call_func(q{has}, (scalar(1),scalar(2)))');
+test('has("foo")', 'tora_call_func(q{has}, (scalar("foo")))');
+test('classA()', 'tora_call_func(q{classA}, ())');
 test('//', '//');
 test('/\//', '/\//');
 test('/hoge/xsmi', '/hoge/xsmi');

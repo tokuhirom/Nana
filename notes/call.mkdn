@@ -1,0 +1,3 @@
+    Klass.method(arg) # => tora_call_method(tora_find_method($PACKAGE{Klass}, 'method'), arg);
+    $object.method($arg) # => tora_call_method(tora_find_method($object, 'method'), $arg)
+
