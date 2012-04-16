@@ -14,6 +14,7 @@ my ($opt, $usage) = describe_options(
     [ 'Dperl', "Dump perl code"   ],
     [ 'Dtree|Dt',   "Dump AST" ],
     [ 'eval|e=s',   "Eval expression" ],
+    [ 'compile-only|c',   "Compile only" ],
     [ 'help|h',       "print usage message and exit" ],
 );
 print($usage) if $opt->help;
@@ -24,19 +25,29 @@ if (defined $opt->eval) {
     my $ast = $parser->parse($opt->eval);
     say(Dumper($ast)) if $opt->dtree;
     my $perl = $compiler->compile($ast);
-    say($perl) if $opt->dperl;
-    eval $perl;
-    die $@ if $@;
+    if ($opt->compile_only) {
+        say($perl);
+        exit(0);
+    } else {
+        say($perl) if $opt->dperl;
+        eval $perl;
+        die $@ if $@;
+    }
 } elsif (@ARGV) {
     my $fname = shift @ARGV;
     open my $fh, '<', $fname;
     my $src = $parser->parse(do { local $/; <$fh>; });
     my $perl = $compiler->compile($src);
-    say($perl) if $opt->dperl;
-    eval $perl;
-    die $@ if $@;
+    if ($opt->compile_only) {
+        print($perl);
+        exit(0);
+    } else {
+        say($perl) if $opt->dperl;
+        eval $perl;
+        die $@ if $@;
+    }
 } else {
-    if (-t STDIN && -t STDOUT) {
+    if (-t STDIN && -t STDOUT && !$opt->compile_only) {
         while (1) {
             print(">> ");
             last if eof(STDIN);
