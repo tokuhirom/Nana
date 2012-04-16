@@ -29,6 +29,17 @@ our $START;
 our $CACHE;
 our $MATCH;
 
+our @KEYWORDS = qw(
+    class sub
+    return
+    unless if for while do else elsif
+    not
+    or xor and
+    lt gt eq cmp le ge ne
+    isa
+);
+my %KEYWORDS = map { $_ => 1 } @KEYWORDS;
+
 sub new { bless {}, shift }
 
 # rule($name, $code);
@@ -113,6 +124,12 @@ sub match {
         if (ref $word eq 'ARRAY') {
             if ($c =~ s/$word->[0]//) {
                 return ($c, $word->[1]);
+            }
+        } elsif ($word =~ /^[a-z]+$/) {
+            die "Is not registered to keyword: $word"
+                unless $KEYWORDS{$word};
+            if ($c =~ s/^$word(?![a-zA-Z0-9_])//) {
+                return ($c, $word);
             }
         } else {
             my $qword = quotemeta($word);
@@ -202,7 +219,7 @@ rule('statement', [
             push @base, $base;
         }
         ($c, my $block) = block($c)
-            or return;
+            or die "Expected block after 'class' but not matched";
         return ($c, _node2('CLASS', $START, $name, \@base, $block));
     },
     sub {
@@ -612,7 +629,9 @@ rule('identifier', [
     sub {
         local $_ = shift;
         s/^\s*//;
-        s/^([A-Za-z_][A-Za-z0-9_]*)// or return;
+        s/^([A-Za-z_][A-Za-z0-9_]*)//
+            or return;
+        return if $KEYWORDS{$1}; # keyword is not a identifier
         return ($_, _node('IDENT', $1));
     }
 ]);
