@@ -789,15 +789,45 @@ rule('string', [
         # TODO: escape chars, etc.
         my $src = shift;
 
-        $src =~ s/^"([^"]+?)"// or return;
-        return ($src, $1);
+        ($src) = match($src, q{"})
+            or return;
+        my $buf = '';
+        while (1) {
+            if ($src =~ s/^"//) {
+                last;
+            } elsif (length($src) == 0) {
+                die "Unexpected EOF in string literal line $START";
+            } elsif ($src =~ s/^\\"//) {
+                $buf .= q{"};
+            } elsif ($src =~ s/^(.)//) {
+                $buf .= $1;
+            } else {
+                die 'should not reach here';
+            }
+        }
+        return ($src, $buf);
     },
     sub {
         # TODO: escape chars, etc.
         my $src = shift;
 
-        $src =~ s/^'([^']+?)'// or return;
-        return ($src, $1);
+        ($src) = match($src, q{'})
+            or return;
+        my $buf = '';
+        while (1) {
+            if ($src =~ s/^'//) {
+                last;
+            } elsif (length($src) == 0) {
+                die "Unexpected EOF in string literal line $START";
+            } elsif ($src =~ s/^\\'//) {
+                $buf .= q{'};
+            } elsif ($src =~ s/^(.)//) {
+                $buf .= $1;
+            } else {
+                die 'should not reach here';
+            }
+        }
+        return ($src, $buf);
     },
 ]);
 
