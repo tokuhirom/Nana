@@ -50,8 +50,8 @@ class Foo {
             'CLASS', 1,
             [ 'IDENT', 1, 'Foo' ],
             [],
-            ['STMTS', 2, [
-                [ 'SUB', 2, [ 'IDENT', 2, 'new' ], [ ], ['STMTS', 3, []] ]
+            ['STMTS', 1, [
+                [ 'SUB', 2, [ 'IDENT', 2, 'new' ], [ ], ['STMTS', 2, []] ]
             ]]
         ]
     ] ]

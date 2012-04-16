@@ -687,6 +687,12 @@ rule('primary', [
     },
     sub {
         my $c = shift;
+        $c =~ s/^__LINE__//
+            or return;
+        return ($c, _node('INT', $LINENO));
+    },
+    sub {
+        my $c = shift;
         ($c, my $ret) = identifier($c)
             or return;
         ($c, $ret);
@@ -696,12 +702,6 @@ rule('primary', [
         ($c, my $ret) = variable($c)
             or return;
         ($c, $ret);
-    },
-    sub {
-        my $c = shift;
-        $c =~ s/^__LINE__//
-            or return;
-        return ($c, _node('INT', $LINENO));
     },
     sub {
         my $c = shift;

@@ -165,7 +165,6 @@ sub _compile {
     } elsif ($node->[0] eq 'STMTS') {
         my $ret = '';
         for (@{$node->[2]}) {
-            $ret .= sprintf("\n#line %d\n", $_->[1]);
             $ret .= _compile($_) . ';';
         }
         return $ret;
