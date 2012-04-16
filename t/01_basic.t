@@ -10,6 +10,21 @@ use Nana::Parser;
 my $compiler = Nana::Translator::Perl->new();
 my $parser   = Nana::Parser->new();
 
+sub eeeeol { local $_ = shift; s/\n$//; $_ }
+
+
+test(<<QQQ, eeeeol(<<FFF)) or die;
+say(<<'PPP', <<'MMM')
+hoho
+PPP
+fufu
+MMM
+QQQ
+say(scalar('hoho
+'),scalar('fufu
+'))
+FFF
+
 test('foo() if bar()', 'if (bar()) {foo()}') or die;
 test('foo() unless bar()', 'unless (bar()) {foo()}') or die;
 test('foo() for bar()', 'for (bar()) {foo()}') or die;

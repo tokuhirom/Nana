@@ -19,11 +19,16 @@ use Sub::Name;
 # arguments with types
 # do-while?
 # //x
+# last
+# next
 
 our $LINENO;
 our $START;
 our $CACHE;
 our $MATCH;
+
+my @HEREDOC_BUFS;
+my @HEREDOC_MARKERS;
 
 our @KEYWORDS = qw(
     class sub
@@ -150,6 +155,9 @@ sub parse {
     if ($rest =~ /[^\n \t]/) {
         die "Parse failed: " . Dumper($rest);
     }
+    if (@HEREDOC_BUFS || @HEREDOC_MARKERS) {
+        die "Unexpected EOF in heredoc: @HEREDOC_MARKERS";
+    }
     # warn $MATCH;
     $ret;
 }
@@ -193,7 +201,22 @@ rule('statement_list', [
             $src =~ s/^;//s
                 and next;
             $src =~ s/^\n//s
-                and do { ++$LINENO; next LOOP; };
+                and do {
+                    ++$LINENO;
+                START:
+                    if (defined(my $marker = shift @HEREDOC_MARKERS)) {
+                        while ($src =~ s/^(([^\n]+)\n)//) {
+                            if ($2 eq $marker) {
+                                shift @HEREDOC_BUFS;
+                                goto START;
+                            } else {
+                                ${$HEREDOC_BUFS[0]} .= $1;
+                            }
+                        }
+                    } else {
+                        next LOOP;
+                    }
+                };
             # there is no more statements, just return!
             return ($src, _node('STMTS', $ret));
         }
@@ -811,6 +834,20 @@ rule('primary', [
         ($c) = match($c, 'undef')
             or return;
         return ($c, _node2('UNDEF', $START));
+    },
+    sub {
+        my $c = shift;
+        ($c) = match($c, q{<<'})
+            or return;
+        $c =~ s/^([^, \t\n']+)//
+            or die "Parsing failed on heredoc LINE $LINENO";
+        my $marker = $1;
+        ($c) = match($c, q{'})
+            or die "Parsing failed on heredoc LINE $LINENO";
+        my $buf = '';
+        push @HEREDOC_BUFS, \$buf;
+        push @HEREDOC_MARKERS, $marker;
+        return ($c, _node2('HEREDOC', $START, \$buf));
     },
 ]);
 

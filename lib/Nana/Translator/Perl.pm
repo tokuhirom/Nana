@@ -136,6 +136,10 @@ sub _compile {
         return "/$re/$node->[3]";
     } elsif ($node->[0] eq 'STR') {
         return '"' . $node->[2] . '"';
+    } elsif ($node->[0] eq 'HEREDOC') {
+        my $buf = ${$node->[2]};
+        $buf =~ s/'/\\'/;
+        return qq{'$buf'};
     } elsif ($node->[0] eq 'INT') {
         return $node->[2];
     } elsif ($node->[0] eq 'RETURN') {
