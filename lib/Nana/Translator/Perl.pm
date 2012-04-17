@@ -67,22 +67,21 @@ sub _compile {
         }
     }
 
-    if ($node->[0] eq '<') {
-        return 'tora_op_lt('. _compile($node->[2]) .','. _compile($node->[3]).')';
-    } elsif ($node->[0] eq '>') {
-        return 'tora_op_gt('. _compile($node->[2]) .','. _compile($node->[3]).')';
-    } elsif ($node->[0] eq '<=') {
-        return 'tora_op_le('. _compile($node->[2]) .','. _compile($node->[3]).')';
-    } elsif ($node->[0] eq '>=') {
-        return 'tora_op_ge('. _compile($node->[2]) .','. _compile($node->[3]).')';
-    } elsif ($node->[0] eq '==') {
-        return 'tora_op_equal('. _compile($node->[2]) .','. _compile($node->[3]).')';
-    } elsif ($node->[0] eq '..') {
-        return 'tora_make_range('. _compile($node->[2]) .','. _compile($node->[3]).')';
-    } elsif ($node->[0] eq '+') {
-        # string concat operator
-        return 'tora_op_add('. _compile($node->[2]) . ',' . _compile($node->[3]).')';
-    } elsif ($node->[0] eq '~') {
+    my %binops = (
+        '<'  => 'tora_op_lt',
+        '>'  => 'tora_op_gt',
+        '<=' => 'tora_op_le',
+        '>=' => 'tora_op_ge',
+        '==' => 'tora_op_equal',
+        '..' => 'tora_make_range',
+        '+'  => 'tora_op_add',
+    );
+
+    if (my $func = $binops{$node->[0]}) {
+        return "$func(". _compile($node->[2]) . ',' . _compile($node->[3]).')';
+    }
+
+    if ($node->[0] eq '~') {
         # string concat operator
         return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '?:') {

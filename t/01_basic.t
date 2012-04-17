@@ -76,7 +76,7 @@ while (tora_call_func($TORA_PACKAGE, q{bar}, ())) {tora_call_func($TORA_PACKAGE,
 --- input
 1+2
 --- expected
-(1+2)
+tora_op_add(1,2)
 
 --- input
 sub foo { 4 }
@@ -89,21 +89,21 @@ $TORA_PACKAGE->{q{foo}} = sub {
 sub foo { 3+2 }
 --- expected
 $TORA_PACKAGE->{q{foo}} = sub {
-(3+2);
+tora_op_add(3,2);
  }
 
 --- input
 sub foo($var) { 3+2 }
 --- expected
 $TORA_PACKAGE->{q{foo}} = sub {
-my $var=shift;(3+2);
+my $var=shift;tora_op_add(3,2);
  }
 
 --- input
 sub foo($var, $boo) { 3+2 }
 --- expected
 $TORA_PACKAGE->{q{foo}} = sub {
-my $var=shift;my $boo=shift;(3+2);
+my $var=shift;my $boo=shift;tora_op_add(3,2);
  }
 
 --- input
@@ -168,7 +168,7 @@ return (3);
 --- input
 (1+2)*3
 --- expected
-(((1+2))*3)
+((tora_op_add(1,2))*3)
 
 --- input
 1-2-3
@@ -193,7 +193,7 @@ return (3);
 --- input
 1-2+3
 --- expected
-((1-2)+3)
+tora_op_add((1-2),3)
 
 --- input
 1*2*3
