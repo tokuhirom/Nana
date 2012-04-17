@@ -64,7 +64,9 @@ unless (tora_call_func($TORA_PACKAGE, q{bar}, ())) {tora_call_func($TORA_PACKAGE
 --- input
 foo() for bar()
 --- expected
-for (ref(tora_call_func($TORA_PACKAGE, q{bar}, ())) eq "ARRAY" ? @{tora_call_func($TORA_PACKAGE, q{bar}, ())} : tora_call_func($TORA_PACKAGE, q{bar}, ())) {tora_call_func($TORA_PACKAGE, q{foo}, ())}
+{my $__tora_iteratee = (tora_call_func($TORA_PACKAGE, q{bar}, ()));
+for (ref($__tora_iteratee) eq "ARRAY" ? @{$__tora_iteratee} : ref($__tora_iteratee) eq "Nana::Translator::Perl::Range" ? $__tora_iteratee->list : $__tora_iteratee) {
+tora_call_func($TORA_PACKAGE, q{foo}, ())}}
 
 --- input
 foo() while bar()
@@ -359,12 +361,16 @@ do {
 --- input
 for 1..10 -> { }
 --- expected
-for (ref(tora_make_range(1,10)) eq "ARRAY" ? @{tora_make_range(1,10)} : tora_make_range(1,10)) {}
+{my $__tora_iteratee = (tora_make_range(1,10));
+for (ref($__tora_iteratee) eq "ARRAY" ? @{$__tora_iteratee} : ref($__tora_iteratee) eq "Nana::Translator::Perl::Range" ? $__tora_iteratee->list : $__tora_iteratee) {
+}}
 
 --- input
 for 1..10 -> $i { }
 --- expected
-for my $i(ref(tora_make_range(1,10)) eq "ARRAY" ? @{tora_make_range(1,10)} : tora_make_range(1,10)) {}
+{my $__tora_iteratee = (tora_make_range(1,10));
+for my $i(ref($__tora_iteratee) eq "ARRAY" ? @{$__tora_iteratee} : ref($__tora_iteratee) eq "Nana::Translator::Perl::Range" ? $__tora_iteratee->list : $__tora_iteratee) {
+}}
 
 --- input
 has()

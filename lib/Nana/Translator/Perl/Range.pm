@@ -18,5 +18,10 @@ sub stringify {
     $self->{left} . '..' . $self->{right};
 }
 
+sub list {
+    my $self = shift;
+    $self->{left}..$self->{right};
+}
+
 1;
 

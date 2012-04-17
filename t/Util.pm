@@ -19,7 +19,10 @@ sub eval_nana {
     my $perl = $compiler->compile($ast, 0);
     warn Dumper($ast) if $ENV{DEBUG};
     warn $perl if $ENV{DEBUG};
-    my $ret = eval $perl;
+    my $ret = do {
+        no warnings;
+        eval $perl;
+    };
     if ($@) {
         Test::More::diag $perl;
     }
@@ -30,7 +33,10 @@ sub eval_nana {
 sub test_nana {
     my ($src, $expected_stdout, $expected_stderr) = @_;
     my ($stdout, $stderr) = capture {
-        eval_nana($src);
+        eval {
+            eval_nana($src);
+        };
+        warn $@ if $@;
     };
     subtest $src => sub {
         is($stdout, $expected_stdout);

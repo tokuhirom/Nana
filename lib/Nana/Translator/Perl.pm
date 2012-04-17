@@ -32,6 +32,7 @@ sub compile {
         ) . "\n";
     }
     $res .= _compile($ast);
+    return $res;
 }
 
 sub _compile {
@@ -195,12 +196,45 @@ sub _compile {
             $ret .= _compile($_) . ";\n";
         }
         return $ret;
-    } elsif ($node->[0] eq 'FOR') {
-        my $ret = 'for ';
-        if (@{$node->[3]}) {
-            $ret .= join(',', map { 'my ' . _compile($_) } @{$node->[3]});
+    } elsif ($node->[0] eq 'FOREACH') {
+    # use Data::Dumper; warn Dumper($node);
+        my $ret = '{my $__tora_iteratee = (' . _compile($node->[2]) .");\n";
+        if (@{$node->[3]} > 2) {
+            die "Too many parameters for foreach statement at line $node->[1].";
+        } elsif (@{$node->[3]} == 2) {
+            $ret .= join('',
+                qq!if (ref(\$__tora_iteratee) eq "HASH") {\n!,
+                qq!  for (keys \%\$__tora_iteratee) {\n!,
+        sprintf(qq!    my %s = \$_;\n!, _compile($node->[3]->[0])),
+        sprintf(qq!    my %s = \$__tora_iteratee->{\$_};\n!, _compile($node->[3]->[1])),
+                    _compile($node->[4]),
+                qq!  }\n!,
+                qq!} else {\n!,
+                qq!  die "This is not a hash type. You cannot iterate by 2 or more variables."!,
+                qq!}\n!,
+            );
+            $ret .= '}';
+        } else {
+            $ret .= 'for ';
+            if (@{$node->[3]}) {
+                $ret .= join(',', map { 'my ' . _compile($_) } @{$node->[3]});
+            }
+            $ret .= '(ref($__tora_iteratee) eq "ARRAY" ? @{$__tora_iteratee} : ref($__tora_iteratee) eq "Nana::Translator::Perl::Range" ? $__tora_iteratee->list : $__tora_iteratee) {' . "\n". _compile($node->[4]) . '}';
+            $ret .= '}';
         }
-        $ret .= '(ref(' . _compile($node->[2]) . ') eq "ARRAY" ? @{'._compile($node->[2]).'} : '._compile($node->[2]).') {' . _compile($node->[4]) . '}';
+        return $ret;
+    } elsif ($node->[0] eq 'FOR') {
+        join('',
+            'for (',
+                _compile($node->[2]),
+            ';',
+                _compile($node->[3]),
+            ';',
+                _compile($node->[4]),
+            ') {',
+                _compile($node->[5]), # block
+            '}'
+        );
     } elsif ($node->[0] eq 'UNDEF') {
         return 'undef';
     } elsif ($node->[0] eq 'FALSE') {

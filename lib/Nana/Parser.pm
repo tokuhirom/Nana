@@ -285,12 +285,12 @@ rule('statement', [
             or die "block is required after while keyword.";
         return ($c, _node2('WHILE', $START, $expression, $block));
     },
-    sub {
+    sub { # foreach
         my $c = shift;
         ($c) = match($c, 'for')
             or return;
         ($c, my $expression) = expression($c)
-            or die "expression is required after 'for' keyword";
+            or return;
         ($c) = match($c, '->')
             or die "'->' missing after for keyword";
         my @vars;
@@ -303,7 +303,33 @@ rule('statement', [
         }
         ($c, my $block) = block($c)
             or die "block is required after 'for' keyword.";
-        return ($c, _node2('FOR', $START, $expression, \@vars, $block));
+        return ($c, _node2('FOREACH', $START, $expression, \@vars, $block));
+    },
+    sub { # c-style for
+        my $c = shift;
+        ($c) = match($c, 'for')
+            or return;
+        ($c) = match($c, '(')
+            or return;
+        my ($e1, $e2, $e3);
+        if ((my $c2, $e1) = expression($c)) { # optional
+            $c = $c2;
+        }
+        ($c) = match($c, ';')
+            or return;
+        if ((my $c2, $e2) = expression($c)) {
+            $c = $c2;
+        }
+        ($c) = match($c, ';')
+            or return;
+        if ((my $c2, $e3) = expression($c)) {
+            $c = $c2;
+        }
+        ($c) = match($c, ')')
+            or die "closing paren is required after 'for' keyword.";;
+        ($c, my $block) = block($c)
+            or die "block is required after 'for' keyword.";
+        return ($c, _node2('FOR', $START, $e1, $e2, $e3, $block));
     },
     sub {
         my $c = shift;
@@ -344,7 +370,7 @@ rule('statement', [
             or return;
         ($c, my $expression) = expression($c)
             or die "expression required after postfix-if statement";
-        return ($c, _node2('FOR', $START, $expression, [], $block));
+        return ($c, _node2('FOREACH', $START, $expression, [], $block));
     },
     sub {
         # foo while bar
