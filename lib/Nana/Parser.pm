@@ -553,7 +553,7 @@ rule('shift_expression', [
 ]);
 
 rule('additive_expression', [
-    left_op(\&term, ['-', '+', '~'])
+    left_op(\&term, ['-', '+'])
 ]);
 
 rule('term', [

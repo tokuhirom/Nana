@@ -76,15 +76,11 @@ sub _compile {
         '..' => 'tora_make_range',
         '+'  => 'tora_op_add',
     );
-
     if (my $func = $binops{$node->[0]}) {
         return "$func(". _compile($node->[2]) . ',' . _compile($node->[3]).')';
     }
 
-    if ($node->[0] eq '~') {
-        # string concat operator
-        return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';
-    } elsif ($node->[0] eq '?:') {
+    if ($node->[0] eq '?:') {
         return join(
             '',
 

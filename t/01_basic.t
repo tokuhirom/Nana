@@ -151,9 +151,9 @@ while 1 {}
 while (1) {}
 
 --- input
-"Hello, " ~ $name
+"Hello, " + $name
 --- expected
-("Hello, ".$name)
+tora_op_add("Hello, ",$name)
 
 --- input
 return 3
@@ -257,11 +257,11 @@ tora_call_method($TORA_PACKAGE, [1,2,3], q{push}, (4))
 
 --- input
 sub hello($name) {
-    return "Hello, " ~ $name;
+    return "Hello, " + $name;
 }
 --- expected
 $TORA_PACKAGE->{q{hello}} = sub {
-my $name=shift;return (("Hello, ".$name));
+my $name=shift;return (tora_op_add("Hello, ",$name));
  }
 
 --- input
