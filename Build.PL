@@ -11,7 +11,7 @@ my $build = Module::Build->new(
         'Capture::Tiny' => 0,
         'TAP::Harness' => '3.23',
         'Test::Base' => 0,
-        'Test::Difference' => 0,
+        'Test::Differences' => 0,
     },
     configure_requires   => { 'Module::Build' => '0.38' },
     requires             => {
