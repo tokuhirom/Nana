@@ -32,11 +32,18 @@ sub tora_call_method {
             die "Unknown method named $methname in $klass";
         }
     } else {
+        # builtin methods
         if (ref $klass eq 'ARRAY') {
             if (my $methbody = $TORA_BUILTIN_CLASSES{Array}->{$methname}) {
                 return $methbody->($klass, @args);
             } else {
                 die "Unknown method $methname in Array";
+            }
+        } elsif (ref $klass eq 'HASH') {
+            if (my $methbody = $TORA_BUILTIN_CLASSES{Hash}->{$methname}) {
+                return $methbody->($klass, @args);
+            } else {
+                die "Unknown method $methname in Hash";
             }
         } else {
             die "unknown class: $klass";

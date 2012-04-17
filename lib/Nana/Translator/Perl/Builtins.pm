@@ -26,7 +26,12 @@ our %TORA_BUILTIN_CLASSES = (
     'Array' => {
         push => sub {
             CORE::push(@{$_[0]}, $_[1]);
-            $_[0];
+            return $_[0];
+        },
+    },
+    'Hash' => {
+        keys => sub {
+            return [CORE::keys(%{$_[0]})];
         },
     },
 );

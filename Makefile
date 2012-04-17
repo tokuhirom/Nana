@@ -1,4 +1,4 @@
 test:
-	prove -Ilib t/
+	prove -r -Ilib t/
 
 .PHONY: test
