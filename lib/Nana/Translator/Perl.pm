@@ -44,7 +44,7 @@ sub _compile {
     for (qw(
         **
         * % x /
-        + -
+        -
         >> <<
         lt gt le ge
         != <=> eq ne cmp ~~
@@ -79,6 +79,9 @@ sub _compile {
         return 'tora_op_equal('. _compile($node->[2]) .','. _compile($node->[3]).')';
     } elsif ($node->[0] eq '..') {
         return 'tora_make_range('. _compile($node->[2]) .','. _compile($node->[3]).')';
+    } elsif ($node->[0] eq '+') {
+        # string concat operator
+        return 'tora_op_add('. _compile($node->[2]) . ',' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '~') {
         # string concat operator
         return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';

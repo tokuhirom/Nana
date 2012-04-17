@@ -2,6 +2,7 @@ package Nana::Translator::Perl::Runtime;
 use strict;
 use warnings FATAL => 'all';
 use utf8;
+use 5.10.0;
 
 use parent qw(Exporter);
 use Nana::Translator::Perl::Builtins;
@@ -14,6 +15,7 @@ our @EXPORT = qw(tora_call_func tora_call_method tora_op_equal
     tora_op_lt tora_op_gt
     tora_op_le tora_op_ge
     tora_make_range
+    tora_op_add
 );
 
 *true = *JSON::true;
@@ -115,6 +117,18 @@ sub tora_op_ge {
         return $lhs >= $rhs ? true() : false();
     } else {
         die "OOPS";
+    }
+}
+
+sub tora_op_add {
+    my ($lhs, $rhs) = @_;
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        return $lhs + $rhs;
+    } elsif ($flags & B::SVp_POK) {
+        return $lhs . $rhs;
+    } else {
+        ...
     }
 }
 
