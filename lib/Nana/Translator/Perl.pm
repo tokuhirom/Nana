@@ -27,7 +27,6 @@ sub compile {
             'use utf8;',
             'use Nana::Translator::Perl::Runtime;',
             'use JSON;',
-            'use boolean -truth;',
             'my $TORA_PACKAGE;',
         ) . "\n";
     }
