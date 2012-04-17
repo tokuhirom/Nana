@@ -207,13 +207,6 @@ HERE
 ===
 --- code
 say(typeof("hoge"));
---- stdout
-Str
---- stderr
-
-===
---- code
-say(typeof("hoge"));
 say(typeof({}));
 --- stdout
 Str

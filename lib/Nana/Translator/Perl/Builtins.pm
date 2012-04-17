@@ -18,6 +18,9 @@ our %TORA_BUILTIN_FUNCTIONS = (
     'print' => sub {
         print(@_);
     },
+    'printf' => sub {
+        printf(@_);
+    },
     'stat' => sub {
         return File::stat::stat(@_);
     },
