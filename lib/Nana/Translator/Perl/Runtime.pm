@@ -69,6 +69,8 @@ sub tora_op_equal {
     if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
         # IV or NV
         return $lhs == $rhs ? true() : false();
+    } elsif ($flags & B::SVp_POK) {
+        return $lhs eq $rhs ? true() : false();
     } else {
         die "OOPS";
     }
@@ -81,6 +83,8 @@ sub tora_op_lt {
     if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
         # IV or NV
         return $lhs < $rhs ? true() : false();
+    } elsif ($flags & B::SVp_POK) {
+        return $lhs lt $rhs ? true() : false();
     } else {
         die "OOPS";
     }
@@ -93,6 +97,8 @@ sub tora_op_gt {
     if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
         # IV or NV
         return $lhs > $rhs ? true() : false();
+    } elsif ($flags & B::SVp_POK) {
+        return $lhs gt $rhs ? true() : false();
     } else {
         die "OOPS";
     }
@@ -104,6 +110,8 @@ sub tora_op_le {
     if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
         # IV or NV
         return $lhs <= $rhs ? true() : false();
+    } elsif ($flags & B::SVp_POK) {
+        return $lhs le $rhs ? true() : false();
     } else {
         die "OOPS";
     }
@@ -115,6 +123,8 @@ sub tora_op_ge {
     if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
         # IV or NV
         return $lhs >= $rhs ? true() : false();
+    } elsif ($flags & B::SVp_POK) {
+        return $lhs ge $rhs ? true() : false();
     } else {
         die "OOPS";
     }
