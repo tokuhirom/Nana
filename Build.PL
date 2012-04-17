@@ -21,6 +21,7 @@ my $build = Module::Build->new(
         'Scalar::Util' => '0',
         'File::stat' => '0',
         'Exporter'           => '5.58'
+        'Getopt::Long::Descriptive' => 0,
     },
     no_index    => { 'directory' => [ 'inc', 't', 'xt' ] },
     name        => 'Nana',
