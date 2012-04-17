@@ -2,13 +2,14 @@ package t::Util;
 use strict;
 use warnings FATAL => 'all';
 use utf8;
+use lib 'lib';
 use Capture::Tiny qw(capture);
 use Nana::Parser;
 use Nana::Translator::Perl;
 use Test::More;
 use Data::Dumper;
 use base qw(Exporter);
-our @EXPORT = qw(eval_nana test_nana);
+our @EXPORT = qw(eval_nana test_nana run_tora_is);
 
 sub eval_nana {
     my $src = shift;
@@ -36,6 +37,7 @@ sub test_nana {
         is($stderr, $expected_stderr);
     };
 }
+*run_tora_is = *test_nana;
 
 1;
 

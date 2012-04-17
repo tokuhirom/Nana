@@ -221,12 +221,12 @@ return (3);
 --- input
 1<2
 --- expected
-(1<2)
+tora_op_lt(1,2)
 
 --- input
 1==2
 --- expected
-(1==2)
+tora_op_equal(1,2)
 
 --- input
 1?2:3
@@ -241,7 +241,7 @@ $x=$y=$z
 --- input
 1..2
 --- expected
-(1..2)
+tora_make_range(1,2)
 
 --- input
 1,2,3
@@ -359,12 +359,12 @@ do {
 --- input
 for 1..10 -> { }
 --- expected
-for (ref((1..10)) eq "ARRAY" ? @{(1..10)} : (1..10)) {}
+for (ref(tora_make_range(1,10)) eq "ARRAY" ? @{tora_make_range(1,10)} : tora_make_range(1,10)) {}
 
 --- input
 for 1..10 -> $i { }
 --- expected
-for my $i(ref((1..10)) eq "ARRAY" ? @{(1..10)} : (1..10)) {}
+for my $i(ref(tora_make_range(1,10)) eq "ARRAY" ? @{tora_make_range(1,10)} : tora_make_range(1,10)) {}
 
 --- input
 has()

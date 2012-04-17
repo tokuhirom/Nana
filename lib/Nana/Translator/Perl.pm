@@ -26,6 +26,8 @@ sub compile {
             'use warnings FATAL => "recursion";',
             'use utf8;',
             'use Nana::Translator::Perl::Runtime;',
+            'use JSON;',
+            'use boolean -truth;',
             'my $TORA_PACKAGE;',
         ) . "\n";
     }
@@ -43,13 +45,13 @@ sub _compile {
         * % x /
         + -
         >> <<
-        < > <= >= lt gt le ge
-        == != <=> eq ne cmp ~~
+        lt gt le ge
+        != <=> eq ne cmp ~~
         &
         | ^
         &&
         || //
-        .. ...
+        ...
         = *= += /= %= x= -= <<= >>= **= &= |= ^=
         and
         or xor
@@ -64,7 +66,19 @@ sub _compile {
         }
     }
 
-    if ($node->[0] eq '~') {
+    if ($node->[0] eq '<') {
+        return 'tora_op_lt('. _compile($node->[2]) .','. _compile($node->[3]).')';
+    } elsif ($node->[0] eq '>') {
+        return 'tora_op_gt('. _compile($node->[2]) .','. _compile($node->[3]).')';
+    } elsif ($node->[0] eq '<=') {
+        return 'tora_op_le('. _compile($node->[2]) .','. _compile($node->[3]).')';
+    } elsif ($node->[0] eq '>=') {
+        return 'tora_op_ge('. _compile($node->[2]) .','. _compile($node->[3]).')';
+    } elsif ($node->[0] eq '==') {
+        return 'tora_op_equal('. _compile($node->[2]) .','. _compile($node->[3]).')';
+    } elsif ($node->[0] eq '..') {
+        return 'tora_make_range('. _compile($node->[2]) .','. _compile($node->[3]).')';
+    } elsif ($node->[0] eq '~') {
         # string concat operator
         return '('. _compile($node->[2]) . '.' . _compile($node->[3]).')';
     } elsif ($node->[0] eq '?:') {
@@ -189,6 +203,10 @@ sub _compile {
         $ret .= '(ref(' . _compile($node->[2]) . ') eq "ARRAY" ? @{'._compile($node->[2]).'} : '._compile($node->[2]).') {' . _compile($node->[4]) . '}';
     } elsif ($node->[0] eq 'UNDEF') {
         return 'undef';
+    } elsif ($node->[0] eq 'FALSE') {
+        return 'JSON::false()';
+    } elsif ($node->[0] eq 'TRUE') {
+        return 'JSON::true()';
     } elsif ($node->[0] eq 'DOUBLE') {
         return $node->[2];
     } elsif ($node->[0] eq 'EXPRESSIONS') {
@@ -207,6 +225,8 @@ sub _compile {
         return '!' . _compile($node->[2]);
     } elsif ($node->[0] eq 'UNARY~') {
         return '~' . _compile($node->[2]);
+    } elsif ($node->[0] eq 'UNARY*') {
+        return '@{' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'UNARY\\') {
         return '\\' . _compile($node->[2]);
     } elsif ($node->[0] eq '=~') {

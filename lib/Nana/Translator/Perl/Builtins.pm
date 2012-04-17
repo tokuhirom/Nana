@@ -4,6 +4,7 @@ use warnings;
 use utf8;
 use parent qw(Exporter);
 use 5.10.0;
+use B;
 
 our @EXPORT = qw(
     %TORA_BUILTIN_FUNCTIONS
@@ -14,8 +15,35 @@ our %TORA_BUILTIN_FUNCTIONS = (
     'say' => sub {
         say(@_);
     },
+    'print' => sub {
+        print(@_);
+    },
     'stat' => sub {
         return File::stat::stat(@_);
+    },
+    'typeof' => sub {
+        my $v = shift;
+        my $ref = ref $v;
+        if ($ref) {
+            if ($ref eq 'ARRAY') {
+                'Array';
+            } elsif ($ref eq 'HASH') {
+                'Hash';
+            } elsif ($ref eq 'CODE') {
+                'Code';
+            } elsif ($ref eq 'Nana::Translator::Perl::Range') {
+                'Code';
+            } else {
+                die "[BUG] Unknown type : $ref";
+            }
+        } else {
+            my $flags = B::svref_2object(\$v)->FLAGS;
+            if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+                return "Int";
+            } else {
+                return "Str";
+            }
+        }
     },
     'open' => sub {
         ...

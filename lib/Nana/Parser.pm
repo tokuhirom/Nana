@@ -39,6 +39,7 @@ our @KEYWORDS = qw(
     lt gt eq cmp le ge ne
     isa
     undef
+    true false
 );
 my %KEYWORDS = map { $_ => 1 } @KEYWORDS;
 
@@ -135,7 +136,7 @@ sub match {
             }
         } else {
             my $qword = quotemeta($word);
-            if ($c =~ s/^$qword(?![&|+>-])//) {
+            if ($c =~ s/^$qword(?![&|+>=-])//) {
                 return ($c, $word);
             }
         }
@@ -415,13 +416,6 @@ rule('expression', [
             or die "expected block after sub in $name->[1]";
         return ($c, _node2('SUB', $START, $name, $params, $block));
     },
-    sub {
-        # say()
-        my $c = shift;
-        ($c, my $lhs) = additive_expression($c) or return;
-        ($c, my $args) = arguments($c) or return;
-        return ($c, _node('CALL', $lhs, $args));
-    },
     \&str_or_expression,
 ]);
 
@@ -549,7 +543,7 @@ rule('regexp_match', [
 rule('unary', [
     sub {
         my $c = shift;
-        ($c, my $op) = match($c, '!', '~', '\\', '+', '-')
+        ($c, my $op) = match($c, '!', '~', '\\', '+', '-', '*')
             or return;
         ($c, my $ex) = pow($c);
         return ($c, _node("UNARY$op", $ex));
@@ -626,6 +620,13 @@ rule('method_call', [
             or return;
         return ($c, _node2('METHOD_CALL', $START, $object, $method, $param));
     },
+    sub {
+        # say()
+        my $c = shift;
+        ($c, my $lhs) = primary($c) or return;
+        ($c, my $args) = arguments($c) or return;
+        return ($c, _node('CALL', $lhs, $args));
+    },
     \&primary
 ]);
 
@@ -683,7 +684,7 @@ rule('arguments', [
         }
 
         ($src) = match($src, ")")
-            or die "Parse failed: missing ')' line $LINENO";
+            or die "Parse failed: missing ')' in argument parsing. line $LINENO";
 
         return ($src, \@args);
     }
@@ -831,9 +832,9 @@ rule('primary', [
     },
     sub {
         my $c = shift;
-        ($c) = match($c, 'undef')
+        ($c, my $word) = match($c, 'undef', 'true', 'false')
             or return;
-        return ($c, _node2('UNDEF', $START));
+        return ($c, _node2(uc($word), $START));
     },
     sub {
         my $c = shift;

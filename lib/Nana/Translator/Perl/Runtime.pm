@@ -5,9 +5,19 @@ use utf8;
 
 use parent qw(Exporter);
 use Nana::Translator::Perl::Builtins;
+use Nana::Translator::Perl::Range;
 use Carp qw(croak);
+use B;
+use JSON ();
 
-our @EXPORT = qw(tora_call_func tora_call_method);
+our @EXPORT = qw(tora_call_func tora_call_method tora_op_equal
+    tora_op_lt tora_op_gt
+    tora_op_le tora_op_ge
+    tora_make_range
+);
+
+*true = *JSON::true;
+*false = *JSON::false;
 
 sub tora_call_func {
     my ($pkg, $funname, @args) = @_;
@@ -49,6 +59,68 @@ sub tora_call_method {
             die "unknown class: $klass";
         }
     }
+}
+
+sub tora_op_equal {
+    my ($lhs, $rhs) = @_;
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        # IV or NV
+        return $lhs == $rhs ? true() : false();
+    } else {
+        die "OOPS";
+    }
+}
+
+sub tora_op_lt {
+    my ($lhs, $rhs) = @_;
+
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        # IV or NV
+        return $lhs < $rhs ? true() : false();
+    } else {
+        die "OOPS";
+    }
+}
+
+sub tora_op_gt {
+    my ($lhs, $rhs) = @_;
+
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        # IV or NV
+        return $lhs > $rhs ? true() : false();
+    } else {
+        die "OOPS";
+    }
+}
+
+sub tora_op_le {
+    my ($lhs, $rhs) = @_;
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        # IV or NV
+        return $lhs <= $rhs ? true() : false();
+    } else {
+        die "OOPS";
+    }
+}
+
+sub tora_op_ge {
+    my ($lhs, $rhs) = @_;
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        # IV or NV
+        return $lhs >= $rhs ? true() : false();
+    } else {
+        die "OOPS";
+    }
+}
+
+sub tora_make_range {
+    my ($lhs, $rhs) = @_;
+    Nana::Translator::Perl::Range->new($lhs, $rhs);
 }
 
 1;
