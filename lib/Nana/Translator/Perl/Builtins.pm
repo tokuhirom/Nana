@@ -76,6 +76,11 @@ our %TORA_BUILTIN_CLASSES = (
             return [CORE::keys(%{$_[0]})];
         },
     },
+    'Class' => {
+        bless => sub { # self.bless($data)
+            return Nana::Translator::Perl::Object->new($_[0], $_[1]);
+        },
+    },
 );
 
 

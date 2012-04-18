@@ -177,7 +177,7 @@ sub _compile {
     } elsif ($node->[0] eq 'ELSE') {
         return ' else {' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'CLASS') {
-        my $ret = '{my $TORA_CLASS=($TORA_PACKAGE->{' . _compile($node->[2]) . '} = +{});';
+        my $ret = '{my $TORA_CLASS=$TORA_SELF=($TORA_PACKAGE->{' . _compile($node->[2]) . '} = Nana::Translator::Perl::Class->new(' . _compile($node->[2]) . ',+{}));';
         $ret .= join(',', map { sprintf "BEGIN{extends '%s';}", _compile($_) } @{$node->[3]});
         $ret .= "\n";
         local $IN_CLASS=1;
@@ -236,6 +236,8 @@ sub _compile {
         return 'undef';
     } elsif ($node->[0] eq 'FALSE') {
         return 'JSON::false()';
+    } elsif ($node->[0] eq 'SELF') {
+        return '($TORA_SELF || die "Do not call self out of class.")';
     } elsif ($node->[0] eq 'TRUE') {
         return 'JSON::true()';
     } elsif ($node->[0] eq 'DOUBLE') {

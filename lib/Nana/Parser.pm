@@ -41,6 +41,7 @@ our @KEYWORDS = qw(
     isa
     undef
     true false
+    self
 );
 my %KEYWORDS = map { $_ => 1 } @KEYWORDS;
 
@@ -874,7 +875,7 @@ rule('primary', [
     },
     sub {
         my $c = shift;
-        ($c, my $word) = match($c, 'undef', 'true', 'false')
+        ($c, my $word) = match($c, 'undef', 'true', 'false', 'self')
             or return;
         return ($c, _node2(uc($word), $START));
     },

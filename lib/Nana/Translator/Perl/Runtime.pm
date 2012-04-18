@@ -6,16 +6,21 @@ use 5.10.0;
 
 use parent qw(Exporter);
 use Nana::Translator::Perl::Builtins;
+use Nana::Translator::Perl::Class;
+use Nana::Translator::Perl::Object;
 use Nana::Translator::Perl::Range;
 use Carp qw(croak);
 use B;
 use JSON ();
+
+our $TORA_SELF;
 
 our @EXPORT = qw(tora_call_func tora_call_method tora_op_equal
     tora_op_lt tora_op_gt
     tora_op_le tora_op_ge
     tora_make_range
     tora_op_add
+    $TORA_SELF
 );
 
 *true = *JSON::true;
@@ -56,6 +61,18 @@ sub tora_call_method {
                 return $methbody->($klass, @args);
             } else {
                 die "Unknown method $methname in Hash";
+            }
+        } elsif (ref $klass eq 'Nana::Translator::Perl::Object') {
+            if (my $methbody = $klass->get_method($methname)) {
+                return $methbody->(@args);
+            } else {
+                die "Unknown method $methname in " . $klass->class->name;
+            }
+        } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
+            if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
+                return $methbody->($klass, @args);
+            } else {
+                die "Unknown method $methname in Class";
             }
         } else {
             die "unknown class: $klass";
