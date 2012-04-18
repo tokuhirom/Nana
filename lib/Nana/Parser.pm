@@ -26,6 +26,7 @@ our $LINENO;
 our $START;
 our $CACHE;
 our $MATCH;
+our $END;
 
 my @HEREDOC_BUFS;
 my @HEREDOC_MARKERS;
@@ -52,6 +53,7 @@ sub rule {
     *{"@{[ __PACKAGE__ ]}::$name"} = subname $name, sub {
         local $START = $LINENO;
         my $src = skip_ws(shift);
+        return if $END;
         if (my $cache = $CACHE->{$name}->{length($src)}) {
             return @$cache;
         }
@@ -151,9 +153,10 @@ sub parse {
     local $LINENO = 1;
     local $CACHE  = {};
     local $MATCH = 0;
+    local $END;
 
     my ($rest, $ret) = program($src);
-    if ($rest =~ /[^\n \t]/) {
+    if (!$END && $rest =~ /[^\n \t]/) {
         die "Parse failed: " . Dumper($rest);
     }
     if (@HEREDOC_BUFS || @HEREDOC_MARKERS) {
@@ -215,6 +218,10 @@ rule('statement_list', [
                             }
                         }
                     } else {
+                        if ($src =~ s/^__END__\n.+//s) {
+                            $END++;
+                            last LOOP;
+                        }
                         next LOOP;
                     }
                 };
@@ -420,7 +427,12 @@ sub skip_ws {
 std:
     s/^[ \t\f]// && goto std;
     s/^#[^\n]+\n/++$LINENO;''/ge && goto std;
-    s/^\n/++$LINENO;''/ge && goto std;
+    if (s/^__END__\n.+//s) {
+        $END++;
+        return '';
+    }
+    s/^\n/++$LINENO;''/e && goto std;
+
 
     $_;
 }
@@ -453,6 +465,10 @@ rule('block', [
 
         ($src, my $body) = statement_list($src)
             or return;
+
+        if ($END) {
+            die "Invalid __END__ found in block at line $LINENO";
+        }
 
         ($src) = match($src, '}')
             or return;
