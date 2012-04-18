@@ -48,6 +48,17 @@ our %TORA_BUILTIN_FUNCTIONS = (
             }
         }
     },
+    'eval' => sub {
+        my $src = shift;
+        require Nana::Translator::Perl;
+        state $parser = Nana::Parser->new();
+        state $compiler = Nana::Translator::Perl->new();
+        my $ast = $parser->parse($src);
+        my $perl = $compiler->compile($ast);
+        my $ret = eval($perl);
+        die $@ if $@;
+        return $ret;
+    },
     'open' => sub {
         ...
     },

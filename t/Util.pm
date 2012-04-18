@@ -40,7 +40,7 @@ sub test_nana {
     };
     subtest $src => sub {
         is($stdout, $expected_stdout);
-        is($stderr, $expected_stderr);
+        is($stderr, $expected_stderr || '');
     };
 }
 *run_tora_is = *test_nana;
