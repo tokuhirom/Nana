@@ -13,7 +13,13 @@ our @EXPORT = qw(
 
 our %TORA_BUILTIN_FUNCTIONS = (
     'say' => sub {
-        say(@_);
+        for (@_) {
+            if (defined $_) {
+                say($_);
+            } else {
+                say('undef');
+            }
+        }
     },
     'print' => sub {
         print(@_);

@@ -1,6 +1,7 @@
 package Nana::Translator::Perl::Runtime;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
+use warnings FATAL => 'recursion';
 use utf8;
 use 5.10.0;
 
@@ -9,17 +10,19 @@ use Nana::Translator::Perl::Builtins;
 use Nana::Translator::Perl::Class;
 use Nana::Translator::Perl::Object;
 use Nana::Translator::Perl::Range;
+use Nana::Translator::Perl::Exception;
 use Carp qw(croak);
 use B;
 use JSON ();
 
 our $TORA_SELF;
+our $TORA_FILENAME;
 
 our @EXPORT = qw(tora_call_func tora_call_method tora_op_equal
     tora_op_lt tora_op_gt
     tora_op_le tora_op_ge
     tora_make_range
-    tora_op_add
+    tora_op_add tora_op_div
     $TORA_SELF
 );
 
@@ -35,7 +38,7 @@ sub tora_call_func {
         if ($func) {
             return $func->(@args);
         } else {
-            croak "Unknown function $funname";
+            die "Unknown function '$funname' at $TORA_FILENAME line @{[ (caller(0))[2] ]}\n";
         }
     }
 }
@@ -154,6 +157,22 @@ sub tora_op_add {
         return $lhs + $rhs;
     } elsif ($flags & B::SVp_POK) {
         return $lhs . $rhs;
+    } else {
+        ...
+    }
+}
+
+sub tora_op_div {
+    my ($lhs, $rhs) = @_;
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        if ($rhs == 0) {
+            die "Zero divided Exception line @{[ (caller(0))[2] ]}";
+        } else {
+            return $lhs / $rhs;
+        }
+    } elsif ($flags & B::SVp_POK) {
+        die "'$lhs' is not numeric. You cannot divide. line @{[ (caller(0))[2] ]}\n";
     } else {
         ...
     }

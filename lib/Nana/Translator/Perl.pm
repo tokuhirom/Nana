@@ -20,7 +20,6 @@ sub compile {
     my $res = '';
     unless ($no_header) {
         $res .= join('',
-            'use 5.12.0;',
             'use strict;',
             'use warnings;',
             'use warnings FATAL => "recursion";',
@@ -28,6 +27,7 @@ sub compile {
             'use Nana::Translator::Perl::Runtime;',
             'use JSON;',
             'my $TORA_PACKAGE;',
+            'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         ) . "\n";
     }
     $res .= _compile($ast);
@@ -42,7 +42,7 @@ sub _compile {
 
     for (qw(
         **
-        * % x /
+        * % x
         -
         >> <<
         lt gt le ge
@@ -52,7 +52,7 @@ sub _compile {
         &&
         || //
         ...
-        = *= += /= %= x= -= <<= >>= **= &= |= ^=
+        *= += /= %= x= -= <<= >>= **= &= |= ^=
         and
         or xor
     ), ',') {
@@ -66,6 +66,12 @@ sub _compile {
         }
     }
 
+    for my $op (qw(=)) {
+        if ($node->[0] eq $op) {
+            return _compile($node->[2]) . $op . _compile($node->[3]);
+        }
+    }
+
     my %binops = (
         '<'  => 'tora_op_lt',
         '>'  => 'tora_op_gt',
@@ -74,6 +80,7 @@ sub _compile {
         '==' => 'tora_op_equal',
         '..' => 'tora_make_range',
         '+'  => 'tora_op_add',
+        '/'  => 'tora_op_div',
     );
     if (my $func = $binops{$node->[0]}) {
         return "$func(". _compile($node->[2]) . ',' . _compile($node->[3]).')';
@@ -114,12 +121,20 @@ sub _compile {
             q{'} . $_ . q{'};
         };
         return '[' . join(', ', map { $make_string->($_) } @{$node->[2]}) .']';
+    } elsif ($node->[0] eq 'DIE') {
+        return "die Nana::Translator::Perl::Exception->new(" . _compile($node->[2]) . ')';
+    } elsif ($node->[0] eq 'TRY') {
+        my $ret = "do {my \@ret = eval {\n";
+        $ret .= _compile($node->[2]);
+        $ret .= '}; ($@ || undef, @ret); };';
+        return $ret;
     } elsif ($node->[0] eq 'DO') {
         my $ret = "do {\n";
         $ret .= _compile($node->[2]) . '}';
         return $ret;
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
+        $ret .= 'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';
         $ret .= $pkg . "->{" . _compile($node->[2]) . "} = sub {\n";
         if ($node->[3]) {

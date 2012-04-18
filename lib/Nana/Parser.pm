@@ -42,6 +42,7 @@ our @KEYWORDS = qw(
     undef
     true false
     self
+    try die
 );
 my %KEYWORDS = map { $_ => 1 } @KEYWORDS;
 
@@ -455,6 +456,20 @@ rule('expression', [
             or die "expected block after sub in $name->[1]";
         return ($c, _node2('SUB', $START, $name, $params, $block));
     },
+    sub {
+        my $c = shift;
+        ($c) = match($c, 'try') or return;
+        ($c, my $block) = block($c)
+            or die "expected block after try keyword";
+        return ($c, _node2('TRY', $START, $block));
+    },
+    sub {
+        my $c = shift;
+        ($c) = match($c, 'die') or return;
+        ($c, my $block) = expression($c)
+            or die "expected expression after die keyword";
+        return ($c, _node2('DIE', $START, $block));
+    },
     \&str_or_expression,
 ]);
 
@@ -509,7 +524,7 @@ rule('assign_expression', [
             or return;
         ($c, my $op) = match($c, qw(= *= += /= %= x= -= <<= >>= **= &= |= ^=))
             or return;
-        ($c, my $lhs) = assign_expression($c)
+        ($c, my $lhs) = expression($c)
             or die "Cannot get expression after $op";
         return ($c, _node($op, $rhs, $lhs));
     },
