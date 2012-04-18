@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use autodie;
 use 5.10.1;
 use Nana::Translator::Perl;
 use Nana::Parser;
