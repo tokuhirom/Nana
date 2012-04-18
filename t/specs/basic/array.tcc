@@ -27,3 +27,9 @@ say(*$x);
 4
 3
 
+===
+--- code
+my $x = [1,2,3];
+say($x.size());
+--- stdout
+3

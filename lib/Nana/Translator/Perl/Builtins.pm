@@ -80,6 +80,9 @@ our %TORA_BUILTIN_CLASSES = (
             CORE::push(@{$_[0]}, $_[1]);
             return $_[0];
         },
+        size => sub {
+            return 0+@{$_[0]};
+        },
     },
     'Hash' => {
         keys => sub {
