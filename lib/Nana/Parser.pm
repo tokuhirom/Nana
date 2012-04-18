@@ -685,6 +685,18 @@ rule('method_call', [
         ($c, my $args) = arguments($c) or return;
         return ($c, _node('CALL', $lhs, $args));
     },
+    sub {
+        # $thing[$n]
+        my $c = shift;
+        ($c, my $lhs) = primary($c) or return;
+        ($c) = match($c, '[')
+            or return;
+        ($c, my $rhs) = primary($c)
+            or return;
+        ($c) = match($c, ']')
+            or die "Unmatched bracket line $START";
+        return ($c, _node('GETITEM', $lhs, $rhs));
+    },
     \&primary
 ]);
 

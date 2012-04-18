@@ -5,6 +5,7 @@ use utf8;
 use parent qw(Exporter);
 use 5.10.0;
 use B;
+use Data::Dumper;
 
 our @EXPORT = qw(
     %TORA_BUILTIN_FUNCTIONS
@@ -20,6 +21,9 @@ our %TORA_BUILTIN_FUNCTIONS = (
                 say('undef');
             }
         }
+    },
+    'p' => sub {
+        warn Dumper(@_);
     },
     'print' => sub {
         print(@_);

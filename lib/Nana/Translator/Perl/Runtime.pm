@@ -5,6 +5,7 @@ use warnings FATAL => 'recursion';
 use utf8;
 use 5.10.0;
 
+use Data::Dumper;
 use parent qw(Exporter);
 use Nana::Translator::Perl::Builtins;
 use Nana::Translator::Perl::Class;
@@ -23,6 +24,7 @@ our @EXPORT = qw(tora_call_func tora_call_method tora_op_equal
     tora_op_le tora_op_ge
     tora_make_range
     tora_op_add tora_op_div
+    tora_get_item
     $TORA_SELF
 );
 
@@ -181,6 +183,16 @@ sub tora_op_div {
 sub tora_make_range {
     my ($lhs, $rhs) = @_;
     Nana::Translator::Perl::Range->new($lhs, $rhs);
+}
+
+sub tora_get_item :lvalue {
+    my ($lhs, $rhs) = @_;
+    if (ref $lhs eq 'ARRAY') {
+        $lhs->[$rhs];
+    } else {
+        ...;
+        return $lhs;
+    }
 }
 
 1;

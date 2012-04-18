@@ -128,6 +128,8 @@ sub _compile {
         $ret .= _compile($node->[2]);
         $ret .= '}; ($@ || undef, @ret); };';
         return $ret;
+    } elsif ($node->[0] eq 'GETITEM') {
+        return 'tora_get_item(' . _compile($node->[2]) . ',' . _compile($node->[3]) .')';
     } elsif ($node->[0] eq 'DO') {
         my $ret = "do {\n";
         $ret .= _compile($node->[2]) . '}';
@@ -149,7 +151,7 @@ sub _compile {
     } elsif ($node->[0] eq 'CALL') {
         if ($node->[2]->[0] eq 'IDENT') {
             my $ret = 'tora_call_func($TORA_PACKAGE, q{' . $node->[2]->[2] . '}, (';
-            $ret .= join(',', map { sprintf('scalar(%s)', _compile($_)) } @{$node->[3]});
+            $ret .= join(',', map { sprintf('%s', _compile($_)) } @{$node->[3]});
             $ret .= '))';
             return $ret;
         } else {
