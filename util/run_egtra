@@ -27,7 +27,7 @@ my $perl = $compiler->compile($ast);
 say($perl) if $ENV{DUMP_PERL};
 my ($out, $err) = capture {
     eval $perl;
-    die $@ if $@;
+    print STDERR $@ if $@;
 };
 
 my $expected = do {

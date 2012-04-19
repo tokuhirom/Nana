@@ -159,7 +159,7 @@ sub _compile {
         $ret .= _compile($node->[4]) . '; }';
         return $ret;
     } elsif ($node->[0] eq 'CALL') {
-        if ($node->[2]->[0] eq 'IDENT') {
+        if ($node->[2]->[0] eq 'IDENT' || $node->[2]->[0] eq 'PRIMARY_IDENT') {
             my $ret = 'tora_call_func($TORA_PACKAGE, q{' . $node->[2]->[2] . '}, (';
             $ret .= join(',', map { sprintf('%s(%s)', $_->[0] eq 'CALL' ? 'scalar' : '', _compile($_)) } @{$node->[3]});
             $ret .= '))';
@@ -167,8 +167,12 @@ sub _compile {
         } else {
             die "Compilation failed.";
         }
+    } elsif ($node->[0] eq 'PRIMARY_IDENT') {
+        return '($TORA_PACKAGE->{' . $node->[2] . '} || die qq{Unknown stuff naemd ' . $node->[2] . '})';
     } elsif ($node->[0] eq 'IDENT') {
         return 'q{' . $node->[2] . '}';
+    } elsif ($node->[0] eq 'DEREF') {
+        return 'tora_deref(' . _compile($node->[2]) . ')';
     } elsif ($node->[0] eq 'NOP') {
         return '';
     } elsif ($node->[0] eq 'REGEXP') {
@@ -204,7 +208,7 @@ sub _compile {
     } elsif ($node->[0] eq 'ELSE') {
         return ' else {' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'CLASS') {
-        my $ret = '{my $TORA_CLASS=$TORA_SELF=($TORA_PACKAGE->{' . _compile($node->[2]) . '} = Nana::Translator::Perl::Class->new(' . _compile($node->[2]) . ',+{}));';
+        my $ret = '{my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{' . _compile($node->[2]) . '} = Nana::Translator::Perl::Class->new(' . _compile($node->[2]) . ',+{}));';
         $ret .= join(',', map { sprintf "BEGIN{extends '%s';}", _compile($_) } @{$node->[3]});
         $ret .= "\n";
         local $IN_CLASS=1;
@@ -212,7 +216,7 @@ sub _compile {
         $ret .= ";}";
         return $ret;
     } elsif ($node->[0] eq 'METHOD_CALL') {
-        return 'tora_call_method($TORA_PACKAGE, '._compile($node->[2]) . ', ' . _compile($node->[3]) . ', (' . join(',', map { _compile($_) } @{$node->[4]}) . '))';
+        return 'do {local $Nana::Translator::Perl::Runtime::TORA_SELF='._compile($node->[2]).';tora_call_method($TORA_PACKAGE, $Nana::Translator::Perl::Runtime::TORA_SELF, ' . _compile($node->[3]) . ', (' . join(',', map { _compile($_) } @{$node->[4]}) . '))}';
     } elsif ($node->[0] eq 'STMTS') {
         my $ret = '';
         for (@{$node->[2]}) {
@@ -264,7 +268,7 @@ sub _compile {
     } elsif ($node->[0] eq 'FALSE') {
         return 'JSON::false()';
     } elsif ($node->[0] eq 'SELF') {
-        return '($TORA_SELF || die "Do not call self out of class.")';
+        return '($Nana::Translator::Perl::Runtime::TORA_SELF || die "Do not call self out of class.")';
     } elsif ($node->[0] eq 'TRUE') {
         return 'JSON::true()';
     } elsif ($node->[0] eq 'DOUBLE') {

@@ -58,7 +58,7 @@ class Foo {
 );
 
 is_deeply($parser->parse('say()'),
-    ['STMTS', 1, [['CALL', 1, ['IDENT', 1, 'say'], []]]]
+    ['STMTS', 1, [['CALL', 1, ['PRIMARY_IDENT', 1, 'say'], []]]]
 );
 
 is_deeply($parser->parse('1+2;3+4'),
@@ -99,7 +99,7 @@ say("hoge"+"fuga")
     ['STMTS', 1, [
         ['CALL', 1,
             [
-                'IDENT',
+                'PRIMARY_IDENT',
                 1,
                 'say',
             ],

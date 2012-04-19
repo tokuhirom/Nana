@@ -89,7 +89,7 @@ my $var=shift;my $boo=shift;undef;tora_op_add(3,2);
 class Foo { sub new() { } }
 
 --- expected
-{my $TORA_CLASS=$TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},+{}));
+{my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},+{}));
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = sub {
 undef; };
 ;}
@@ -99,7 +99,7 @@ undef; };
 class Foo isa Bar { sub new() { } }
 
 --- expected
-{my $TORA_CLASS=$TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},+{}));BEGIN{extends 'q{Bar}';}
+{my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},+{}));BEGIN{extends 'q{Bar}';}
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = sub {
 undef; };
 ;}
@@ -287,7 +287,7 @@ tora_make_range(1,2)
 [1,2,3].push(4)
 
 --- expected
-tora_call_method($TORA_PACKAGE, [1,2,3], q{push}, (4))
+do {local $Nana::Translator::Perl::Runtime::TORA_SELF=[1,2,3];tora_call_method($TORA_PACKAGE, $Nana::Translator::Perl::Runtime::TORA_SELF, q{push}, (4))}
 
 ===
 --- input
@@ -507,18 +507,35 @@ qr/hoge/xsmi
 ===
 --- input
 ++$i
+
 --- expected
 ++($i)
 
 ===
 --- input
 say(++$i);
+
 --- expected
 tora_call_func($TORA_PACKAGE, q{say}, ((++($i))))
 
 ===
 --- input
 my $i2;
+
 --- expected
 my ($i2)
+
+===
+--- input
+$foo.call();
+
+--- expected
+do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$foo;tora_call_method($TORA_PACKAGE, $Nana::Translator::Perl::Runtime::TORA_SELF, q{call}, ())}
+
+===
+--- input
+$foo.bar().baz();
+
+--- expected
+do {local $Nana::Translator::Perl::Runtime::TORA_SELF=do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$foo;tora_call_method($TORA_PACKAGE, $Nana::Translator::Perl::Runtime::TORA_SELF, q{bar}, ())};tora_call_method($TORA_PACKAGE, $Nana::Translator::Perl::Runtime::TORA_SELF, q{baz}, ())}
 

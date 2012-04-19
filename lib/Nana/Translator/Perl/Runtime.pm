@@ -25,7 +25,7 @@ our @EXPORT = qw(tora_call_func tora_call_method tora_op_equal
     tora_make_range
     tora_op_add tora_op_div
     tora_get_item
-    $TORA_SELF
+    tora_deref
 );
 
 *true = *JSON::true;
@@ -58,11 +58,16 @@ sub __tora_call_method_fallback {
 
 sub tora_call_method {
     my ($pkg, $klass, $methname, @args) = @_;
+    local $Nana::Translator::Perl::Runtime::TORA_SELF = $klass;
     if (my $klaas = $pkg->{$klass}) {
         if (my $methbody = $klaas->{$methname}) {
             my @ret = $methbody->(@args);
             return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
         } else {
+            if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
+                my @ret = $methbody->(@args);
+                return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
+            }
             __tora_call_method_fallback($pkg, $klass, $klass, $methname, @args);
         }
     } else {
@@ -87,9 +92,12 @@ sub tora_call_method {
                 __tora_call_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
             }
         } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
+            if (my $methbody = $klass->{$methname}) {
                 return $methbody->($klass, @args);
             } else {
+                if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
+                    return $methbody->($klass, @args);
+                }
                 __tora_call_method_fallback($pkg, $klass, 'Class', $methname, @args);
             }
         } elsif (!ref $klass) {
@@ -225,9 +233,23 @@ sub tora_get_item :lvalue {
         $lhs->[$rhs];
     } elsif (ref $lhs eq 'HASH') {
         $lhs->{$rhs};
+    } elsif (!defined $lhs) {
+        die "You cannot get item from Undef";
+        $lhs;
     } else {
         ...;
         return $lhs;
+    }
+}
+
+*typeof = *Nana::Translator::Perl::Builtins::typeof;
+
+sub tora_deref {
+    my $v = shift;
+    if (ref $v eq 'Nana::Translator::Perl::Object') {
+        $v->{data};
+    } else {
+        die "You cannot dereference " . typeof($v);
     }
 }
 

@@ -1,0 +1,16 @@
+class FooClass {
+    sub new() {
+        self.bless({counter=>4});
+    }
+    sub counter() {
+        ${self}[counter]
+    }
+}
+
+my $foo = FooClass.new()
+say(${$foo}['counter']);
+say($foo.counter());
+
+__END__
+4
+4

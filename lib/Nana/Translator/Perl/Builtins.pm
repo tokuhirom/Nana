@@ -30,6 +30,7 @@ sub __say {
 
 our %TORA_BUILTIN_FUNCTIONS = (
     'say' => \&__say,
+    'typeof' => \&typeof,
     '__DUMP' => sub {
         Dump($_[0]);
     },
@@ -44,30 +45,6 @@ our %TORA_BUILTIN_FUNCTIONS = (
     },
     'stat' => sub {
         return File::stat::stat(@_);
-    },
-    'typeof' => sub {
-        my $v = shift;
-        my $ref = ref $v;
-        if ($ref) {
-            if ($ref eq 'ARRAY') {
-                'Array';
-            } elsif ($ref eq 'HASH') {
-                'Hash';
-            } elsif ($ref eq 'CODE') {
-                'Code';
-            } elsif ($ref eq 'Nana::Translator::Perl::Range') {
-                'Code';
-            } else {
-                die "[BUG] Unknown type : $ref";
-            }
-        } else {
-            my $flags = B::svref_2object(\$v)->FLAGS;
-            if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-                return "Int";
-            } else {
-                return "Str";
-            }
-        }
     },
     'eval' => sub {
         my $src = shift;
@@ -104,6 +81,9 @@ our %TORA_BUILTIN_CLASSES = (
         bless => sub { # self.bless($data)
             return Nana::Translator::Perl::Object->new($_[0], $_[1]);
         },
+        name => sub {
+            return $_[0]->name;
+        },
     },
     'Str' => {
         length => sub {
@@ -117,6 +97,13 @@ our %TORA_BUILTIN_CLASSES = (
         tora => sub {
             return to_tora($_[0]);
         },
+        class => sub {
+            if ($_[0]->isa("Nana::Translator::Perl::Object")) {
+                return $_[0]->class;
+            } else {
+                ...
+            }
+        },
     },
 );
 
@@ -129,6 +116,12 @@ sub typeof {
         return 'Hash';
     } elsif (!defined $stuff) {
         return 'Undef';
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::Range') {
+        'Range';
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::Object') {
+        return 'Object';
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::Class') {
+        return 'Class';
     } elsif (ref $stuff) {
         ...
     } else {

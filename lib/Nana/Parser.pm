@@ -13,7 +13,6 @@ use Sub::Name;
 # "" ''
 # #{ } in string literal
 # <<'...' <<"..."
-# method call
 # class call
 # -> { } lambda.
 # arguments with types
@@ -104,7 +103,7 @@ sub left_op {
             $ret = _node($op, $ret, $rhs);
         }
         return ($c, $ret);
-    },
+    }
 }
 
 sub nonassoc_op {
@@ -243,13 +242,13 @@ rule('statement', [
         # class Name [isa Parent] {}
         ($c) = match($c, 'class')
             or return;
-        ($c, my $name) = identifier($c)
-            or die "identifier expected after 'class' keyword";
+        ($c, my $name) = class_name($c)
+            or die "class name expected after 'class' keyword";
         my @base;
         if ((my $c2) = match($c, 'isa')) {
             $c = $c2;
-            ($c, my $base) = identifier($c)
-                or die "identifier expected after 'isa' keyword";
+            ($c, my $base) = class_name($c)
+                or die "class name expected after 'isa' keyword";
             push @base, $base;
         }
         ($c, my $block) = block($c)
@@ -677,18 +676,6 @@ rule('incdec', [
 
 rule('method_call', [
     sub {
-        my $c = shift;
-        ($c, my $object) = primary($c)
-            or return;
-        ($c) = match($c, '.')
-            or return;
-        ($c, my $method) = identifier($c)
-            or return;
-        ($c, my $param) = arguments($c)
-            or return;
-        return ($c, _node2('METHOD_CALL', $START, $object, $method, $param));
-    },
-    sub {
         # say()
         my $c = shift;
         ($c, my $lhs) = primary($c) or return;
@@ -703,9 +690,25 @@ rule('method_call', [
             or return;
         ($c, my $rhs) = primary($c)
             or return;
+        $rhs->[0] = 'IDENT' if $rhs->[0] eq 'PRIMARY_IDENT';
         ($c) = match($c, ']')
             or die "Unmatched bracket line $START";
         return ($c, _node('GETITEM', $lhs, $rhs));
+    },
+    sub {
+        my $c = shift;
+        ($c, my $object) = primary($c)
+            or return;
+        my $ret = $object;
+        while (my ($c2, $op) = match($c, [qr{^\.(?!\.)}, '.'])) {
+            $c = $c2;
+            ($c, my $rhs) = identifier($c)
+                or die "There is no identifier after '.' operator line $LINENO";
+            ($c, my $param) = arguments($c)
+                or return;
+            $ret = _node2('METHOD_CALL', $START, $ret, $rhs, $param);
+        }
+        return ($c, $ret);
     },
     \&primary
 ]);
@@ -773,8 +776,17 @@ rule('arguments', [
 rule('identifier', [
     sub {
         local $_ = shift;
-        s/^\s*//;
         s/^([A-Za-z_][A-Za-z0-9_]*)//
+            or return;
+        return if $KEYWORDS{$1} && $1 ne 'class'; # keyword is not a identifier
+        return ($_, _node('IDENT', $1));
+    }
+]);
+
+rule('class_name', [
+    sub {
+        local $_ = shift;
+        s/^([A-Za-z_][A-Za-z0-9_]*)(::[A-Za-z_][A-Za-z0-9_]*)*//
             or return;
         return if $KEYWORDS{$1}; # keyword is not a identifier
         return ($_, _node('IDENT', $1));
@@ -807,6 +819,16 @@ rule('primary', [
     },
     \&string,
     \&regexp,
+    sub {
+        my $c = shift;
+        ($c) = match($c, '${')
+            or return;
+        ($c, my $ret) = expression($c)
+            or return;
+        ($c) = match($c, '}')
+            or return;
+        ($c, _node("DEREF", $ret));
+    },
     sub {
         my $c = shift;
         ($c, my $ret) = _qw_literal($c)
@@ -855,6 +877,7 @@ rule('primary', [
         my $c = shift;
         ($c, my $ret) = identifier($c)
             or return;
+        $ret->[0] = "PRIMARY_IDENT";
         ($c, $ret);
     },
     sub {
@@ -886,6 +909,7 @@ rule('primary', [
             or return;
         my @content;
         while (my ($c2, $lhs) = assign_expression($c)) {
+            $lhs->[0] = 'IDENT' if $lhs->[0] eq 'PRIMARY_IDENT';
             push @content, $lhs;
             $c = $c2;
             ($c2) = match($c, '=>')
