@@ -104,8 +104,64 @@ our %TORA_BUILTIN_CLASSES = (
             return Nana::Translator::Perl::Object->new($_[0], $_[1]);
         },
     },
+    'Str' => {
+        length => sub {
+            return length $_[0];
+        },
+    },
+    'Object' => {
+        tora => sub {
+            return to_tora($_[0]);
+        },
+    },
 );
 
+sub typeof {
+    my $stuff = shift;
+
+    if (ref $stuff eq 'ARRAY') {
+        return 'Array';
+    } elsif (ref $stuff eq 'HASH') {
+        return 'Hash';
+    } elsif (!defined $stuff) {
+        return 'Undef';
+    } elsif (ref $stuff) {
+        ...
+    } else {
+        my $flags = B::svref_2object(\$stuff)->FLAGS;
+        # TODO: support NV class.
+        if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+            if ($flags & B::SVp_IOK) {
+                return "Int";
+            } else {
+                return "Double";
+            }
+        } else {
+            return "Str";
+        }
+    }
+}
+
+sub to_tora {
+    my $stuff = shift;
+    my $type = typeof $stuff;
+    if ($type eq 'Array') {
+        return '[' . join(',', map { to_tora($_) } @$stuff) . ']';
+    } elsif ($type eq 'Hash') {
+        my @x;
+        for (keys %$stuff) {
+            push @x, to_tora($_) . '=>' . to_tora($stuff->{$_});
+        }
+        return '{' . join(',', @x) . '}';
+    } elsif ($type eq 'Undef') {
+        return 'undef';
+    } elsif ($type eq 'Str') {
+        $stuff =~ s/'/\\'/g;
+        return "'" . $stuff . "'";
+    } else {
+        ...
+    }
+}
 
 1;
 

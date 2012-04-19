@@ -186,7 +186,8 @@ rule('program', [
         ($c, $ret);
     },
     sub {
-        return (shift, _node('NOP'));
+        my $c = shift;
+        return ($c, _node('NOP'));
     },
 ]);
 
@@ -230,6 +231,7 @@ rule('statement_list', [
             # there is no more statements, just return!
             return ($src, _node('STMTS', $ret));
         }
+        return ($src, _node('STMTS', $ret));
     }
 ]);
 
@@ -603,7 +605,8 @@ rule('unary', [
         my $c = shift;
         ($c, my $op) = match($c, '!', '~', '\\', '+', '-', '*')
             or return;
-        ($c, my $ex) = pow($c);
+        ($c, my $ex) = pow($c)
+            or return;
         return ($c, _node("UNARY$op", $ex));
     },
     \&pow

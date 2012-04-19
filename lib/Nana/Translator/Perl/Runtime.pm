@@ -47,6 +47,15 @@ sub tora_call_func {
     }
 }
 
+sub __tora_call_method_fallback {
+    my ($pkg, $klass, $klass_name, $methname, @args) = @_;
+    if (my $methbody = $TORA_BUILTIN_CLASSES{Object}->{$methname}) {
+        my @ret = $methbody->($klass, @args);
+        return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
+    }
+    die "Unknown method named $methname in $klass_name";
+}
+
 sub tora_call_method {
     my ($pkg, $klass, $methname, @args) = @_;
     if (my $klaas = $pkg->{$klass}) {
@@ -54,7 +63,7 @@ sub tora_call_method {
             my @ret = $methbody->(@args);
             return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
         } else {
-            die "Unknown method named $methname in $klass";
+            __tora_call_method_fallback($pkg, $klass, $klass, $methname, @args);
         }
     } else {
         # builtin methods
@@ -62,30 +71,52 @@ sub tora_call_method {
             if (my $methbody = $TORA_BUILTIN_CLASSES{Array}->{$methname}) {
                 return $methbody->($klass, @args);
             } else {
-                die "Unknown method $methname in Array";
+                __tora_call_method_fallback($pkg, $klass, 'Array', $methname, @args);
             }
         } elsif (ref $klass eq 'HASH') {
             if (my $methbody = $TORA_BUILTIN_CLASSES{Hash}->{$methname}) {
                 return $methbody->($klass, @args);
             } else {
-                die "Unknown method $methname in Hash";
+                __tora_call_method_fallback($pkg, $klass, 'Hash', $methname, @args);
             }
         } elsif (ref $klass eq 'Nana::Translator::Perl::Object') {
             if (my $methbody = $klass->get_method($methname)) {
-                return $methbody->(@args);
+                my @ret = $methbody->(@args);
+                return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
             } else {
-                die "Unknown method $methname in " . $klass->class->name;
+                __tora_call_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
             }
         } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
             if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
                 return $methbody->($klass, @args);
             } else {
-                die "Unknown method $methname in Class";
+                __tora_call_method_fallback($pkg, $klass, 'Class', $methname, @args);
+            }
+        } elsif (!ref $klass) {
+            # IV or NV
+            my $flags = B::svref_2object(\$klass)->FLAGS;
+            # TODO: support NV class.
+            if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+                if (my $methbody = $TORA_BUILTIN_CLASSES{Int}->{$methname}) {
+                    return $methbody->($klass, @args);
+                } else {
+                    __tora_call_method_fallback($pkg, $klass, 'Int', $methname, @args);
+                }
+            } else {
+                if (my $methbody = $TORA_BUILTIN_CLASSES{Str}->{$methname}) {
+                    return $methbody->($klass, @args);
+                } else {
+                    __tora_call_method_fallback($pkg, $klass, 'Str', $methname, @args);
+                }
             }
         } else {
             croak "Unknown class: $klass";
         }
     }
+}
+
+sub tora_call_method2 {
+    my ($pkg, $klass, $methname, $seen, @args) = @_;
 }
 
 sub tora_op_equal {
