@@ -140,7 +140,7 @@ sub match {
             }
         } else {
             my $qword = quotemeta($word);
-            if ($c =~ s/^$qword(?![&|+>=])//) {
+            if ($c =~ s/^$qword(?![&|>=])//) {
                 return ($c, $word);
             }
         }
@@ -589,7 +589,7 @@ rule('shift_expression', [
 ]);
 
 rule('additive_expression', [
-    left_op(\&term, [[qr{^-(?![>-])}, '-'], '+'])
+    left_op(\&term, [[qr{^-(?![a-z>-])}, '-'], [qr{^\+(?![\+])}, '+']])
 ]);
 
 rule('term', [
@@ -605,8 +605,12 @@ rule('regexp_match', [
 rule('unary', [
     sub {
         my $c = shift;
-        ($c, my $op) = match($c, '!', '~', '\\', '+', [qr{^-(?![>-])}, '-'], '*')
-            or return;
+        ($c, my $op) = match($c, '!', '~', '\\', , [qr{^\+(?![\+])}, '+'], [qr{^-(?![>a-z-])}, '-'], '*',
+                +[qr{^-e(?=[\( \t])}, "-e"],
+                +[qr{^-f(?=[\( \t])}, "-f"],
+                +[qr{^-x(?=[\( \t])}, "-x"],
+                +[qr{^-d(?=[\( \t])}, "-d"],
+            ) or return;
         ($c, my $ex) = pow($c)
             or return;
         return ($c, _node("UNARY$op", $ex));

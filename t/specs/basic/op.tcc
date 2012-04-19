@@ -26,3 +26,36 @@ say(3 + '4');
 7
 --- stderr
 
+===
+--- code
+my $i=0;
+say($i++);
+say($i++);
+--- stdout
+0
+1
+--- stderr
+
+===
+--- code
+my $i=3;
+say($i--);
+say($i--);
+say($i);
+--- stdout
+3
+2
+1
+--- stderr
+
+===
+--- code
+my $i=3;
+say(++$i);
+say(++$i);
+say($i);
+--- stdout
+4
+5
+5
+--- stderr

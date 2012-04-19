@@ -504,3 +504,14 @@ tora_call_func($TORA_PACKAGE, q{classA}, ())
 --- expected
 /hoge/xsmi
 
+===
+--- input
+++$i
+--- expected
+++($i)
+
+===
+--- input
+say(++$i);
+--- expected
+tora_call_func($TORA_PACKAGE, q{say}, ((++($i))))

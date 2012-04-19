@@ -223,6 +223,8 @@ sub tora_get_item :lvalue {
     my ($lhs, $rhs) = @_;
     if (ref $lhs eq 'ARRAY') {
         $lhs->[$rhs];
+    } elsif (ref $lhs eq 'HASH') {
+        $lhs->{$rhs};
     } else {
         ...;
         return $lhs;

@@ -7,6 +7,7 @@ use 5.10.0;
 use B;
 use Data::Dumper;
 use Devel::Peek;
+use Nana::Translator::Perl::RegexpMatched;
 
 our @EXPORT = qw(
     %TORA_BUILTIN_FUNCTIONS
@@ -108,6 +109,9 @@ our %TORA_BUILTIN_CLASSES = (
         length => sub {
             return length $_[0];
         },
+        match => sub {
+            return $_[0] =~ $_[1] ? Nana::Translator::Perl::RegexpMatched->new() : undef;
+        },
     },
     'Object' => {
         tora => sub {
@@ -158,7 +162,10 @@ sub to_tora {
     } elsif ($type eq 'Str') {
         $stuff =~ s/'/\\'/g;
         return "'" . $stuff . "'";
+    } elsif ($type eq 'Int') {
+        return $stuff;
     } else {
+        die "$type.tora is not implemented yet.";
         ...
     }
 }

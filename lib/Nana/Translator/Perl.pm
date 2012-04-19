@@ -72,6 +72,12 @@ sub _compile {
         }
     }
 
+    for my $op(qw(-f -d -x -e)) {
+        if ($node->[0] eq "UNARY$op") {
+            return "(($op(" . _compile($node->[2]).'))?JSON::true():JSON::false())';
+        }
+    }
+
     my %binops = (
         '<'  => 'tora_op_lt',
         '>'  => 'tora_op_gt',
@@ -168,7 +174,7 @@ sub _compile {
     } elsif ($node->[0] eq 'REGEXP') {
         my $re = $node->[2];
         $re =~ s!/!\\/!g;
-        return "/$re/$node->[3]";
+        return "qr/$re/$node->[3]";
     } elsif ($node->[0] eq 'STR') {
         return '"' . $node->[2] . '"';
     } elsif ($node->[0] eq 'HEREDOC') {
