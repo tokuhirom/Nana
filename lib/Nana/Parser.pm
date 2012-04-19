@@ -204,9 +204,10 @@ rule('statement_list', [
 
             # skip spaces.
             $src =~ s/^[ \t\f]*//s;
+            my $found_semicolon;
             # read next statement if found ';' or '\n'
             $src =~ s/^;//s
-                and next;
+                and $found_semicolon++;
             $src =~ s/^\n//s
                 and do {
                     ++$LINENO;
@@ -228,6 +229,7 @@ rule('statement_list', [
                         next LOOP;
                     }
                 };
+            next if $found_semicolon;
             # there is no more statements, just return!
             return ($src, _node('STMTS', $ret));
         }
