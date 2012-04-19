@@ -140,7 +140,7 @@ sub match {
             }
         } else {
             my $qword = quotemeta($word);
-            if ($c =~ s/^$qword(?![&|+>=-])//) {
+            if ($c =~ s/^$qword(?![&|+>=])//) {
                 return ($c, $word);
             }
         }
@@ -587,7 +587,7 @@ rule('shift_expression', [
 ]);
 
 rule('additive_expression', [
-    left_op(\&term, ['-', '+'])
+    left_op(\&term, [[qr{^-(?![>-])}, '-'], '+'])
 ]);
 
 rule('term', [
@@ -603,7 +603,7 @@ rule('regexp_match', [
 rule('unary', [
     sub {
         my $c = shift;
-        ($c, my $op) = match($c, '!', '~', '\\', '+', '-', '*')
+        ($c, my $op) = match($c, '!', '~', '\\', '+', [qr{^-(?![>-])}, '-'], '*')
             or return;
         ($c, my $ex) = pow($c)
             or return;
@@ -881,8 +881,10 @@ rule('primary', [
         while (my ($c2, $lhs) = assign_expression($c)) {
             push @content, $lhs;
             $c = $c2;
-            ($c) = match($c, '=>')
-                or die "Missing => in hash creation line $LINENO\n";
+            ($c2) = match($c, '=>')
+                or return;
+                # or die "Missing => in hash creation '@{[ substr($c, 10) ]}...' line $LINENO\n";
+            $c = $c2;
             ($c, my $rhs) = assign_expression($c);
             push @content, $rhs;
 
@@ -891,7 +893,8 @@ rule('primary', [
             $c = $c3;
         }
         ($c) = match($c, "}")
-            or die "} not found on hash at line $LINENO";
+            or return;
+            # or die "} not found on hash at line $LINENO";
         return ($c, _node2('{}', $START, \@content));
     },
     sub {
