@@ -34,11 +34,13 @@ our @EXPORT = qw(tora_call_func tora_call_method tora_op_equal
 sub tora_call_func {
     my ($pkg, $funname, @args) = @_;
     if (my $func = $pkg->{$funname}) {
-        return $func->(@args);
+        my @ret = $func->(@args);
+        return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
     } else {
         my $func = $TORA_BUILTIN_FUNCTIONS{$funname};
         if ($func) {
-            return $func->(@args);
+            my @ret = $func->(@args);
+            return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
         } else {
             die "Unknown function '$funname' at $TORA_FILENAME line @{[ (caller(0))[2] ]}\n";
         }
@@ -49,7 +51,8 @@ sub tora_call_method {
     my ($pkg, $klass, $methname, @args) = @_;
     if (my $klaas = $pkg->{$klass}) {
         if (my $methbody = $klaas->{$methname}) {
-            return $methbody->(@args);
+            my @ret = $methbody->(@args);
+            return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
         } else {
             die "Unknown method named $methname in $klass";
         }
@@ -80,7 +83,7 @@ sub tora_call_method {
                 die "Unknown method $methname in Class";
             }
         } else {
-            die "unknown class: $klass";
+            croak "Unknown class: $klass";
         }
     }
 }

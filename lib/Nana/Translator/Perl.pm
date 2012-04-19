@@ -145,13 +145,17 @@ sub _compile {
                 $ret .= _compile($_);
                 $ret .= "=shift;";
             }
+
+            # remove arguments from stack.
+            # for 'sub foo ($n) { }'
+            $ret .= 'undef;';
         }
-        $ret .= _compile($node->[4]) . ' }';
+        $ret .= _compile($node->[4]) . '; }';
         return $ret;
     } elsif ($node->[0] eq 'CALL') {
         if ($node->[2]->[0] eq 'IDENT') {
             my $ret = 'tora_call_func($TORA_PACKAGE, q{' . $node->[2]->[2] . '}, (';
-            $ret .= join(',', map { sprintf('%s', _compile($_)) } @{$node->[3]});
+            $ret .= join(',', map { sprintf('%s(%s)', $_->[0] eq 'CALL' ? 'scalar' : '', _compile($_)) } @{$node->[3]});
             $ret .= '))';
             return $ret;
         } else {

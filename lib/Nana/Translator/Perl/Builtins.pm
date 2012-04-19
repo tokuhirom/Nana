@@ -6,21 +6,31 @@ use parent qw(Exporter);
 use 5.10.0;
 use B;
 use Data::Dumper;
+use Devel::Peek;
 
 our @EXPORT = qw(
     %TORA_BUILTIN_FUNCTIONS
     %TORA_BUILTIN_CLASSES
 );
 
-our %TORA_BUILTIN_FUNCTIONS = (
-    'say' => sub {
-        for (@_) {
-            if (defined $_) {
-                say($_);
+sub __say {
+    for my $x (@_) {
+        if (defined $x) {
+            if (ref $x eq 'ARRAY') {
+                __say(@$x);
             } else {
-                say('undef');
+                say($x);
             }
+        } else {
+            say('undef');
         }
+    }
+}
+
+our %TORA_BUILTIN_FUNCTIONS = (
+    'say' => \&__say,
+    '__DUMP' => sub {
+        Dump($_[0]);
     },
     'p' => sub {
         warn Dumper(@_);

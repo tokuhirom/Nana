@@ -17,10 +17,6 @@ sub eeeeol { local $_ = shift; s/\n$//; $_ }
 spec_file('t/01_basic.dat');
 
 my $ofh;
-if ($ENV{REGEN}) {
-    open $ofh, '>', 't/01_basic.dat'
-        or die;
-}
 
 plan tests => blocks()*1;
 
@@ -43,6 +39,10 @@ sub test {
     $perl =~ s/\n$//;
 
     if ($ENV{REGEN}) {
+        if (!$ofh) {
+            open $ofh, '>', 't/01_basic.dat'
+                or die;
+        }
         print $ofh "===\n";
         print $ofh "--- input\n";
         print $ofh $src . "\n";
