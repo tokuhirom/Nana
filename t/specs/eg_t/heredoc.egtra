@@ -1,0 +1,20 @@
+print(<<'EOF');
+Hello, world.
+EOF
+
+say("OOOOO");
+
+print(<<'XXX', "DIVDIV\n", <<'YYY');
+Hello, world.
+XXX
+HogeHoge
+FugaFuga
+YYY
+
+__END__
+Hello, world.
+OOOOO
+Hello, world.
+DIVDIV
+HogeHoge
+FugaFuga

@@ -1,0 +1,42 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use utf8;
+use FindBin;
+use lib "$FindBin::Bin/../lib/";
+use 5.10.0;
+
+use Test::Differences;
+use Data::Dumper;
+use Nana::Parser;
+use Nana::Translator::Perl;
+use Capture::Tiny qw(capture);
+use Test::More;
+
+my $parser = Nana::Parser->new();
+my $compiler = Nana::Translator::Perl->new();
+
+my $fname = shift or die "Usage: $0 fname.egtra";
+open my $fh, '<', $fname
+    or die "Usage: $0";
+my $src = do { local $/; <$fh> };
+
+my $ast = $parser->parse($src);
+say(Dumper $ast) if $ENV{DUMP_AST};
+my $perl = $compiler->compile($ast);
+say($perl) if $ENV{DUMP_PERL};
+my ($out, $err) = capture {
+    eval $perl;
+    die $@ if $@;
+};
+
+my $expected = do {
+    my $x = $src;
+    $x =~ s/\A.*\n__END__\n(.+)\Z/$1/sm;
+    $x;
+};
+eq_or_diff($out, $expected, $fname);
+is($err, '', $fname);
+
+done_testing;
+

@@ -1,0 +1,8 @@
+say(-f "Build.PL");
+say(-f "Puild.PL");
+say(-f "t");
+
+__END__
+true
+false
+false

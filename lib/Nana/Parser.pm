@@ -490,6 +490,7 @@ rule('block', [
             die "Invalid __END__ found in block at line $LINENO";
         }
 
+
         ($src) = match($src, '}')
             or return;
         return ($src, $body || _node('NOP'));
@@ -784,7 +785,7 @@ rule('variable', [
     sub {
         my $src = shift;
         confess unless defined $src;
-        $src =~ s!^(\$[A-Za-z_]+)!!
+        $src =~ s!^(\$[A-Za-z_][A-Z0-9a-z_]*)!!
             or return;
         return ($src, _node('VARIABLE', $1));
     }

@@ -488,21 +488,21 @@ tora_call_func($TORA_PACKAGE, q{classA}, ())
 //
 
 --- expected
-//
+qr//
 
 ===
 --- input
 /\//
 
 --- expected
-/\//
+qr/\//
 
 ===
 --- input
 /hoge/xsmi
 
 --- expected
-/hoge/xsmi
+qr/hoge/xsmi
 
 ===
 --- input
@@ -515,3 +515,10 @@ tora_call_func($TORA_PACKAGE, q{classA}, ())
 say(++$i);
 --- expected
 tora_call_func($TORA_PACKAGE, q{say}, ((++($i))))
+
+===
+--- input
+my $i2;
+--- expected
+my ($i2)
+
