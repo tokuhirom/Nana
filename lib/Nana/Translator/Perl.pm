@@ -146,10 +146,17 @@ sub _compile {
         my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';
         $ret .= $pkg . "->{" . _compile($node->[2]) . "} = sub {\n";
         if ($node->[3]) {
-            for (@{$node->[3]}) {
-                $ret .= "my ";
-                $ret .= _compile($_);
-                $ret .= "=shift;";
+            for (my $i=0; $i<@{$node->[3]}; $i++) {
+                my $p = $node->[3]->[$i];
+                if ($p->[0] eq 'PARAMS_DEFAULT') {
+                    $ret .= "my ";
+                    $ret .= _compile($p->[2]);
+                    $ret .= "=\@_>0?shift \@_:" ._compile($p->[3]) .";";
+                } else {
+                    $ret .= "my ";
+                    $ret .= _compile($p);
+                    $ret .= "=shift;";
+                }
             }
 
             # remove arguments from stack.

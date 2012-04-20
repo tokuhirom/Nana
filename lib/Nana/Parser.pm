@@ -26,6 +26,7 @@ our $START;
 our $CACHE;
 our $MATCH;
 our $END;
+our $FILENAME;
 
 my @HEREDOC_BUFS;
 my @HEREDOC_MARKERS;
@@ -148,13 +149,14 @@ sub match {
 }
 
 sub parse {
-    my ($class, $src) = @_;
+    my ($class, $src, $fname) = @_;
     confess unless defined $src;
     local $Data::Dumper::Terse = 1;
     local $LINENO = 1;
     local $CACHE  = {};
     local $MATCH = 0;
     local $END;
+    local $FILENAME = $fname || '<eval>';
 
     my ($rest, $ret) = program($src);
     if (!$END && $rest =~ /[^\n \t]/) {
@@ -165,6 +167,10 @@ sub parse {
     }
     # warn $MATCH;
     $ret;
+}
+
+sub _err {
+    die "@_ at $FILENAME line $LINENO";
 }
 
 sub _node {
@@ -725,7 +731,7 @@ rule('parameters', [
         confess unless defined $src;
 
         ($src) = match($src, ")")
-            or die "Parse failed: missing ')'";
+            or die "Parse failed: missing ')' on subroutine parameters line $LINENO";
 
         return ($src, $ret);
     }
@@ -740,7 +746,15 @@ rule('parameter_list', [
 
         while (my ($src2, $var) = variable($src)) {
             $src = $src2;
-            push @$ret, $var;
+
+            if (my ($c2) = match($src, '=')) {
+                $src = $c2;
+                ($src, my $default) = primary($src)
+                    or _err "Missing primary expression after '=' in parametes";
+                push @$ret, _node("PARAMS_DEFAULT", $var, $default);
+            } else {
+                push @$ret, $var;
+            }
 
             (my $src3) = match($src, ',')
                 or return ($src, $ret);
