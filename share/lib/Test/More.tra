@@ -1,0 +1,122 @@
+class Test::Builder {
+    sub new() {
+        self.bless({
+            counter => 0,
+            failed => 0,
+        });
+    }
+    sub counter() { ${self}[counter] }
+    sub incr_counter() {
+        ${self}[counter] = ${self}[counter] + 1;
+    }
+    sub incr_failed() {
+        ${self}[failed] = ${self}[failed] + 1;
+    }
+    sub failed() {
+        return ${self}[failed];
+    }
+    sub ok($b, $msg=undef) {
+        if ($b) {
+            self.pass($msg);
+            return true;
+        } else {
+            self.fail($msg);
+            return false;
+        }
+    }
+    sub pass($msg=undef) {
+        self.incr_counter();
+        print("ok " + self.counter());
+        if ($msg!=undef) {
+            print(" - " + $msg);
+        }
+        print("\n");
+        return true;
+    }
+    sub fail($msg=undef) {
+        self.incr_counter();
+        print("not ok " + self.counter());
+        if ($msg!=undef) {
+            print(" - " + $msg);
+        }
+        print("\n");
+        self.incr_failed();
+        return false;
+    }
+    sub is($a, $b, $msg=undef) {
+        if ($a==$b) {
+            self.pass($msg);
+            return true;
+        } else {
+            self.incr_counter();
+            print("not ok " + self.counter());
+            if $msg != undef {
+                print(" - " + $msg);
+            }
+            print("\n");
+            say(" # got:      " + $a);
+            say(" # expected: " + $b);
+            self.incr_failed();
+            return false;
+        }
+    }
+    sub like($a, $b, $msg=undef) {
+        self.incr_counter();
+        if ($a.match($b)) {
+            print("ok " + self.counter());
+            if $msg!=undef {
+                print(" - " + $msg);
+            }
+            print("\n");
+            return true;
+        } else {
+            print("not ok " + self.counter());
+            if $msg!=undef {
+                print(" - " + $msg);
+            }
+            say(" # got:      " + $a);
+            say(" # expected: " + $b);
+            self.incr_failed();
+            return false;
+        }
+    }
+    sub note($msg) {
+        say("# " + $msg);
+    }
+    sub done_testing() {
+        say("1.." + self.counter());
+        if (self.counter() == 0) {
+            say('# No tests run!');
+        }
+        if (self.failed() > 0) {
+            # printf("# Looks like you failed %d test of %d.", self.failed, $counter);
+        }
+    }
+}
+
+my $BUILDER = Test::Builder.new();
+
+sub ok($b, $msg=undef) {
+    $BUILDER.ok($b, $msg);
+}
+
+sub fail($msg=undef) {
+    $BUILDER.fail($msg);
+}
+
+sub is($a, $b, $msg=undef) {
+    $BUILDER.is($a, $b, $msg);
+}
+
+sub like($a, $b, $msg=undef) {
+    $BUILDER.like($a, $b, $msg);
+}
+
+sub note($msg) {
+    $BUILDER.note($msg);
+}
+
+sub done_testing() {
+    $BUILDER.done_testing();
+}
+

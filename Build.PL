@@ -20,12 +20,17 @@ my $build = Module::Build->new(
         'Sub::Name' => '0',
         'Scalar::Util' => '0',
         'File::stat' => '0',
-        'Exporter'           => '5.58'
+        'Exporter'           => '5.58',
         'Getopt::Long::Descriptive' => 0,
+        'File::ShareDir' => '1.03',
     },
     no_index    => { 'directory' => [ 'inc', 't', 'xt' ] },
-    name        => 'Nana',
+    name        => 'nana',
+    dist_name   => 'nana',
     module_name => 'Nana::Parser',
+    share_dir => {
+        dist => [ 'share' ],
+    },
 
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? 't/ xt/' : 't/',
 
