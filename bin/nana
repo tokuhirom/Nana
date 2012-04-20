@@ -35,8 +35,9 @@ if (defined $opt->eval) {
 } elsif (@ARGV) {
     my $fname = shift @ARGV;
     open my $fh, '<', $fname;
-    my $src = $parser->parse(do { local $/; <$fh>; });
-    my $perl = $compiler->compile($src);
+    my $ast = $parser->parse(do { local $/; <$fh>; });
+    say(Dumper($ast)) if $opt->dtree;
+    my $perl = $compiler->compile($ast);
     if ($opt->compile_only) {
         print($perl);
         exit(0);
