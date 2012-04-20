@@ -147,7 +147,7 @@ sub _compile {
         my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
         $ret .= 'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';
-        $ret .= $pkg . "->{" . _compile($node->[2]) . "} = sub {\n";
+        $ret .= $pkg . "->{" . _compile($node->[2]) . "} = sub {;\n";
         if ($node->[3]) {
             for (my $i=0; $i<@{$node->[3]}; $i++) {
                 my $p = $node->[3]->[$i];
@@ -166,7 +166,11 @@ sub _compile {
             # for 'sub foo ($n) { }'
             $ret .= 'undef;';
         }
-        $ret .= _compile($node->[4]) . '; }';
+        my $block = _compile($node->[4]);
+        if ($block =~ qr!\A\{\s*\}\Z!) {
+            $block = '';
+        }
+        $ret .= $block . '; }';
         return $ret;
     } elsif ($node->[0] eq 'CALL') {
         if ($node->[2]->[0] eq 'IDENT' || $node->[2]->[0] eq 'PRIMARY_IDENT') {
@@ -200,17 +204,17 @@ sub _compile {
     } elsif ($node->[0] eq 'RETURN') {
         return 'return (' . _compile($node->[2]) . ');';
     } elsif ($node->[0] eq 'UNLESS') {
-        return 'unless (' . _compile($node->[2]) . ') {' . _compile($node->[3]) . '}';
+        return 'unless (' . _compile($node->[2]) . ')' . _compile($node->[3]);
     } elsif ($node->[0] eq 'IF') {
-        my $ret = 'if (' . _compile($node->[2]) . ') {' . _compile($node->[3]) . '}';
+        my $ret = 'if (' . _compile($node->[2]) . ')' . _compile($node->[3]);
         if ($node->[4]) {
             $ret .= _compile($node->[4]);
         }
         return $ret;
     } elsif ($node->[0] eq 'WHILE') {
-        return 'while (' . _compile($node->[2]) . ') {' . _compile($node->[3]) . '}';
+        return 'while (' . _compile($node->[2]) . ')' . _compile($node->[3]);
     } elsif ($node->[0] eq 'ELSIF') {
-        my $ret = ' elsif ('. _compile($node->[2]) . ') {' . _compile($node->[3]) . '}';
+        my $ret = ' elsif ('. _compile($node->[2]) . ')' . _compile($node->[3]);
         if ($node->[4]) {
             $ret .= _compile($node->[4]);
         }
@@ -257,7 +261,7 @@ sub _compile {
             if (@{$node->[3]}) {
                 $ret .= join(',', map { 'my ' . _compile($_) } @{$node->[3]});
             }
-            $ret .= '(ref($__tora_iteratee) eq "ARRAY" ? @{$__tora_iteratee} : ref($__tora_iteratee) eq "Nana::Translator::Perl::Range" ? $__tora_iteratee->list : $__tora_iteratee) {' . "\n". _compile($node->[4]) . '}';
+            $ret .= '(ref($__tora_iteratee) eq "ARRAY" ? @{$__tora_iteratee} : ref($__tora_iteratee) eq "Nana::Translator::Perl::Range" ? $__tora_iteratee->list : $__tora_iteratee) ' . "\n". _compile($node->[4]) . '';
             $ret .= '}';
         }
         return $ret;
@@ -269,9 +273,8 @@ sub _compile {
                 _compile($node->[3]),
             ';',
                 _compile($node->[4]),
-            ') {',
+            ')',
                 _compile($node->[5]), # block
-            '}'
         );
     } elsif ($node->[0] eq 'UNDEF') {
         return 'undef';
@@ -283,6 +286,8 @@ sub _compile {
         return 'JSON::true()';
     } elsif ($node->[0] eq 'DOUBLE') {
         return $node->[2];
+    } elsif ($node->[0] eq 'BLOCK') {
+        return '{' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'EXPRESSIONS') {
         die;
     } elsif ($node->[0] eq '{}') {

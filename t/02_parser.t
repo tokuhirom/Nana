@@ -18,7 +18,9 @@ eq_or_diff(
                 'SUB', 1,
                 [ 'IDENT', 1, 'foo' ],
                 [ map { [ 'VARIABLE', 1, $_ ] } qw($a $b $c) ],
-                [ 'STMTS', 1, [[ 'INT', 1, '1' ]]],
+                [BLOCK => 1,
+                    [ 'STMTS', 1, [[ 'INT', 1, '1' ]]],
+                ]
             ]
         ]
     ]
@@ -50,8 +52,10 @@ class Foo {
             'CLASS', 1,
             [ 'IDENT', 1, 'Foo' ],
             [],
-            ['STMTS', 1, [
-                [ 'SUB', 2, [ 'IDENT', 2, 'new' ], [ ], ['STMTS', 2, []] ]
+            [BLOCK => 1, [
+                'STMTS', 1, [
+                    [ 'SUB', 2, [ 'IDENT', 2, 'new' ], [ ], [BLOCK => 2, ['STMTS', 2, []]] ]
+                ]
             ]]
         ]
     ] ]
@@ -124,7 +128,9 @@ if 1 { }
                 '1',
             ],
             [
-                'STMTS', 1, [ ]
+                BLOCK => 1, [
+                    'STMTS', 1, [ ]
+                ]
             ],
             undef
         ]
@@ -142,11 +148,15 @@ if 1 { } else { }
                 '1',
             ],
             [
-                'STMTS', 1, [ ]
+                'BLOCK', 1, [
+                    'STMTS', 1, [ ]
+                ]
             ],
             [
                 'ELSE', 1, [
-                    'STMTS', 1, [ ]
+                    BLOCK => 1, [
+                        'STMTS', 1, [ ]
+                    ]
                 ]
             ]
         ]

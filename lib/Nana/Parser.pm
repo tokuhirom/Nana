@@ -519,7 +519,7 @@ rule('block', [
 
         ($src) = match($src, '}')
             or return;
-        return ($src, $body || _node('NOP'));
+        return ($src, $body ? _node2('BLOCK', $START, $body) : _node('NOP'));
     }
 ]);
 
