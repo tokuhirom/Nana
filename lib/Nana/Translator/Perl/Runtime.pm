@@ -16,16 +16,22 @@ use Carp qw(croak);
 use B;
 use JSON ();
 
+use File::ShareDir ();
+use File::Spec;
+
 our $TORA_SELF;
 our $TORA_FILENAME;
+our %TORA_INC;
 
-our @EXPORT = qw(tora_call_func tora_call_method tora_op_equal
+our @EXPORT = qw(tora_call_func tora_call_method
+    tora_op_equal tora_op_ne
     tora_op_lt tora_op_gt
     tora_op_le tora_op_ge
     tora_make_range
     tora_op_add tora_op_div
     tora_get_item
     tora_deref
+    tora_use
 );
 
 *true = *JSON::true;
@@ -140,6 +146,23 @@ sub tora_op_equal {
     }
 }
 
+sub tora_op_ne {
+    my ($lhs, $rhs) = @_;
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        # IV or NV
+        return $lhs != $rhs ? true() : false();
+    } elsif ($flags & B::SVp_POK) {
+        return $lhs ne $rhs ? true() : false();
+    } elsif (!defined $lhs) {
+        return defined $rhs;
+    } else {
+        use Devel::Peek;
+        Dump($lhs);
+        ...
+    }
+}
+
 sub tora_op_lt {
     my ($lhs, $rhs) = @_;
 
@@ -200,7 +223,12 @@ sub tora_op_add {
     if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
         return $lhs + $rhs;
     } elsif ($flags & B::SVp_POK) {
-        return $lhs . $rhs;
+        if (!defined $rhs) {
+            warn "use of uninitialized value in Str#+ at " . (caller(0))[1] . ' line ' . (caller(0))[2] . "\n";
+            return $lhs;
+        } else {
+            return $lhs . $rhs;
+        }
     } else {
         ...
     }
@@ -251,6 +279,52 @@ sub tora_deref {
     } else {
         die "You cannot dereference " . typeof($v);
     }
+}
+
+my @libdir = (
+    grep { defined $_ } (
+        eval { File::Spec->catfile(File::ShareDir::dist_dir('nana'), 'lib') },
+    )
+);
+sub tora_use {
+    my ($pkg, $klass, $import) = @_;
+    # TODO: $NANALIB
+    (my $path = $klass) =~ s!::!\/!g;
+    require Nana::Parser;
+    require Nana::Translator::Perl;
+    state $parser   = Nana::Parser->new();
+    state $compiler = Nana::Translator::Perl->new();
+    local $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE;
+    for my $libdir (@libdir) {
+        my $fname = "$libdir/$path.tra";
+        if (-f $fname) {
+            open(my $fh, '<', $fname)
+                or die "Cannot open module file $fname: $!";
+            my $src = do { local $/; <$fh> };
+            my $perl = eval {
+                my $ast = $parser->parse($src, $fname);
+                $compiler->compile($ast, 0, $fname);
+            };
+            if ($@) {
+                die "Compilation failed in use: $@";
+            }
+
+            eval $perl;
+            if ($@) {
+                die "Compilation failed in use(Phase 2): $@";
+            }
+
+            for my $key (keys %$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE) {
+                if ($pkg->{$key}) {
+                    warn "overriding $key at " . (caller(0))[1] . ' line ' . (caller(0))[2] . "\n";
+                }
+                $pkg->{$key} = $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE->{$key};
+            }
+
+            return;
+        }
+    }
+    die "Cannot find module $klass from:\n" . join("\n", @libdir);
 }
 
 1;

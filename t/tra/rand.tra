@@ -1,0 +1,27 @@
+use Test::More *;
+
+for 1..100 -> $i {
+    my $n = rand();
+    is(typeof($n), 'Double');
+    ok(0.0 <= $n);
+    ok($n <= 1.0);
+}
+
+# rand(int)
+for 1..100 -> $i {
+    my $n = rand(100);
+    is(typeof($n), 'Int');
+    ok(0 <= $n);
+    ok($n <= 100);
+}
+
+# rand(double)
+for 1..100 -> $i {
+    my $n = rand(100.0);
+    is(typeof($n), 'Double');
+    ok(0.0 <= $n);
+    ok($n <= 100.0);
+}
+
+done_testing();
+

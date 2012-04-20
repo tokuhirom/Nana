@@ -1,0 +1,5 @@
+say("OK")
+say("OK2")
+__END__
+OK
+OK2

@@ -1,0 +1,40 @@
+use Test::More *;
+
+my $first=4649;
+my $second=5963;
+
+sub foo($a, $b) {
+    is($a, 1);
+    is($b, 2);
+}
+
+sub bar($a, $b=4) {
+    $first = $a;
+    $second = $b;
+}
+
+foo(1,2);
+
+{
+    bar(3);
+    p($first);
+    is($first, 3);
+    is($second, 4);
+}
+
+{
+    $first = undef;
+    $second = undef;
+    bar(3);
+    p($first);
+    is($first, 3);
+    is($second, 4);
+}
+
+{
+    bar(3);
+    is($first, 3);
+    is($second, 4);
+}
+
+done_testing();

@@ -1,0 +1,17 @@
+use Test::More *;
+
+my ($err2) = try {
+    die "OK";
+};
+is($err2, "OK");
+
+my $err3;
+{
+    my $thing;
+    $err3 = try {
+        die "OOPS";
+    };
+}
+is($err3, "OOPS");
+
+done_testing();

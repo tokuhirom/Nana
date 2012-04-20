@@ -1,0 +1,28 @@
+use Test::More *;
+use Config *;
+
+ok(-f "SConstruct");
+ok(!-f "fjdaslkfjadslfjalf");
+ok(!-f "t");
+
+ok(!-d "SConstruct");
+ok(-d "t");
+ok(!-d "fjdaslkfjadslfjalf");
+
+ok(-e "SConstruct");
+ok(-e "t");
+ok(!-e "fjdaslkfjadslfjalf");
+
+is(-s "jiojklj", undef);
+is(-s "t/dat/filetest/foo", 8);
+
+my $bin = './bin/tora';
+my $conf = tora_config();
+if $conf['TORA_OS'] == 'MSWin32' {
+    $bin += '.exe';
+}
+is(-x $bin, true);
+is(-x __FILE__, false);
+
+done_testing();
+

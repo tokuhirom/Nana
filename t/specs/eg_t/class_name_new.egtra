@@ -1,0 +1,14 @@
+class Foo::Bar {
+    sub new() {
+        self.bless(3);
+    }
+    sub bar() {
+        ${self}
+    }
+}
+
+my $foo = Foo::Bar.new();
+say($foo.bar())
+
+__END__
+3

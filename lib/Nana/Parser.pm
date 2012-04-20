@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 use utf8;
+use 5.10.0;
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw(refaddr);
@@ -25,7 +26,6 @@ our $LINENO;
 our $START;
 our $CACHE;
 our $MATCH;
-our $END;
 our $FILENAME;
 
 my @HEREDOC_BUFS;
@@ -42,6 +42,7 @@ our @KEYWORDS = qw(
     undef
     true false
     self
+    use
     try die
 );
 my %KEYWORDS = map { $_ => 1 } @KEYWORDS;
@@ -54,8 +55,8 @@ sub rule {
     no strict 'refs';
     *{"@{[ __PACKAGE__ ]}::$name"} = subname $name, sub {
         local $START = $LINENO;
-        my $src = skip_ws(shift);
-        return if $END;
+        my ($src, $got_end) = skip_ws(shift);
+        return () if $got_end;
         if (my $cache = $CACHE->{$name}->{length($src)}) {
             return @$cache;
         }
@@ -126,7 +127,8 @@ sub match {
     my ($c, @words) = @_;
     croak "[BUG]" if @_ == 1;
     confess unless defined $c;
-    $c = skip_ws($c);
+    ($c, my $got_end) = skip_ws($c);
+    return if $got_end;
     for my $word (@words) {
         if (ref $word eq 'ARRAY') {
             if ($c =~ s/$word->[0]//) {
@@ -155,11 +157,10 @@ sub parse {
     local $LINENO = 1;
     local $CACHE  = {};
     local $MATCH = 0;
-    local $END;
     local $FILENAME = $fname || '<eval>';
 
-    my ($rest, $ret) = program($src);
-    if (!$END && $rest =~ /[^\n \t]/) {
+    my ($rest, $ret, $got_end) = program($src);
+    if (!$got_end && $rest =~ /[^\n \t]/ && ![skip_ws($rest)]->[1]) {
         die "Parse failed: " . Dumper($rest);
     }
     if (@HEREDOC_BUFS || @HEREDOC_MARKERS) {
@@ -186,7 +187,7 @@ sub _node2 {
 rule('program', [
     sub {
         my $c = shift;
-        ($c, my $ret) = statement_list($c)
+        ($c, my $ret, my $got_end) = statement_list($c)
             or return;
         ($c, $ret);
     },
@@ -198,24 +199,28 @@ rule('program', [
 
 rule('statement_list', [
     sub {
-        my $src = skip_ws(shift);
+        my ($src, $got_end) = skip_ws(shift);
+        return if $got_end;
 
         my $ret = [];
         LOOP: while (1) {
             my ($tmp, $stmt) = statement($src)
-                or return ($src, _node2('STMTS', $START, $ret));
+                or do {
+                    return ($src, _node2('STMTS', $START, $ret), $got_end)
+                };
             $src = $tmp;
             push @$ret, $stmt;
 
             # skip spaces.
             $src =~ s/^[ \t\f]*//s;
-            my $found_semicolon;
+            my $have_next_stmt;
             # read next statement if found ';' or '\n'
             $src =~ s/^;//s
-                and $found_semicolon++;
+                and $have_next_stmt++;
             $src =~ s/^\n//s
                 and do {
                     ++$LINENO;
+                    $have_next_stmt++;
                 START:
                     if (defined(my $marker = shift @HEREDOC_MARKERS)) {
                         while ($src =~ s/^(([^\n]+)(\n|$))//) {
@@ -227,18 +232,18 @@ rule('statement_list', [
                             }
                         }
                     } else {
-                        if ($src =~ s/^__END__\n.+//s) {
-                            $END++;
+                        if ($src =~ s/\A__END__\n.+//s) {
+                            $got_end++;
                             last LOOP;
                         }
                         next LOOP;
                     }
                 };
-            next if $found_semicolon;
+            next if $have_next_stmt;
             # there is no more statements, just return!
-            return ($src, _node('STMTS', $ret));
+            return ($src, _node('STMTS', $ret), $got_end);
         }
-        return ($src, _node('STMTS', $ret));
+        return ($src, _node('STMTS', $ret), $got_end);
     }
 ]);
 
@@ -268,6 +273,22 @@ rule('statement', [
         ($c, my $expression) = expression($c)
             or die "expression expected after 'return' keyword";
         return ($c, _node2('RETURN', $START, $expression));
+    },
+    sub {
+        my $c = shift;
+        ($c) = match($c, 'use')
+            or return;
+        ($c, my $klass) = class_name($c)
+            or _err "class name is required after 'use' keyword";
+        my $type;
+        if ((my $c2) = match($c, '*')) {
+            $c = $c2;
+            $type = '*';
+        } elsif (my ($c3, $primary) = primary($c)) {
+            $c = $c3;
+            $type = $primary;
+        }
+        return ($c, _node2('USE', $START, $klass, $type));
     },
     sub {
         my $c = shift;
@@ -439,13 +460,13 @@ std:
     s/^[ \t\f]// && goto std;
     s/^#[^\n]+\n/++$LINENO;''/ge && goto std;
     if (s/^__END__\n.+//s) {
-        $END++;
-        return '';
+        # $END++;
+        return ('', 1);
     }
     s/^\n/++$LINENO;''/e && goto std;
 
 
-    $_;
+    return ($_);
 }
 
 rule('expression', [
@@ -462,7 +483,7 @@ rule('expression', [
         }
 
         ($c, my $block) = block($c)
-            or die "expected block after sub in $name->[1]";
+            or _err "expected block after sub in $name->[1]";
         return ($c, _node2('SUB', $START, $name, $params, $block));
     },
     sub {
@@ -488,10 +509,10 @@ rule('block', [
         ($src) = match($src, '{')
             or return;
 
-        ($src, my $body) = statement_list($src)
+        ($src, my $body, my $got_end) = statement_list($src)
             or return;
 
-        if ($END) {
+        if ($got_end) {
             die "Invalid __END__ found in block at line $LINENO";
         }
 
@@ -677,7 +698,7 @@ rule('incdec', [
             or return;
         return ($c, _node2("PREDEC", $START, $object));
     },
-    \&method_call
+    \&method_call,
 ]);
 
 rule('method_call', [
@@ -800,7 +821,7 @@ rule('identifier', [
 rule('class_name', [
     sub {
         local $_ = shift;
-        s/^([A-Za-z_][A-Za-z0-9_]*)(::[A-Za-z_][A-Za-z0-9_]*)*//
+        s/^(([A-Za-z_][A-Za-z0-9_]*)(::[A-Za-z_][A-Za-z0-9_]*)*)//
             or return;
         return if $KEYWORDS{$1}; # keyword is not a identifier
         return ($_, _node('IDENT', $1));
@@ -886,6 +907,13 @@ rule('primary', [
         $c =~ s/^__LINE__//
             or return;
         return ($c, _node('INT', $LINENO));
+    },
+    sub {
+        my $c = shift;
+        ($c, my $ret) = class_name($c)
+            or return;
+        $ret->[0] = "PRIMARY_IDENT";
+        ($c, $ret);
     },
     sub {
         my $c = shift;
@@ -987,7 +1015,8 @@ rule('_qw_literal', [
         }->{$1};
         my $ret = [];
         while (1) {
-            $src = skip_ws($src);
+            ($src, my $got_end) = skip_ws($src);
+            return if $got_end;
             if ($src =~ s!^([^ \t\Q$close\E]+)!!) {
                 push @$ret, $1;
             } elsif ($src =~ s!^$close!!smx) {

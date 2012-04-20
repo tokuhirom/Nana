@@ -1,0 +1,30 @@
+use Test::More *;
+
+my $d = opendir('t/dat/dir');
+my $a = [];
+while (1) {
+    my $e = $d.read();
+    if (!$e) {
+        last;
+    }
+    $a.push($e);
+}
+ok($a[0]);
+if (!$a[0]) {
+    die("OOPS");
+}
+
+$a = $a.sort();
+is($a[0], '.');
+is($a[1], '..');
+is($a[2], 'x');
+is($a[3], 'y');
+is($a[4], 'z');
+
+my $p = [];
+for opendir('t/dat/dir') -> $e {
+    $p.push($e);
+}
+is($p.sort().tora(), '[".","..","x","y","z"]');
+
+done_testing();

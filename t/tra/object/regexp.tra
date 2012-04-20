@@ -1,0 +1,51 @@
+use Test::More *;
+
+my $re = /foo/x;
+is(typeof($re), 'Regexp');
+is($re.flags, 8);
+is($re.flags, Regexp.EXPANDED);
+is(//i.flags, Regexp.IGNORECASE);
+
+# global
+is("Foo::Bar::Baz".replace(/::/g, '/'), 'Foo/Bar/Baz');
+# non-global
+is("Foo::Bar::Baz".replace(/::/, '/'),  'Foo/Bar::Baz');
+
+# ignorecse flag
+is("foo".replace(/OO/, '/'),   'foo');
+is("foo".replace(/OO/i, '/'),  'f/');
+is("foo".match(/OO/i), true);
+is("foo".match(/OO/), false);
+
+# replace with string
+is("foo".replace('oo', 'pp'), 'fpp');
+
+# match with string
+is("foo".match('oo'), true);
+is("foo".match('OO'), false);
+
+{
+    my $m = "ablacadabla".match(/(da)bla/);
+    is($m[0], 'dabla');
+    is($m[1], 'da');
+    is($m[2], undef);
+}
+{
+    my $m = "ablacadabla".match(/(da)/);
+    is($m[5096], undef);
+}
+
+is(Regexp.quotemeta("f.o"), 'f\\.o');
+
+note('s option(DOTALL)'); {
+    ok("hogehogeabXabhogehoge".match(qr{ab.ab}));
+    ok(!"hogehogeab\nabhogehoge".match(qr{ab.ab}));
+    ok("hogehogeab\nabhogehoge".match(qr{ab.ab}s));
+}
+
+note('m option'); {
+    ok(!"hoge\nhege".match(qr{^hege}));
+    ok("hoge\nhege".match(qr{^hege}m));
+}
+
+done_testing();

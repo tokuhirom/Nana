@@ -26,7 +26,7 @@ sub compile {
             'use utf8;',
             'use Nana::Translator::Perl::Runtime;',
             'use JSON;',
-            'my $TORA_PACKAGE;',
+            '$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE = my $TORA_PACKAGE = {};',
             'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         ) . "\n";
     }
@@ -46,7 +46,7 @@ sub _compile {
         -
         >> <<
         lt gt le ge
-        != <=> eq ne cmp ~~
+        <=> eq ne cmp ~~
         &
         | ^
         &&
@@ -84,6 +84,7 @@ sub _compile {
         '<=' => 'tora_op_le',
         '>=' => 'tora_op_ge',
         '==' => 'tora_op_equal',
+        '!=' => 'tora_op_ne',
         '..' => 'tora_make_range',
         '+'  => 'tora_op_add',
         '/'  => 'tora_op_div',
@@ -136,6 +137,8 @@ sub _compile {
         return $ret;
     } elsif ($node->[0] eq 'GETITEM') {
         return 'tora_get_item(' . _compile($node->[2]) . ',' . _compile($node->[3]) .')';
+    } elsif ($node->[0] eq 'USE') {
+        return 'tora_use($TORA_PACKAGE,' . _compile($node->[2]) . ',' . ($node->[3] eq '*' ? 'q{*}' : _compile($node->[3])) . ')';
     } elsif ($node->[0] eq 'DO') {
         my $ret = "do {\n";
         $ret .= _compile($node->[2]) . '}';
@@ -175,7 +178,7 @@ sub _compile {
             die "Compilation failed.";
         }
     } elsif ($node->[0] eq 'PRIMARY_IDENT') {
-        return '($TORA_PACKAGE->{' . $node->[2] . '} || die qq{Unknown stuff naemd ' . $node->[2] . '})';
+        return '($TORA_PACKAGE->{q!' . $node->[2] . '!} || die qq{Unknown stuff naemd ' . $node->[2] . '})';
     } elsif ($node->[0] eq 'IDENT') {
         return 'q{' . $node->[2] . '}';
     } elsif ($node->[0] eq 'DEREF') {

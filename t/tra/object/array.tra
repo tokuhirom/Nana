@@ -1,0 +1,36 @@
+use Test::More *;
+
+# join
+is([1,2,3].join(' '), '1 2 3');
+
+# map
+my $inner = [];
+my $ret = [1,2,3].map(-> $n {
+    $inner.push($n);
+    $n*2;
+});
+is($ret.tora(), '[2,4,6]');
+
+# map, $_
+{
+    my $inner = [];
+    [1,2,3].map(-> {
+        $inner.push($_);
+    });
+    is($inner.tora(), '[1,2,3]');
+}
+
+note("out-of-range"); {
+    my $a = [];
+    is($a[0], undef);
+    is($a[100], undef);
+};
+
+# grep
+note("grep"); {
+    my $a = [1,2,3,4,5];
+    is($a.grep(-> { $_ % 2 == 0 }).tora(), [2,4].tora());
+    is(["hoge", "fuga", "hage"].grep(/^h/).tora(), ["hoge", "hage"].tora());
+}
+
+done_testing();
