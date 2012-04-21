@@ -10,6 +10,7 @@ use Devel::Peek;
 use Nana::Translator::Perl::RegexpMatched;
 use Nana::Translator::Perl::Class;
 use Carp;
+use Cwd;
 
 our @EXPORT = qw(
     %TORA_BUILTIN_FUNCTIONS
@@ -35,6 +36,7 @@ sub __say {
 our %TORA_BUILTIN_FUNCTIONS = (
     'say' => \&__say,
     'typeof' => \&typeof,
+    getcwd => \&Cwd::getcwd,
     '__DUMP' => sub {
         Dump($_[0]);
     },

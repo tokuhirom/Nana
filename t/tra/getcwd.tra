@@ -1,5 +1,5 @@
 use Test::More *;
 
-like(getcwd(), /tora/);
+like(getcwd(), /Nana/i);
 
 done_testing();

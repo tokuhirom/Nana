@@ -81,16 +81,17 @@ sub tora_call_method {
     local $Nana::Translator::Perl::Runtime::TORA_SELF = $klass;
 
     if (my $klaas = $pkg->{$klass}) {
-        # XXX WHO CAN CALL THIS PATH?
-        if (my $methbody = $klaas->{$methname}) {
-            return __call($methbody, \@args);
-        } else {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
-                my @ret = $methbody->(@args);
-                return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
-            }
-            __tora_call_method_fallback($pkg, $klass, $klass, $methname, @args);
-        }
+        die "XXX WHO CAN CALL THIS PATH?";
+
+#       if (my $methbody = $klaas->{$methname}) {
+#           return __call($methbody, \@args);
+#       } else {
+#           if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
+#               my @ret = $methbody->(@args);
+#               return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
+#           }
+#           __tora_call_method_fallback($pkg, $klass, $klass, $methname, @args);
+#       }
     } else {
         # builtin methods
         if (ref $klass eq 'ARRAY') {

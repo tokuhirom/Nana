@@ -12,5 +12,5 @@ Foo.new();
 
 ok(1);
 
-done_testing;
+done_testing();
 
