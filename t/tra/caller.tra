@@ -10,6 +10,7 @@ sub bar () {
 
 sub baz () {
     is(typeof(caller(0)), "Caller");
+    is(typeof(caller(0).code()), "Code");
     is(caller(0).code().package(), "main");
 
     is(typeof(caller(0).code()), "Code");

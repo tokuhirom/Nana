@@ -20,12 +20,14 @@ sub compile {
     my $res = '';
     unless ($no_header) {
         $res .= join('',
+            'package main;',
             'use strict;',
             'use warnings;',
             'use warnings FATAL => "recursion";',
             'use utf8;',
             'use Nana::Translator::Perl::Runtime;',
             'use JSON;',
+            'use Sub::Name;',
             '$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE = my $TORA_PACKAGE = {};',
             'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         ) . "\n";
@@ -45,8 +47,7 @@ sub _compile {
         * % x
         -
         >> <<
-        lt gt le ge
-        <=> eq ne cmp ~~
+        <=> ~~
         &
         | ^
         &&
@@ -147,7 +148,7 @@ sub _compile {
         my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
         $ret .= 'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';
-        $ret .= $pkg . "->{" . _compile($node->[2]) . "} = sub {;\n";
+        $ret .= $pkg . "->{" . _compile($node->[2]) . "} = subname(" . _compile($node->[2]) .", sub {;\n";
         if ($node->[3]) {
             for (my $i=0; $i<@{$node->[3]}; $i++) {
                 my $p = $node->[3]->[$i];
@@ -170,7 +171,7 @@ sub _compile {
         if ($block =~ qr!\A\{\s*\}\Z!) {
             $block = '';
         }
-        $ret .= $block . '; }';
+        $ret .= $block . '; })';
         return $ret;
     } elsif ($node->[0] eq 'CALL') {
         if ($node->[2]->[0] eq 'IDENT' || $node->[2]->[0] eq 'PRIMARY_IDENT') {
@@ -282,6 +283,10 @@ sub _compile {
         return 'JSON::false()';
     } elsif ($node->[0] eq 'SELF') {
         return '($Nana::Translator::Perl::Runtime::TORA_SELF || die "Do not call self out of class.")';
+    } elsif ($node->[0] eq '__FILE__') {
+        return '__FILE__';
+    } elsif ($node->[0] eq '__LINE__') {
+        return '__LINE__';
     } elsif ($node->[0] eq 'TRUE') {
         return 'JSON::true()';
     } elsif ($node->[0] eq 'DOUBLE') {

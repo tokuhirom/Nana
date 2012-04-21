@@ -44,6 +44,7 @@ our @KEYWORDS = qw(
     self
     use
     try die
+    __FILE__ __LINE__
 );
 my %KEYWORDS = map { $_ => 1 } @KEYWORDS;
 
@@ -171,7 +172,7 @@ sub parse {
 }
 
 sub _err {
-    die "@_ at $FILENAME line $LINENO";
+    die "@_ at $FILENAME line $LINENO\n";
 }
 
 sub _node {
@@ -387,7 +388,7 @@ rule('statement', [
             or return;
         ($c, my $expression) = expression($c)
             or die "expression required after postfix-if statement";
-        return ($c, _node2('IF', $START, $expression, $block, undef));
+        return ($c, _node2('IF', $START, $expression, _node('BLOCK', $block), undef));
     },
     sub {
         # foo if bar
@@ -398,10 +399,10 @@ rule('statement', [
             or return;
         ($c, my $expression) = expression($c)
             or die "expression required after postfix-if statement";
-        return ($c, _node2('UNLESS', $START, $expression, $block, undef));
+        return ($c, _node2('UNLESS', $START, $expression, _node('BLOCK', $block), undef));
     },
     sub {
-        # foo if bar
+        # foo for bar
         my $c = shift;
         ($c, my $block) = expression($c)
             or return;
@@ -409,7 +410,7 @@ rule('statement', [
             or return;
         ($c, my $expression) = expression($c)
             or die "expression required after postfix-if statement";
-        return ($c, _node2('FOREACH', $START, $expression, [], $block));
+        return ($c, _node2('FOREACH', $START, $expression, [], _node('BLOCK', $block)));
     },
     sub {
         # foo while bar
@@ -420,7 +421,7 @@ rule('statement', [
             or return;
         ($c, my $expression) = expression($c)
             or die "expression required after postfix-if statement";
-        return ($c, _node2('WHILE', $START, $expression, $block));
+        return ($c, _node2('WHILE', $START, $expression, _node('BLOCK', $block)));
     },
     \&expression,
     \&block,
@@ -616,7 +617,7 @@ rule('shift_expression', [
 ]);
 
 rule('additive_expression', [
-    left_op(\&term, [[qr{^-(?![a-z>-])}, '-'], [qr{^\+(?![\+])}, '+']])
+    left_op(\&term, [[qr{^-(?![=a-z>-])}, '-'], [qr{^\+(?![\+=])}, '+']])
 ]);
 
 rule('term', [
@@ -632,7 +633,7 @@ rule('regexp_match', [
 rule('unary', [
     sub {
         my $c = shift;
-        ($c, my $op) = match($c, '!', '~', '\\', , [qr{^\+(?![\+])}, '+'], [qr{^-(?![>a-z-])}, '-'], '*',
+        ($c, my $op) = match($c, '!', '~', '\\', , [qr{^\+(?![\+=])}, '+'], [qr{^-(?![=>a-z-])}, '-'], '*',
                 +[qr{^-e(?=[\( \t])}, "-e"],
                 +[qr{^-f(?=[\( \t])}, "-f"],
                 +[qr{^-x(?=[\( \t])}, "-x"],
@@ -703,28 +704,8 @@ rule('incdec', [
 
 rule('method_call', [
     sub {
-        # say()
         my $c = shift;
-        ($c, my $lhs) = primary($c) or return;
-        ($c, my $args) = arguments($c) or return;
-        return ($c, _node('CALL', $lhs, $args));
-    },
-    sub {
-        # $thing[$n]
-        my $c = shift;
-        ($c, my $lhs) = primary($c) or return;
-        ($c) = match($c, '[')
-            or return;
-        ($c, my $rhs) = primary($c)
-            or return;
-        $rhs->[0] = 'IDENT' if $rhs->[0] eq 'PRIMARY_IDENT';
-        ($c) = match($c, ']')
-            or die "Unmatched bracket line $START";
-        return ($c, _node('GETITEM', $lhs, $rhs));
-    },
-    sub {
-        my $c = shift;
-        ($c, my $object) = primary($c)
+        ($c, my $object) = funcall($c)
             or return;
         my $ret = $object;
         while (my ($c2, $op) = match($c, [qr{^\.(?!\.)}, '.'])) {
@@ -736,6 +717,30 @@ rule('method_call', [
             $ret = _node2('METHOD_CALL', $START, $ret, $rhs, $param);
         }
         return ($c, $ret);
+    },
+    \&funcall
+]);
+
+rule('funcall', [
+    sub {
+        # $thing[$n]
+        my $c = shift;
+        ($c, my $lhs) = primary($c) or return;
+        ($c) = match($c, '[')
+            or return;
+        ($c, my $rhs) = expression($c)
+            or return;
+        $rhs->[0] = 'IDENT' if $rhs->[0] eq 'PRIMARY_IDENT';
+        ($c) = match($c, ']')
+            or die "Unmatched bracket line $START";
+        return ($c, _node('GETITEM', $lhs, $rhs));
+    },
+    sub {
+        # say()
+        my $c = shift;
+        ($c, my $lhs) = primary($c) or return;
+        ($c, my $args) = arguments($c) or return;
+        return ($c, _node('CALL', $lhs, $args));
     },
     \&primary
 ]);
@@ -801,8 +806,9 @@ rule('arguments', [
             $src = $c3;
         }
 
-        ($src) = match($src, ")")
-            or die "Parse failed: missing ')' in argument parsing. line $LINENO";
+        my ($src2) = match($src, ")")
+            or _err "Parse failed: missing ')' in argument parsing: '" . substr($src, 0, 20) . q{...'};
+        $src = $src2;
 
         return ($src, \@args);
     }
@@ -981,7 +987,7 @@ rule('primary', [
     },
     sub {
         my $c = shift;
-        ($c, my $word) = match($c, 'undef', 'true', 'false', 'self')
+        ($c, my $word) = match($c, 'undef', 'true', 'false', 'self', '__FILE__', '__LINE__')
             or return;
         return ($c, _node2(uc($word), $START));
     },

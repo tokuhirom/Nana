@@ -18,12 +18,14 @@ my ($opt, $usage) = describe_options(
 );
 print($usage) if $opt->help;
 
+package Nana::Command;
+
 my $parser = Nana::Parser->new;
 my $compiler = Nana::Translator::Perl->new();
 if (defined $opt->eval) {
     my $ast = $parser->parse($opt->eval);
     say(Dumper($ast)) if $opt->dtree;
-    my $perl = $compiler->compile($ast);
+    my $perl = $compiler->compile($ast, 0, '<eval>');
     if ($opt->compile_only) {
         say($perl);
         exit(0);
@@ -37,7 +39,7 @@ if (defined $opt->eval) {
     open my $fh, '<', $fname;
     my $ast = $parser->parse(do { local $/; <$fh>; });
     say(Dumper($ast)) if $opt->dtree;
-    my $perl = $compiler->compile($ast);
+    my $perl = $compiler->compile($ast, 0, $fname);
     if ($opt->compile_only) {
         print($perl);
         exit(0);

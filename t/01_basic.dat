@@ -16,14 +16,14 @@ tora_call_func($TORA_PACKAGE, q{say}, (('hoho
 foo() if bar()
 
 --- expected
-if (tora_call_func($TORA_PACKAGE, q{bar}, ()))tora_call_func($TORA_PACKAGE, q{foo}, ())
+if (tora_call_func($TORA_PACKAGE, q{bar}, ())){tora_call_func($TORA_PACKAGE, q{foo}, ())}
 
 ===
 --- input
 foo() unless bar()
 
 --- expected
-unless (tora_call_func($TORA_PACKAGE, q{bar}, ()))tora_call_func($TORA_PACKAGE, q{foo}, ())
+unless (tora_call_func($TORA_PACKAGE, q{bar}, ())){tora_call_func($TORA_PACKAGE, q{foo}, ())}
 
 ===
 --- input
@@ -32,14 +32,14 @@ foo() for bar()
 --- expected
 {my $__tora_iteratee = (tora_call_func($TORA_PACKAGE, q{bar}, ()));
 for (ref($__tora_iteratee) eq "ARRAY" ? @{$__tora_iteratee} : ref($__tora_iteratee) eq "Nana::Translator::Perl::Range" ? $__tora_iteratee->list : $__tora_iteratee) 
-tora_call_func($TORA_PACKAGE, q{foo}, ())}
+{tora_call_func($TORA_PACKAGE, q{foo}, ())}}
 
 ===
 --- input
 foo() while bar()
 
 --- expected
-while (tora_call_func($TORA_PACKAGE, q{bar}, ()))tora_call_func($TORA_PACKAGE, q{foo}, ())
+while (tora_call_func($TORA_PACKAGE, q{bar}, ())){tora_call_func($TORA_PACKAGE, q{foo}, ())}
 
 ===
 --- input
@@ -53,36 +53,36 @@ tora_op_add(1,2)
 sub foo { 4 }
 
 --- expected
-local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = sub {;
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
 {4;
-}; }
+}; })
 
 ===
 --- input
 sub foo { 3+2 }
 
 --- expected
-local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = sub {;
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
 {tora_op_add(3,2);
-}; }
+}; })
 
 ===
 --- input
 sub foo($var) { 3+2 }
 
 --- expected
-local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = sub {;
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
 my $var=shift;undef;{tora_op_add(3,2);
-}; }
+}; })
 
 ===
 --- input
 sub foo($var, $boo) { 3+2 }
 
 --- expected
-local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = sub {;
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
 my $var=shift;my $boo=shift;undef;{tora_op_add(3,2);
-}; }
+}; })
 
 ===
 --- input
@@ -90,8 +90,8 @@ class Foo { sub new() { } }
 
 --- expected
 {my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},+{}));
-{local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = sub {;
-undef; };
+{local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = subname(q{new}, sub {;
+undef; });
 };}
 
 ===
@@ -100,8 +100,8 @@ class Foo isa Bar { sub new() { } }
 
 --- expected
 {my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},+{}));BEGIN{extends 'q{Bar}';}
-{local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = sub {;
-undef; };
+{local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = subname(q{new}, sub {;
+undef; });
 };}
 
 ===
@@ -296,9 +296,9 @@ sub hello($name) {
 }
 
 --- expected
-local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{hello}} = sub {;
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{hello}} = subname(q{hello}, sub {;
 my $name=shift;undef;{return (tora_op_add("Hello, ",$name));
-}; }
+}; })
 
 ===
 --- input

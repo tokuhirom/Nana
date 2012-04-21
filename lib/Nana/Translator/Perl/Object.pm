@@ -8,9 +8,14 @@ sub new {
     bless {klass => $klass, data => $data}, $class;
 }
 
+sub data {
+    my $self = shift;
+    return $self->{data};
+}
+
 sub get_method {
     my ($self, $name) = @_;
-    return $self->{klass}->{$name};
+    return $self->{klass}->get_method($name);
 }
 
 sub class {

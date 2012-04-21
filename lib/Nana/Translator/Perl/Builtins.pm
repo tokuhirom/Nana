@@ -8,11 +8,15 @@ use B;
 use Data::Dumper;
 use Devel::Peek;
 use Nana::Translator::Perl::RegexpMatched;
+use Nana::Translator::Perl::Class;
+use Carp;
 
 our @EXPORT = qw(
     %TORA_BUILTIN_FUNCTIONS
     %TORA_BUILTIN_CLASSES
 );
+
+our %TORA_BUILTIN_CLASSES;
 
 sub __say {
     for my $x (@_) {
@@ -60,16 +64,77 @@ our %TORA_BUILTIN_FUNCTIONS = (
     'open' => sub {
         ...
     },
+    'caller' => do {
+        my $class = Nana::Translator::Perl::Class->new(
+            'Caller'
+        );
+        $class->add_method(
+            'package' => sub {
+            warn "PKG";
+                $_[0]->[0];
+            }
+        );
+        $class->add_method(
+            'code' => sub {
+                return $Nana::Translator::Perl::Runtime::TORA_SELF->data->[0];
+            }
+        );
+        sub {
+            my @stack = @Nana::Translator::Perl::Runtime::CALLER_STACK;
+            pop @stack; # ignore current stack
+            if (@_==1) {
+                my $need = shift;
+                my $n = 0;
+                for my $caller (reverse @stack) {
+                    if ($n == $need) {
+                        return Nana::Translator::Perl::Object->new(
+                            $class,
+                            $caller
+                        );
+                    }
+                    $n++;
+                }
+                return undef;
+            } else {
+                my @ret;
+                for my $caller (reverse @stack) {
+                    push @ret, Nana::Translator::Perl::Object->new(
+                        $class,
+                        $caller
+                    );
+                }
+                return \@ret;
+            }
+        },
+    },
 );
 
-our %TORA_BUILTIN_CLASSES = (
+%TORA_BUILTIN_CLASSES = (
+    'Code' => {
+        package => sub {
+            my $code = shift;
+            my $obj = B::svref_2object($code);
+            return $obj->GV->STASH->NAME;
+        },
+        name => sub {
+            my $code = shift;
+            my $obj = B::svref_2object($code);
+            return $obj->GV->NAME;
+        },
+    },
     'Array' => {
-        push => sub {
-            CORE::push(@{$_[0]}, $_[1]);
-            return $_[0];
+        push => sub { CORE::push(@{$_[0]}, $_[1]); return $_[0]; },
+        pop => sub { return CORE::pop(@{$_[0]}); },
+        shift => sub { return CORE::shift(@{$_[0]}); },
+        unshift => sub { CORE::unshift(@{$_[0]}, $_[1]); return $_[0]; },
+        reverse => sub {
+            return [reverse @{$_[0]}];
         },
         size => sub {
             return 0+@{$_[0]};
+        },
+        sort => sub {
+            return [sort @{$_[0]}];
         },
     },
     'Hash' => {
@@ -117,11 +182,13 @@ sub typeof {
     } elsif (!defined $stuff) {
         return 'Undef';
     } elsif (ref $stuff eq 'Nana::Translator::Perl::Range') {
-        'Range';
+        return 'Range';
     } elsif (ref $stuff eq 'Nana::Translator::Perl::Object') {
-        return 'Object';
+        return $stuff->class->name;
     } elsif (ref $stuff eq 'Nana::Translator::Perl::Class') {
         return 'Class';
+    } elsif (ref $stuff eq 'CODE') {
+        return 'Code';
     } elsif (ref $stuff) {
         ...
     } else {

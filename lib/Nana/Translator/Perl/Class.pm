@@ -13,5 +13,16 @@ sub name {
     return $self->{__tora_name};
 }
 
+sub get_method {
+    my ($self, $name) = @_;
+    return $self->{$name};
+}
+
+sub add_method {
+    my ($self, $name, $code) = @_;
+    $self->{$name} = $code;
+    undef;
+}
+
 1;
 

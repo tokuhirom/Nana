@@ -37,11 +37,24 @@ our @EXPORT = qw(tora_call_func tora_call_method
 *true = *JSON::true;
 *false = *JSON::false;
 
+our @CALLER_STACK;
+
+sub __call {
+    my ($func, $args) = @_;
+
+    local @CALLER_STACK = @CALLER_STACK;
+    push @CALLER_STACK, [
+        $func
+    ];
+
+    my @ret = $func->(@$args);
+    return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
+}
+
 sub tora_call_func {
     my ($pkg, $funname, @args) = @_;
     if (my $func = $pkg->{$funname}) {
-        my @ret = $func->(@args);
-        return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
+        return __call($func, \@args);
     } else {
         my $func = $TORA_BUILTIN_FUNCTIONS{$funname};
         if ($func) {
@@ -55,20 +68,22 @@ sub tora_call_func {
 
 sub __tora_call_method_fallback {
     my ($pkg, $klass, $klass_name, $methname, @args) = @_;
+    # call 'Object'
     if (my $methbody = $TORA_BUILTIN_CLASSES{Object}->{$methname}) {
         my @ret = $methbody->($klass, @args);
         return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
     }
-    die "Unknown method named $methname in $klass_name";
+    croak "Unknown method named $methname in $klass_name";
 }
 
 sub tora_call_method {
     my ($pkg, $klass, $methname, @args) = @_;
     local $Nana::Translator::Perl::Runtime::TORA_SELF = $klass;
+
     if (my $klaas = $pkg->{$klass}) {
+        # XXX WHO CAN CALL THIS PATH?
         if (my $methbody = $klaas->{$methname}) {
-            my @ret = $methbody->(@args);
-            return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
+            return __call($methbody, \@args);
         } else {
             if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
                 my @ret = $methbody->(@args);
@@ -84,6 +99,12 @@ sub tora_call_method {
             } else {
                 __tora_call_method_fallback($pkg, $klass, 'Array', $methname, @args);
             }
+        } elsif (ref $klass eq 'CODE') {
+            if (my $methbody = $TORA_BUILTIN_CLASSES{Code}->{$methname}) {
+                return $methbody->($klass, @args);
+            } else {
+                __tora_call_method_fallback($pkg, $klass, 'Code', $methname, @args);
+            }
         } elsif (ref $klass eq 'HASH') {
             if (my $methbody = $TORA_BUILTIN_CLASSES{Hash}->{$methname}) {
                 return $methbody->($klass, @args);
@@ -92,14 +113,13 @@ sub tora_call_method {
             }
         } elsif (ref $klass eq 'Nana::Translator::Perl::Object') {
             if (my $methbody = $klass->get_method($methname)) {
-                my @ret = $methbody->(@args);
-                return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
+                return __call($methbody, \@args);
             } else {
                 __tora_call_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
             }
         } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
             if (my $methbody = $klass->{$methname}) {
-                return $methbody->($klass, @args);
+                return __call($methbody, [$klass, @args]);
             } else {
                 if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
                     return $methbody->($klass, @args);
@@ -141,7 +161,14 @@ sub tora_op_equal {
         return $lhs == $rhs ? true() : false();
     } elsif ($flags & B::SVp_POK) {
         return $lhs eq $rhs ? true() : false();
+    } elsif (!defined $lhs) {
+        return !defined $rhs;
+    } elsif (!defined $rhs) {
+        return !defined $lhs;
     } else {
+    warn Dumper([$lhs, $rhs]);
+        Dump($lhs);
+        Dump($rhs);
         die "OOPS";
     }
 }
@@ -263,7 +290,7 @@ sub tora_get_item :lvalue {
         $lhs->{$rhs};
     } elsif (!defined $lhs) {
         die "You cannot get item from Undef";
-        $lhs;
+        $lhs; # workaround. perl5 needs lvalue on die.
     } else {
         ...;
         return $lhs;
