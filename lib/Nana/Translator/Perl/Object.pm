@@ -18,6 +18,13 @@ sub get_method {
     return $self->{klass}->get_method($name);
 }
 
+sub has_method {
+    my ($self, $name) = @_;
+    return $self->{klass}->get_method($name)
+        ? JSON::true()
+        : JSON::false();
+}
+
 sub class {
     my ($self) = @_;
     return $self->{klass};

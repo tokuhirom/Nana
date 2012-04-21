@@ -25,6 +25,6 @@ my $p = [];
 for opendir('t/dat/dir') -> $e {
     $p.push($e);
 }
-is($p.sort().tora(), '[".","..","x","y","z"]');
+is($p.sort().tora(), q{['.','..','x','y','z']});
 
 done_testing();

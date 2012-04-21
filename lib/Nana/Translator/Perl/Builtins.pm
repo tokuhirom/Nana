@@ -86,6 +86,12 @@ our %TORA_BUILTIN_FUNCTIONS = (
         return $ret;
     },
     'open' => \&tora_open,
+    opendir => sub {
+        my $dirname = shift;
+        opendir(my $dh, $dirname)
+            or die "Cannot open directory $dirname: $!";
+        return $TORA_BUILTIN_CLASSES{Dir}->create_instance($dh);
+    },
     'caller' => do {
         my $class = Nana::Translator::Perl::Class->new(
             'Caller'
@@ -129,6 +135,19 @@ our %TORA_BUILTIN_FUNCTIONS = (
         },
     },
 );
+
+my $DIR_ITER_CLASS = do {
+    my $class = Nana::Translator::Perl::Class->new(
+        'Dir::Iterator'
+    );
+    $class->add_method(
+        '__next__' => sub {
+            my $entry = readdir(self->data);
+            return $entry;
+        }
+    );
+    $class;
+};
 
 my %built_class_src = (
     'Code' => {
@@ -227,6 +246,15 @@ my %built_class_src = (
         open => sub {
             shift; # $class
             tora_open(@_);
+        },
+    },
+    'Dir' => {
+        read => sub {
+            my $entry = readdir(self->data);
+            return $entry;
+        },
+        __iter__ => sub {
+            $DIR_ITER_CLASS->create_instance(self->data);
         },
     },
 );

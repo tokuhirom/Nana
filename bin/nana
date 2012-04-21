@@ -18,8 +18,6 @@ my ($opt, $usage) = describe_options(
 );
 print($usage) if $opt->help;
 
-package Nana::Command;
-
 my $parser = Nana::Parser->new;
 my $compiler = Nana::Translator::Perl->new();
 if (defined $opt->eval) {

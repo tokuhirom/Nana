@@ -45,6 +45,7 @@ our @KEYWORDS = qw(
     use
     try die
     __FILE__ __LINE__
+    last next
 );
 my %KEYWORDS = map { $_ => 1 } @KEYWORDS;
 
@@ -472,6 +473,12 @@ std:
 }
 
 rule('expression', [
+    sub {
+        my $c = shift;
+        ($c, my $word) = match($c, 'last', 'next')
+            or return;
+        return ($c, _node2(uc($word), $START));
+    },
     sub {
         # -> $x { }
         my $c = shift;
@@ -1157,6 +1164,12 @@ rule('string', [
                 last;
             } elsif (length($src) == 0) {
                 die "Unexpected EOF in string literal line $START";
+            } elsif ($src =~ s/^\\0//) {
+                $buf .= qq{\0};
+            } elsif ($src =~ s/^\\t//) {
+                $buf .= qq{\t};
+            } elsif ($src =~ s/^\\n//) {
+                $buf .= qq{\n};
             } elsif ($src =~ s/^\\"//) {
                 $buf .= q{"};
             } elsif ($src =~ s/^(.)//) {
@@ -1171,11 +1184,22 @@ rule('string', [
         # TODO: escape chars, etc.
         my $src = shift;
 
-        ($src) = match($src, q{'})
+        my $close2 = length($src) > 2 ? substr($src, 1, 1) : '';
+        ($src, my $close) = match($src, q{'}, [qr{^q([!'\{\["\(])}, 'q'])
             or return;
+        if ($close eq 'q') {
+            $close = {
+                '!' => '!',
+                '{' => '}',
+                '[' => ']',
+                '"' => '"',
+                "'" => "'",
+                "(" => ")",
+            }->{$close2};
+        }
         my $buf = '';
         while (1) {
-            if ($src =~ s/^'//) {
+            if ($src =~ s/^$close//) {
                 last;
             } elsif (length($src) == 0) {
                 die "Unexpected EOF in string literal line $START";

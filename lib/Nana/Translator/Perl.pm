@@ -236,8 +236,14 @@ sub _compile {
         my $re = $node->[2];
         $re =~ s!/!\\/!g;
         return "qr/$re/$node->[3]";
+    } elsif ($node->[0] eq 'NEXT') {
+        return 'next;'
+    } elsif ($node->[0] eq 'LAST') {
+        return 'last;'
     } elsif ($node->[0] eq 'STR') {
-        return '"' . $node->[2] . '"';
+        my $str = $node->[2];
+        $str =~ s/!/\\!/g; # escape
+        return 'q!' . $str . '!';
     } elsif ($node->[0] eq 'HEREDOC') {
         my $buf = ${$node->[2]};
         $buf =~ s/'/\\'/;
@@ -287,6 +293,7 @@ sub _compile {
         if (@{$node->[3]} > 2) {
             die "Too many parameters for foreach statement at line $node->[1].";
         } elsif (@{$node->[3]} == 2) {
+            # for hash
             $ret .= join('',
                 qq!if (ref(\$__tora_iteratee) eq "HASH") {\n!,
                 qq!  for (keys \%\$__tora_iteratee) {\n!,
@@ -299,12 +306,38 @@ sub _compile {
                 qq!}\n!,
             );
             $ret .= '}';
-        } else {
-            $ret .= 'for ';
-            if (@{$node->[3]}) {
-                $ret .= join(',', map { 'my ' . _compile($_) } @{$node->[3]});
+        } else { # 1 args
+            $ret .= 'if (ref $__tora_iteratee eq "Nana::Translator::Perl::Object" && $__tora_iteratee->has_method("__iter__")) {' . "\n";
+            $ret .= '  my $__tora_iterator = ' . _compile(
+                ['METHOD_CALL', $node->[1],
+                    ['VARIABLE', $node->[1], '$__tora_iteratee'],
+                    ['IDENT',    $node->[1], '__iter__'],
+                    []]
+            ) . ';';
+            $ret .= sprintf('  while (%s = %s)', (@{$node->[3]} ? ('my ' . _compile($node->[3]->[0])) : 'local $_'), _compile(
+                ['METHOD_CALL', $node->[1],
+                    ['VARIABLE', $node->[1], '$__tora_iterator'],
+                    ['IDENT',    $node->[1], '__next__'],
+                    []]
+            ));
+            $ret .= _compile($node->[4]);
+            $ret .= '} else {' . "\n";
+            {
+                $ret .= 'for ';
+                if (@{$node->[3]}) {
+                    $ret .= join(',', map { 'my ' . _compile($_) } @{$node->[3]});
+                }
+                $ret .= join('',
+                    '(',
+                          'ref($__tora_iteratee) eq "ARRAY"',
+                        '? @{$__tora_iteratee}',
+                        ': ref($__tora_iteratee) eq "Nana::Translator::Perl::Range"',
+                        '? $__tora_iteratee->list',
+                        ': $__tora_iteratee',
+                    ') '
+                ). "\n". _compile($node->[4]) . '';
             }
-            $ret .= '(ref($__tora_iteratee) eq "ARRAY" ? @{$__tora_iteratee} : ref($__tora_iteratee) eq "Nana::Translator::Perl::Range" ? $__tora_iteratee->list : $__tora_iteratee) ' . "\n". _compile($node->[4]) . '';
+            $ret .= '}'; # if-else
             $ret .= '}';
         }
         return $ret;
