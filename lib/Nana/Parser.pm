@@ -475,7 +475,13 @@ rule('expression', [
         my $c = shift;
 
         ($c)           = match($c, 'sub') or return;
-        ($c, my $name) = identifier($c)   or die "Parsing error";
+
+        # name is optional thing.
+        # you can use anon sub.
+        my $name;
+        if ((my $c2, $name) = identifier($c)) {
+            $c = $c2;
+        }
 
         my $params;
         if ((my $c2, $params) = parameters($c)) {

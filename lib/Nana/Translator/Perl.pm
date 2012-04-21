@@ -146,9 +146,13 @@ sub _compile {
         return $ret;
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
-        $ret .= 'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
-        my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';
-        $ret .= $pkg . "->{" . _compile($node->[2]) . "} = subname(" . _compile($node->[2]) .", sub {;\n";
+        if ($node->[2]) {
+            $ret .= 'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
+            my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';
+            $ret .= $pkg . "->{" . _compile($node->[2]) . "} = subname(" . _compile($node->[2]) .", sub {;\n";
+        } else {
+            $ret .= "(sub {;\n";
+        }
         if ($node->[3]) {
             for (my $i=0; $i<@{$node->[3]}; $i++) {
                 my $p = $node->[3]->[$i];
@@ -179,8 +183,13 @@ sub _compile {
             $ret .= join(',', map { sprintf('%s(%s)', $_->[0] eq 'CALL' ? 'scalar' : '', _compile($_)) } @{$node->[3]});
             $ret .= '))';
             return $ret;
+        } elsif ($node->[2]->[0] eq 'VARIABLE') {
+            my $ret = 'tora_call_func($TORA_PACKAGE, (' . _compile($node->[2]) . '), (';
+            $ret .= join(',', map { sprintf('%s(%s)', $_->[0] eq 'CALL' ? 'scalar' : '', _compile($_)) } @{$node->[3]});
+            $ret .= '))';
+            return $ret;
         } else {
-            die "Compilation failed.";
+            die "Compilation failed in subroutine call.";
         }
     } elsif ($node->[0] eq 'PRIMARY_IDENT') {
         return '($TORA_PACKAGE->{q!' . $node->[2] . '!} || die qq{Unknown stuff naemd ' . $node->[2] . '})';

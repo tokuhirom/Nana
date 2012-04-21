@@ -53,6 +53,9 @@ sub __call {
 
 sub tora_call_func {
     my ($pkg, $funname, @args) = @_;
+    if (ref $funname eq 'CODE') {
+        return __call($funname, \@args);
+    }
     if (my $func = $pkg->{$funname}) {
         return __call($func, \@args);
     } else {
