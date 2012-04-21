@@ -226,6 +226,8 @@ sub to_tora {
         return "'" . $stuff . "'";
     } elsif ($type eq 'Int') {
         return $stuff;
+    } elsif ($type eq 'Double') {
+        return $stuff;
     } else {
         die "$type.tora is not implemented yet.";
         ...

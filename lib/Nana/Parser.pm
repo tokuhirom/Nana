@@ -331,8 +331,9 @@ rule('statement', [
             or return;
         ($c, my $expression) = expression($c)
             or return;
-        ($c) = match($c, '->')
-            or die "'->' missing after for keyword";
+        (my $c2) = match($c, '->')
+            or _err "'->' missing after for keyword '" . substr($c, 0, 15) . "..'";
+        $c = $c2;
         my @vars;
         while (my ($c2, $var) = variable($c)) {
             push @vars, $var;
@@ -471,6 +472,26 @@ std:
 }
 
 rule('expression', [
+    sub {
+        # -> $x { }
+        my $c = shift;
+
+        ($c) = match($c, [qr{^->(?![>])}, '->'])
+            or return;
+
+        my @params;
+        while ((my $c2, my $param) = variable($c)) {
+            push @params, $param;
+            $c = $c2;
+            my ($c3) = match($c, ',')
+                or last;
+            $c = $c3;
+        }
+
+        ($c, my $block) = block($c)
+            or _err "expected block after ->";
+        return ($c, _node2('LAMBDA', $START, \@params, $block));
+    },
     sub {
         my $c = shift;
 
@@ -714,10 +735,10 @@ rule('method_call', [
         ($c, my $object) = funcall($c)
             or return;
         my $ret = $object;
-        while (my ($c2, $op) = match($c, [qr{^\.(?!\.)}, '.'])) {
+        while (my ($c2, $op) = match($c, [qr{^\.(?![\.0-9])}, '.'])) {
             $c = $c2;
             ($c, my $rhs) = identifier($c)
-                or die "There is no identifier after '.' operator line $LINENO";
+                or _err "There is no identifier after '.' operator in method call";
             ($c, my $param) = arguments($c)
                 or return;
             $ret = _node2('METHOD_CALL', $START, $ret, $rhs, $param);
@@ -852,17 +873,17 @@ rule('variable', [
 
 rule('primary', [
     sub {
+        # NV
+        my $c = shift;
+        $c =~ s/^([1-9][0-9]*\.[0-9]+)// or return;
+        return ($c, _node('DOUBLE', $1));
+    },
+    sub {
         # int
         my $c = shift;
         $c =~ s/^(0x[0-9a-fA-F]+|0|[1-9][0-9]*)//
             or return;
         return ($c, _node('INT', $1));
-    },
-    sub {
-        # NV
-        my $c = shift;
-        $c =~ s/^([1-9][0-9]*\.[0-9]*)// or return;
-        return ($c, _node('DOUBLE', $1));
     },
     \&string,
     \&regexp,

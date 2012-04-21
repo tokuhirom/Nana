@@ -83,8 +83,8 @@ sub tora_call_method {
     my ($pkg, $klass, $methname, @args) = @_;
     local $Nana::Translator::Perl::Runtime::TORA_SELF = $klass;
 
-    if (my $klaas = $pkg->{$klass}) {
-        die "XXX WHO CAN CALL THIS PATH?";
+#   if (my $klaas = $pkg->{$klass}) {
+#       die "XXX WHO CAN CALL THIS PATH?";
 
 #       if (my $methbody = $klaas->{$methname}) {
 #           return __call($methbody, \@args);
@@ -95,7 +95,8 @@ sub tora_call_method {
 #           }
 #           __tora_call_method_fallback($pkg, $klass, $klass, $methname, @args);
 #       }
-    } else {
+#   } else {
+    {
         # builtin methods
         if (ref $klass eq 'ARRAY') {
             if (my $methbody = $TORA_BUILTIN_CLASSES{Array}->{$methname}) {
@@ -169,6 +170,8 @@ sub tora_op_equal {
         return !defined $rhs;
     } elsif (!defined $rhs) {
         return !defined $lhs;
+    } elsif (ref $lhs eq 'JSON::XS::Boolean') {
+        return (ref $rhs eq 'JSON::XS::Boolean') && $lhs == $rhs;
     } else {
     warn Dumper([$lhs, $rhs]);
         Dump($lhs);

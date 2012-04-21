@@ -144,6 +144,38 @@ sub _compile {
         my $ret = "do {\n";
         $ret .= _compile($node->[2]) . '}';
         return $ret;
+    } elsif ($node->[0] eq 'LAMBDA') {
+        my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
+        $ret .= "(sub {;\n";
+        if (@{$node->[2]}) { # have args
+            for (my $i=0; $i<@{$node->[2]}; $i++) {
+                my $p = $node->[2]->[$i];
+                if ($p->[0] eq 'PARAMS_DEFAULT') {
+                    $ret .= "my ";
+                    $ret .= _compile($p->[2]);
+                    $ret .= "=\@_>0?shift \@_:" ._compile($p->[3]) .";";
+                } else {
+                    $ret .= "my ";
+                    $ret .= _compile($p);
+                    $ret .= "=shift;";
+                }
+            }
+
+            # remove arguments from stack.
+            # for 'sub foo ($n) { }'
+            $ret .= 'undef;';
+        } else {
+            $ret .= "local \$_ = shift;";
+            # remove arguments from stack.
+            # for 'sub foo ($n) { }'
+            $ret .= 'undef;';
+        }
+        my $block = _compile($node->[3]);
+        if ($block =~ qr!\A\{\s*\}\Z!) {
+            $block = '';
+        }
+        $ret .= $block . '; })';
+        return $ret;
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
         if ($node->[2]) {
