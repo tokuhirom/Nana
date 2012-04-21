@@ -24,5 +24,13 @@ sub add_method {
     undef;
 }
 
+sub create_instance {
+    my ($self, $data) = @_;
+    return Nana::Translator::Perl::Object->new(
+        $self,
+        $data
+    );
+}
+
 1;
 

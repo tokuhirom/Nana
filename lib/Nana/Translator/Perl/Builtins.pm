@@ -33,6 +33,24 @@ sub __say {
     }
 }
 
+sub self() { $Nana::Translator::Perl::Runtime::TORA_SELF }
+
+sub tora_open {
+    my $fname = shift;
+    my $mode = shift || 'r';
+    my $opener;
+    if ($mode =~ 'r') {
+        $opener = '<';
+    } elsif ($mode =~ /w/) {
+        $opener = '>';
+    } else {
+        die "Unknown file opening mode: $mode";
+    }
+    open my $fh, $opener, $fname
+        or die "Cannot open file $fname: $!";
+    return $TORA_BUILTIN_CLASSES{File}->create_instance($fh);
+}
+
 our %TORA_BUILTIN_FUNCTIONS = (
     'say' => \&__say,
     'typeof' => \&typeof,
@@ -67,16 +85,13 @@ our %TORA_BUILTIN_FUNCTIONS = (
         die $@ if $@;
         return $ret;
     },
-    'open' => sub {
-        ...
-    },
+    'open' => \&tora_open,
     'caller' => do {
         my $class = Nana::Translator::Perl::Class->new(
             'Caller'
         );
         $class->add_method(
             'package' => sub {
-            warn "PKG";
                 $_[0]->[0];
             }
         );
@@ -115,7 +130,7 @@ our %TORA_BUILTIN_FUNCTIONS = (
     },
 );
 
-%TORA_BUILTIN_CLASSES = (
+my %built_class_src = (
     'Code' => {
         package => sub {
             my $code = shift;
@@ -195,7 +210,37 @@ our %TORA_BUILTIN_FUNCTIONS = (
             }
         },
     },
+    'File' => {
+        'slurp' => sub {
+            my $fh = $Nana::Translator::Perl::Runtime::TORA_SELF->data;
+            my $src = do { local $/; <$fh> };
+            return $src;
+        },
+        close => sub {
+            my $fh = self->data;
+            return CORE::close($fh);
+        },
+        fileno => sub {
+            my $fh = self->data;
+            return CORE::fileno($fh);
+        },
+        open => sub {
+            shift; # $class
+            tora_open(@_);
+        },
+    },
 );
+while (my ($class_name, $methods) = each %built_class_src) {
+    $TORA_BUILTIN_CLASSES{$class_name} = do {
+        my $class = Nana::Translator::Perl::Class->new($class_name);
+        while (my ($methname, $methbody) = each %$methods) {
+            $class->add_method(
+                $methname, $methbody
+            );
+        }
+        $class;
+    };
+}
 
 sub typeof {
     my $stuff = shift;

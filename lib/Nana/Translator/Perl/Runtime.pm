@@ -129,7 +129,7 @@ sub tora_call_method {
                 if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
                     return $methbody->($klass, @args);
                 }
-                __tora_call_method_fallback($pkg, $klass, 'Class', $methname, @args);
+                __tora_call_method_fallback($pkg, $klass, $klass->name, $methname, @args);
             }
         } elsif (!ref $klass) {
             # IV or NV

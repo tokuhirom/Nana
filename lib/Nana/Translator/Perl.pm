@@ -26,6 +26,7 @@ sub compile {
             'use warnings FATAL => "recursion";',
             'use utf8;',
             'use Nana::Translator::Perl::Runtime;',
+            'use Nana::Translator::Perl::Builtins qw(%TORA_BUILTIN_CLASSES);',
             'use JSON;',
             'use Sub::Name;',
             '$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE = my $TORA_PACKAGE = {};',
@@ -224,7 +225,7 @@ sub _compile {
             die "Compilation failed in subroutine call.";
         }
     } elsif ($node->[0] eq 'PRIMARY_IDENT') {
-        return '($TORA_PACKAGE->{q!' . $node->[2] . '!} || die qq{Unknown stuff naemd ' . $node->[2] . '})';
+        return '($TORA_PACKAGE->{q!' . $node->[2] . '!} || $TORA_BUILTIN_CLASSES{q!' . $node->[2] . '!} || die qq{Unknown stuff named ' . $node->[2] . '})';
     } elsif ($node->[0] eq 'IDENT') {
         return 'q{' . $node->[2] . '}';
     } elsif ($node->[0] eq 'DEREF') {
