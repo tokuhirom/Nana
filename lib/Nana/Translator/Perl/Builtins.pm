@@ -37,6 +37,10 @@ our %TORA_BUILTIN_FUNCTIONS = (
     'say' => \&__say,
     'typeof' => \&typeof,
     getcwd => \&Cwd::getcwd,
+    'sprintf' => sub {
+        my $format = shift;
+        return CORE::sprintf($format, @_);
+    },
     '__DUMP' => sub {
         Dump($_[0]);
     },
@@ -143,6 +147,16 @@ our %TORA_BUILTIN_FUNCTIONS = (
         keys => sub {
             return [CORE::keys(%{$_[0]})];
         },
+        delete => sub {
+            return CORE::delete($_[0]->{$_[1]});
+        },
+        exists => sub {
+            return CORE::exists($_[0]->{$_[1]})
+                ? JSON::true() : JSON::false();
+        },
+        values => sub {
+            return [CORE::values(%{$_[0]})];
+        },
     },
     'Class' => {
         bless => sub { # self.bless($data)
@@ -158,6 +172,15 @@ our %TORA_BUILTIN_FUNCTIONS = (
         },
         match => sub {
             return $_[0] =~ $_[1] ? Nana::Translator::Perl::RegexpMatched->new() : undef;
+        },
+        substr => sub {
+            if (@_==2) {
+                return substr($_[0], $_[1]);
+            } elsif (@_==3) {
+                return substr($_[0], $_[1], $_[2]);
+            } else {
+                die "ARGUMENT MISSING";
+            }
         },
     },
     'Object' => {

@@ -43,8 +43,8 @@ note("index"); {
 };
 
 note("uc"); {
-    is("fOobar1234".upper, 'FOOBAR1234');
-    is("FoobAr1234".lower, 'foobar1234');
+    is("fOobar1234".upper(), 'FOOBAR1234');
+    is("FoobAr1234".lower(), 'foobar1234');
 };
 
 note("*"); {

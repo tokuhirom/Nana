@@ -886,6 +886,7 @@ rule('primary', [
         return ($c, _node('INT', $1));
     },
     \&string,
+    \&bytes,
     \&regexp,
     sub {
         my $c = shift;
@@ -1089,6 +1090,57 @@ rule('regexp', [
             $flags = $1;
         }
         return ($src, _node('REGEXP', $buf, $flags));
+    },
+]);
+
+rule('bytes', [
+    sub {
+        # TODO: escape chars, etc.
+        my $src = shift;
+
+        ($src) = match($src, q{b"})
+            or return;
+        my $buf = '';
+        while (1) {
+            if ($src =~ s/^"//) {
+                last;
+            } elsif (length($src) == 0) {
+                die "Unexpected EOF in bytes literal line $START";
+            } elsif ($src =~ s/^\\"//) {
+                $buf .= q{"};
+            } elsif ($src =~ s/^(\\[0-9a-f]{2})//) {
+                $buf .= $1;
+            } elsif ($src =~ s/^(.)//) {
+                $buf .= $1;
+            } else {
+                die 'should not reach here';
+            }
+        }
+        return ($src, _node('STR', $buf));
+    },
+    sub {
+        # TODO: escape chars, etc.
+        my $src = shift;
+
+        ($src) = match($src, q{b'})
+            or return;
+        my $buf = '';
+        while (1) {
+            if ($src =~ s/^'//) {
+                last;
+            } elsif (length($src) == 0) {
+                die "Unexpected EOF in bytes literal line $START";
+            } elsif ($src =~ s/^\\'//) {
+                $buf .= q{'};
+            } elsif ($src =~ s/^(\\[0-9a-f]{2})//) {
+                $buf .= $1;
+            } elsif ($src =~ s/^(.)//) {
+                $buf .= $1;
+            } else {
+                die 'should not reach here';
+            }
+        }
+        return ($src, _node('STR', $buf));
     },
 ]);
 
