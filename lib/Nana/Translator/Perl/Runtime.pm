@@ -300,12 +300,13 @@ sub tora_get_item :lvalue {
 
 *typeof = *Nana::Translator::Perl::Builtins::typeof;
 
-sub tora_deref {
+sub tora_deref:lvalue {
     my $v = shift;
     if (ref $v eq 'Nana::Translator::Perl::Object') {
         $v->{data};
     } else {
         die "You cannot dereference " . typeof($v);
+        $v; # dummy for :lvalue
     }
 }
 
