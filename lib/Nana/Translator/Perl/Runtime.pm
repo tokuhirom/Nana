@@ -183,6 +183,9 @@ sub tora_op_equal {
 sub tora_op_ne {
     my ($lhs, $rhs) = @_;
     my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if (!defined $rhs) {
+        return defined $lhs;
+    }
     if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
         # IV or NV
         return $lhs != $rhs ? true() : false();

@@ -19,6 +19,10 @@ our @EXPORT = qw(
 
 our %TORA_BUILTIN_CLASSES;
 
+sub _runtime_error {
+    croak @_;
+}
+
 sub __say {
     for my $x (@_) {
         if (defined $x) {
@@ -287,6 +291,24 @@ my %built_class_src = (
         },
         __iter__ => sub {
             $DIR_ITER_CLASS->create_instance(self->data);
+        },
+        new => sub {
+            my ($class, $dirname) = @_;
+            opendir(my $dh, $dirname)
+                or _runtime_error "Cannot open directory $dirname: $!";
+            return $TORA_BUILTIN_CLASSES{Dir}->create_instance($dh);
+        },
+        rmdir => sub {
+            my ($class, $name) = @_;
+            rmdir($name)
+                or _runtime_error "Cannot remove directory $name: $!";
+            undef;
+        },
+        mkdir => sub {
+            my ($class, $name) = @_;
+            mkdir($name)
+                or _runtime_error "Cannot create directory $name: $!";
+            undef;
         },
     },
 );

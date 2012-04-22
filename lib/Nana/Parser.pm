@@ -648,12 +648,13 @@ rule('unary', [
     sub {
         my $c = shift;
         ($c, my $op) = match($c, '!', '~', '\\', , [qr{^\+(?![\+=])}, '+'], [qr{^-(?![=>a-z-])}, '-'], '*',
+                # filetest
                 +[qr{^-e(?=[\( \t])}, "-e"],
                 +[qr{^-f(?=[\( \t])}, "-f"],
                 +[qr{^-x(?=[\( \t])}, "-x"],
                 +[qr{^-d(?=[\( \t])}, "-d"],
             ) or return;
-        ($c, my $ex) = pow($c)
+        ($c, my $ex) = expression($c)
             or return;
         return ($c, _node("UNARY$op", $ex));
     },
