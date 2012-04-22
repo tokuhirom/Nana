@@ -480,26 +480,6 @@ rule('expression', [
         return ($c, _node2(uc($word), $START));
     },
     sub {
-        # -> $x { }
-        my $c = shift;
-
-        ($c) = match($c, [qr{^->(?![>])}, '->'])
-            or return;
-
-        my @params;
-        while ((my $c2, my $param) = variable($c)) {
-            push @params, $param;
-            $c = $c2;
-            my ($c3) = match($c, ',')
-                or last;
-            $c = $c3;
-        }
-
-        ($c, my $block) = block($c)
-            or _err "expected block after ->";
-        return ($c, _node2('LAMBDA', $START, \@params, $block));
-    },
-    sub {
         my $c = shift;
 
         ($c)           = match($c, 'sub') or return;
@@ -879,6 +859,26 @@ rule('variable', [
 ]);
 
 rule('primary', [
+    sub {
+        # -> $x { }
+        my $c = shift;
+
+        ($c) = match($c, [qr{^->(?![>])}, '->'])
+            or return;
+
+        my @params;
+        while ((my $c2, my $param) = variable($c)) {
+            push @params, $param;
+            $c = $c2;
+            my ($c3) = match($c, ',')
+                or last;
+            $c = $c3;
+        }
+
+        ($c, my $block) = block($c)
+            or _err "expected block after ->";
+        return ($c, _node2('LAMBDA', $START, \@params, $block));
+    },
     sub {
         # NV
         my $c = shift;

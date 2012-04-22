@@ -183,6 +183,22 @@ my %built_class_src = (
         pop => sub { return CORE::pop(@{$_[0]}); },
         shift => sub { return CORE::shift(@{$_[0]}); },
         unshift => sub { CORE::unshift(@{$_[0]}, $_[1]); return $_[0]; },
+        map => sub {
+            return [map { $_[1]->($_) } @{$_[0]}];
+        },
+        grep => sub {
+            my $type = typeof($_[1]);
+            if ($type eq 'Regexp') {
+                return [grep { $_ =~ $_[1] } @{$_[0]}];
+            } elsif ($type eq 'Code') {
+                return [grep { $_[1]->($_) } @{$_[0]}];
+            } else {
+                die "Unkonown type for code.";
+            }
+        },
+        join => sub {
+            return join($_[1], @{$_[0]});
+        },
         reverse => sub {
             return [reverse @{$_[0]}];
         },
@@ -303,6 +319,8 @@ sub typeof {
         return 'Class';
     } elsif (ref $stuff eq 'CODE') {
         return 'Code';
+    } elsif (ref $stuff eq 'Regexp') {
+        return 'Regexp';
     } elsif (ref $stuff) {
         ...
     } else {
