@@ -21,4 +21,4 @@ while (false) { }
     is($n, 5);
 }
 
-done_testing;
+done_testing();
