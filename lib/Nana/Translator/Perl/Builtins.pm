@@ -55,6 +55,22 @@ our %TORA_BUILTIN_FUNCTIONS = (
     'say' => \&__say,
     'typeof' => \&typeof,
     getcwd => \&Cwd::getcwd,
+    sqrt => sub { sqrt(shift @_) },
+    abs => sub { abs(shift @_) },
+    cos => sub { cos(shift @_) },
+    exp => sub { exp(shift @_) },
+    hex => sub { hex(shift @_) },
+    int => sub { int(shift @_) },
+    log => sub { log(shift @_) },
+    oct => sub { oct(shift @_) },
+    sin => sub { sin(shift @_) },
+    atan2 => sub { atan2(shift @_, shift @_) },
+    getppid => sub {
+        return getppid()
+    },
+    getpid => sub {
+        return $?
+    },
     'sprintf' => sub {
         my $format = shift;
         return CORE::sprintf($format, @_);
