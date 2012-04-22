@@ -2,10 +2,17 @@ use Test::More *;
 
 is(callee(), undef);
 
+sub bar {
+    my $code = callee();
+    is(typeof($code), 'Code');
+    is($code.name(), 'bar');
+}
+
 sub foo() {
     my $code = callee();
     is(typeof($code), 'Code');
     is($code.name(), 'foo');
+    bar();
 }
 
 foo();

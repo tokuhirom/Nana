@@ -112,47 +112,33 @@ our %TORA_BUILTIN_FUNCTIONS = (
             or die "Cannot open directory $dirname: $!";
         return $TORA_BUILTIN_CLASSES{Dir}->create_instance($dh);
     },
-    'caller' => do {
-        my $class = Nana::Translator::Perl::Class->new(
-            'Caller'
-        );
-        $class->add_method(
-            'package' => sub {
-                $_[0]->[0];
-            }
-        );
-        $class->add_method(
-            'code' => sub {
-                return $Nana::Translator::Perl::Runtime::TORA_SELF->data->[0];
-            }
-        );
-        sub {
-            my @stack = @Nana::Translator::Perl::Runtime::CALLER_STACK;
-            pop @stack; # ignore current stack
-            if (@_==1) {
-                my $need = shift;
-                my $n = 0;
-                for my $caller (reverse @stack) {
-                    if ($n == $need) {
-                        return Nana::Translator::Perl::Object->new(
-                            $class,
-                            $caller
-                        );
-                    }
-                    $n++;
+    'callee' => sub {
+        my @stack = @Nana::Translator::Perl::Runtime::CALLER_STACK;
+        if (@stack == 0) {
+            return undef;
+        }
+        return $stack[@stack-1]->[0];
+    },
+    'caller' => sub {
+        my @stack = @Nana::Translator::Perl::Runtime::CALLER_STACK;
+        pop @stack; # ignore current stack
+        if (@_==1) {
+            my $need = shift;
+            my $n = 0;
+            for my $caller (reverse @stack) {
+                if ($n == $need) {
+                    return $TORA_BUILTIN_CLASSES{Caller}->create_instance($caller);
                 }
-                return undef;
-            } else {
-                my @ret;
-                for my $caller (reverse @stack) {
-                    push @ret, Nana::Translator::Perl::Object->new(
-                        $class,
-                        $caller
-                    );
-                }
-                return \@ret;
+                $n++;
             }
-        },
+            return undef;
+        } else {
+            my @ret;
+            for my $caller (reverse @stack) {
+                push @ret, $TORA_BUILTIN_CLASSES{Caller}->create_instance($caller);
+            }
+            return \@ret;
+        }
     },
 );
 
@@ -309,6 +295,14 @@ my %built_class_src = (
             mkdir($name)
                 or _runtime_error "Cannot create directory $name: $!";
             undef;
+        },
+    },
+    Caller => {
+        package => sub {
+            $_[0]->[0];
+        },
+        code => sub {
+            self->data->[0]
         },
     },
 );
