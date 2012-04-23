@@ -57,7 +57,7 @@ sub foo { 4 }
 --- expected
 
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
-{4;
+local $_ = [@_];undef;{4;
 }; })
 
 ===
@@ -67,7 +67,7 @@ sub foo { 3+2 }
 --- expected
 
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
-{tora_op_add(3,2);
+local $_ = [@_];undef;{tora_op_add(3,2);
 }; })
 
 ===

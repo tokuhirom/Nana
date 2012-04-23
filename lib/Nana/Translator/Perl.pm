@@ -210,6 +210,8 @@ sub _compile {
             # remove arguments from stack.
             # for 'sub foo ($n) { }'
             $ret .= 'undef;';
+        } else {
+            $ret .= 'local $_ = [@_];undef;';
         }
         my $block = _compile($node->[4]);
         if ($block =~ qr!\A\{\s*\}\Z!) {

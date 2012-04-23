@@ -394,6 +394,8 @@ sub typeof {
         return $stuff->class->name;
     } elsif (ref $stuff eq 'JSON::XS::Boolean') {
         return 'Bool';
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::Exception') {
+        return 'Exception';
     } elsif (ref $stuff eq 'Nana::Translator::Perl::Class') {
         return 'Class';
     } elsif (ref $stuff eq 'CODE') {

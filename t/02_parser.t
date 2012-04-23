@@ -91,8 +91,8 @@ eq_or_diff($parser->parse(<<'...'),
 ...
     ['STMTS', 1, [
         ['+', 1,
-            ['STR', 1, 'hoge'],
-            ['STR', 1, 'fuga'],
+            ['STR2', 1, \'hoge'],
+            ['STR2', 1, \'fuga'],
         ]
     ]]
 );
@@ -109,8 +109,8 @@ say("hoge"+"fuga")
             ],
             [
                 ['+', 1,
-                    ['STR', 1, 'hoge'],
-                    ['STR', 1, 'fuga'],
+                    ['STR2', 1, \'hoge'],
+                    ['STR2', 1, \'fuga'],
                 ]
             ]
         ]
