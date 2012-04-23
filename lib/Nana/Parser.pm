@@ -461,7 +461,7 @@ sub skip_ws {
 
 std:
     s/^[ \t\f]// && goto std;
-    s/^#[^\n]+\n/++$LINENO;''/ge && goto std;
+    s/^#[^\n]*\n/++$LINENO;''/ge && goto std;
     if (s/^__END__\n.+//s) {
         # $END++;
         return ('', 1);
