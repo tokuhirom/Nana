@@ -80,6 +80,9 @@ sub _compile {
             return "(($op(" . _compile($node->[2]).'))?JSON::true():JSON::false())';
         }
     }
+    if ($node->[0] eq 'UNARY-s') {
+        return "(-s(" . _compile($node->[2]).'))';
+    }
 
     my %binops = (
         '<'  => 'tora_op_lt',

@@ -657,6 +657,7 @@ rule('unary', [
         my $c = shift;
         ($c, my $op) = match($c,
                 # filetest
+                +[qr{^-s(?=[\( \t])}, "-s"],
                 +[qr{^-e(?=[\( \t])}, "-e"],
                 +[qr{^-f(?=[\( \t])}, "-f"],
                 +[qr{^-x(?=[\( \t])}, "-x"],
