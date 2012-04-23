@@ -146,7 +146,7 @@ sub _compile {
         $ret .= _compile($node->[2]) . '}';
         return $ret;
     } elsif ($node->[0] eq 'LAMBDA') {
-        my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
+        my $ret = sprintf(qq{\n#line %d "$FILENAME"\n}, $node->[1]);
         $ret .= "(sub {;\n";
         if (@{$node->[2]}) { # have args
             for (my $i=0; $i<@{$node->[2]}; $i++) {
@@ -178,7 +178,7 @@ sub _compile {
         $ret .= $block . '; })';
         return $ret;
     } elsif ($node->[0] eq 'SUB') {
-        my $ret = sprintf(qq{#line %d "$FILENAME"\n}, $node->[1]);
+        my $ret = sprintf(qq{\n#line %d "$FILENAME"\n}, $node->[1]);
         if ($node->[2]) {
             $ret .= 'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
             my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';

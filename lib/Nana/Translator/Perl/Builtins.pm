@@ -167,6 +167,16 @@ my %built_class_src = (
             my $obj = B::svref_2object($code);
             return $obj->GV->NAME;
         },
+        filename => sub {
+            my $code = shift;
+            my $obj = B::svref_2object($code);
+            return $obj->GV->FILE;
+        },
+        line => sub {
+            my $code = shift;
+            my $obj = B::svref_2object($code);
+            return $obj->GV->LINE;
+        },
     },
     'Array' => {
         push => sub { CORE::push(@{$_[0]}, $_[1]); return $_[0]; },
