@@ -568,10 +568,10 @@ rule('assign_expression', [
         my $c = shift;
         ($c, my $rhs) = three_expression($c)
             or return;
-        ($c, my $op) = match($c, qw(= *= += /= %= x= -= <<= >>= **= &= |= ^=))
+        ($c, my $op) = match($c, [qr{^=(?![=><])}, '='], qw(*= += /= %= x= -= <<= >>= **= &= |= ^=), [qr{^\|\|=}, '||='])
             or return;
         ($c, my $lhs) = expression($c)
-            or die "Cannot get expression after $op";
+            or _err "Cannot get expression after $op";
         return ($c, _node($op, $rhs, $lhs));
     },
     \&three_expression
