@@ -20,7 +20,7 @@ my ($opt, $usage) = describe_options(
 );
 print($usage) if $opt->help;
 
-Nana::Translator::Perl::Runtime->add_libpath($opt->i);
+Nana::Translator::Perl::Runtime->add_libpath($opt->i || []);
 
 my $parser = Nana::Parser->new;
 my $compiler = Nana::Translator::Perl->new();

@@ -738,9 +738,12 @@ rule('method_call', [
             $c = $c2;
             ($c, my $rhs) = identifier($c)
                 or _err "There is no identifier after '.' operator in method call";
-            ($c, my $param) = arguments($c)
-                or return;
-            $ret = _node2('METHOD_CALL', $START, $ret, $rhs, $param);
+            if ((my $c3, my $param) = arguments($c)) {
+                $c = $c3;
+                $ret = _node2('METHOD_CALL', $START, $ret, $rhs, $param);
+            } else {
+                $ret = _node2('GET_METHOD', $START, $ret, $rhs);
+            }
         }
         return ($c, $ret);
     },

@@ -1,0 +1,6 @@
+class Foo {
+    sub new {
+        self.bless(4649);
+    }
+    sub get { ${self} }
+}

@@ -300,6 +300,15 @@ sub _compile {
         $ret .= _compile($node->[4]);
         $ret .= ";}";
         return $ret;
+    } elsif ($node->[0] eq 'GET_METHOD') {
+        return join('',
+            'do {',
+                '[tora_get_method($TORA_PACKAGE,',
+                    _compile($node->[2]) .',',
+                    _compile($node->[3]),
+                ')]->[0]',
+            '}'
+        );
     } elsif ($node->[0] eq 'METHOD_CALL') {
         return join('',
             'do {local $Nana::Translator::Perl::Runtime::TORA_SELF='._compile($node->[2]).';',

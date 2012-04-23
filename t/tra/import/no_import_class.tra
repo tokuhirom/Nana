@@ -1,0 +1,8 @@
+use Test::More *;
+$LIBPATH.push('t/tra/import/lib/');
+use IMP4;
+
+is(typeof(IMP4), 'FilePackage');
+is(IMP4.Foo.new().get(), 4649);
+
+done_testing();
