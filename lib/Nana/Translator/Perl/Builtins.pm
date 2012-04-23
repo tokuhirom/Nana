@@ -59,7 +59,15 @@ our %TORA_BUILTIN_FUNCTIONS = (
     'say' => \&__say,
     'typeof' => \&typeof,
     getcwd => \&Cwd::getcwd,
-    rand => sub { ... if @_; rand() },
+    rand => sub {
+        if (@_==0) {
+            return rand()
+        } elsif (@_==1) {
+            return rand($_[0]);
+        } else {
+            _runtime_error("Too much arguments for rand");
+        }
+    },
     sqrt => sub { sqrt(shift @_) },
     abs => sub { abs(shift @_) },
     cos => sub { cos(shift @_) },
