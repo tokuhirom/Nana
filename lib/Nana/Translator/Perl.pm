@@ -30,6 +30,9 @@ sub compile {
             'use JSON;',
             'use Sub::Name;',
             'my $LIBPATH=$Nana::Translator::Perl::Runtime::LIBPATH;',
+            'my $STDOUT=$Nana::Translator::Perl::Runtime::STDOUT;',
+            'my $STDERR=$Nana::Translator::Perl::Runtime::STDERR;',
+            'my $STDIN=$Nana::Translator::Perl::Runtime::STDIN;',
             '$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE = my $TORA_PACKAGE = {};',
             'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         ) . "\n";

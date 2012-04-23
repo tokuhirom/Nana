@@ -27,6 +27,9 @@ our $LIBPATH = [
         eval { File::Spec->catfile(File::ShareDir::dist_dir('nana'), 'lib') },
     )
 ];
+our $STDOUT = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->create_instance(*STDOUT);
+our $STDERR = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->create_instance(*STDERR);
+our $STDIN  = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->create_instance(*STDIN);
 
 our @EXPORT = qw(tora_call_func tora_call_method
     tora_op_equal tora_op_ne
