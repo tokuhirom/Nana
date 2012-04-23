@@ -3,4 +3,4 @@ use Test::More *;
 is(typeof(b'hoge'), 'Bytes');
 is(b'hoge'.length(), 4);
 
-done_testing;
+done_testing();

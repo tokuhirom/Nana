@@ -23,6 +23,7 @@ my $build = Module::Build->new(
         'Exporter'           => '5.58',
         'Getopt::Long::Descriptive' => 0,
         'File::ShareDir' => '1.03',
+        'Devel::GlobalDestruction' => '0.04',
     },
     no_index    => { 'directory' => [ 'inc', 't', 'xt' ] },
     name        => 'nana',

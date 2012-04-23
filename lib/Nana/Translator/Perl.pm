@@ -242,8 +242,14 @@ sub _compile {
         return 'last;'
     } elsif ($node->[0] eq 'STR') {
         my $str = $node->[2];
+        # TODO: more escape?
         $str =~ s/!/\\!/g; # escape
         return 'q!' . $str . '!';
+    } elsif ($node->[0] eq 'BYTES') {
+        my $str = $node->[2];
+        $str =~ s/!/\\!/g; # escape
+        # TODO: more escape?
+        return 'do { no utf8; tora_bytes(qq!' . $str . '!) }';
     } elsif ($node->[0] eq 'HEREDOC') {
         my $buf = ${$node->[2]};
         $buf =~ s/'/\\'/;

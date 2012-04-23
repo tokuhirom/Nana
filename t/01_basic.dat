@@ -55,6 +55,7 @@ tora_op_add(1,2)
 sub foo { 4 }
 
 --- expected
+
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
 {4;
 }; })
@@ -64,6 +65,7 @@ local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q
 sub foo { 3+2 }
 
 --- expected
+
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
 {tora_op_add(3,2);
 }; })
@@ -73,6 +75,7 @@ local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q
 sub foo($var) { 3+2 }
 
 --- expected
+
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
 my $var=shift;undef;{tora_op_add(3,2);
 }; })
@@ -82,6 +85,7 @@ my $var=shift;undef;{tora_op_add(3,2);
 sub foo($var, $boo) { 3+2 }
 
 --- expected
+
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{foo}} = subname(q{foo}, sub {;
 my $var=shift;my $boo=shift;undef;{tora_op_add(3,2);
 }; })
@@ -92,7 +96,8 @@ class Foo { sub new() { } }
 
 --- expected
 {my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},+{}));
-{local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = subname(q{new}, sub {;
+{
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = subname(q{new}, sub {;
 undef; });
 };}
 
@@ -102,7 +107,8 @@ class Foo isa Bar { sub new() { } }
 
 --- expected
 {my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},+{}));BEGIN{extends 'q{Bar}';}
-{local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = subname(q{new}, sub {;
+{
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = subname(q{new}, sub {;
 undef; });
 };}
 
@@ -298,6 +304,7 @@ sub hello($name) {
 }
 
 --- expected
+
 local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_PACKAGE->{q{hello}} = subname(q{hello}, sub {;
 my $name=shift;undef;{return (tora_op_add(q!Hello, !,$name));
 }; })

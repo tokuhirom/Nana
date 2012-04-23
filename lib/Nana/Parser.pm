@@ -647,14 +647,22 @@ rule('regexp_match', [
 rule('unary', [
     sub {
         my $c = shift;
-        ($c, my $op) = match($c, '!', '~', '\\', , [qr{^\+(?![\+=])}, '+'], [qr{^-(?![=>a-z-])}, '-'], '*',
+        ($c, my $op) = match($c, '!', '~', '\\', , [qr{^\+(?![\+=])}, '+'], [qr{^-(?![=>a-z-])}, '-'], '*') or return;
+        ($c, my $ex) = unary($c)
+            or return;
+        return ($c, _node("UNARY$op", $ex));
+    },
+    sub {
+        # file test
+        my $c = shift;
+        ($c, my $op) = match($c,
                 # filetest
                 +[qr{^-e(?=[\( \t])}, "-e"],
                 +[qr{^-f(?=[\( \t])}, "-f"],
                 +[qr{^-x(?=[\( \t])}, "-x"],
                 +[qr{^-d(?=[\( \t])}, "-d"],
             ) or return;
-        ($c, my $ex) = expression($c)
+        ($c, my $ex) = pow($c)
             or return;
         return ($c, _node("UNARY$op", $ex));
     },
@@ -883,7 +891,7 @@ rule('primary', [
     sub {
         # NV
         my $c = shift;
-        $c =~ s/^([1-9][0-9]*\.[0-9]+)// or return;
+        $c =~ s/^((?:[1-9][0-9]*|0)\.[0-9]+)// or return;
         return ($c, _node('DOUBLE', $1));
     },
     sub {
@@ -1116,7 +1124,9 @@ rule('bytes', [
                 die "Unexpected EOF in bytes literal line $START";
             } elsif ($src =~ s/^\\"//) {
                 $buf .= q{"};
-            } elsif ($src =~ s/^(\\[0-9a-f]{2})//) {
+            } elsif ($src =~ s/^(\\[0-7]{3})//) {
+                $buf .= $1;
+            } elsif ($src =~ s/^(\\x[0-9a-f]{2})//) {
                 $buf .= $1;
             } elsif ($src =~ s/^(.)//) {
                 $buf .= $1;
@@ -1124,7 +1134,7 @@ rule('bytes', [
                 die 'should not reach here';
             }
         }
-        return ($src, _node('STR', $buf));
+        return ($src, _node('BYTES', $buf));
     },
     sub {
         # TODO: escape chars, etc.
@@ -1148,7 +1158,7 @@ rule('bytes', [
                 die 'should not reach here';
             }
         }
-        return ($src, _node('STR', $buf));
+        return ($src, _node('BYTES', $buf));
     },
 ]);
 

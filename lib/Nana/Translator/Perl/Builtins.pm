@@ -315,6 +315,21 @@ my %built_class_src = (
             self->data->[0]
         },
     },
+    Bytes => {
+        length => sub {
+            return length(self->data);
+        },
+        decode => sub {
+            my ($charset) = @_;
+            require Encode;
+            return Encode::decode($charset, self->data);
+        },
+        encode => sub {
+            my ($charset) = @_;
+            require Encode;
+            return Encode::encode($charset, self->data);
+        },
+    },
 );
 while (my ($class_name, $methods) = each %built_class_src) {
     $TORA_BUILTIN_CLASSES{$class_name} = do {
@@ -341,6 +356,8 @@ sub typeof {
         return 'Range';
     } elsif (ref $stuff eq 'Nana::Translator::Perl::Object') {
         return $stuff->class->name;
+    } elsif (ref $stuff eq 'JSON::XS::Boolean') {
+        return 'Bool';
     } elsif (ref $stuff eq 'Nana::Translator::Perl::Class') {
         return 'Class';
     } elsif (ref $stuff eq 'CODE') {
@@ -380,6 +397,9 @@ sub to_tora {
     } elsif ($type eq 'Str') {
         $stuff =~ s/'/\\'/g;
         return "'" . $stuff . "'";
+    } elsif ($type eq 'Bytes') {
+        $stuff =~ s/'/\\'/g;
+        return "b'" . $stuff . "'";
     } elsif ($type eq 'Int') {
         return $stuff;
     } elsif ($type eq 'Double') {

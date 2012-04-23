@@ -32,10 +32,15 @@ our @EXPORT = qw(tora_call_func tora_call_method
     tora_get_item
     tora_deref
     tora_use
+    tora_bytes
 );
 
 *true = *JSON::true;
 *false = *JSON::false;
+
+sub _runtime_error {
+    croak @_;
+}
 
 our @CALLER_STACK;
 
@@ -160,23 +165,34 @@ sub tora_call_method2 {
 
 sub tora_op_equal {
     my ($lhs, $rhs) = @_;
-    my $flags = B::svref_2object(\$lhs)->FLAGS;
-    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-        # IV or NV
-        return $lhs == $rhs ? true() : false();
-    } elsif ($flags & B::SVp_POK) {
-        return $lhs eq $rhs ? true() : false();
-    } elsif (!defined $lhs) {
+
+    # check undef
+    if (!defined $lhs) {
         return !defined $rhs;
     } elsif (!defined $rhs) {
         return !defined $lhs;
-    } elsif (ref $lhs eq 'JSON::XS::Boolean') {
-        return (ref $rhs eq 'JSON::XS::Boolean') && $lhs == $rhs;
+    }
+
+    my $type = typeof($lhs);
+    if ($type eq 'Int') {
+        return $lhs == $rhs ? true() : false();
+    } elsif ($type eq 'Double') {
+        return $lhs == $rhs ? true() : false();
+    } elsif ($type eq 'Str') {
+        return $lhs eq $rhs ? true() : false();
+    } elsif ($type eq 'Bytes') {
+        my $rtype = typeof($rhs);
+        if ($rtype eq 'Bytes') {
+            return $lhs->data eq $rhs->data ? true() : false();
+        } elsif ($rtype eq 'Str') {
+            return $lhs->data eq $rhs ? true() : false();
+        } else {
+            _runtime_error "You cannot compare Bytes and $rtype";
+        }
+    } elsif ($type eq 'Bool') {
+        return (typeof($rhs) eq 'Bool') && $lhs == $rhs;
     } else {
-    warn Dumper([$lhs, $rhs]);
-        Dump($lhs);
-        Dump($rhs);
-        die "OOPS";
+        die "OOPS. Cannot compare $type";
     }
 }
 
@@ -363,6 +379,11 @@ sub tora_use {
         }
     }
     die "Cannot find module $klass from:\n" . join("\n", @libdir);
+}
+
+sub tora_bytes {
+    my $str = shift;
+    $TORA_BUILTIN_CLASSES{Bytes}->create_instance($str);
 }
 
 1;
