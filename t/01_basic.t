@@ -12,7 +12,11 @@ use Nana::Parser;
 my $compiler = Nana::Translator::Perl->new();
 my $parser   = Nana::Parser->new();
 
-sub eeeeol { local $_ = shift; s/\n$//; $_ }
+sub eeeeol {
+    local $_ = shift;
+    s/^\n//; s/\n$//;
+    $_
+}
 
 spec_file('t/01_basic.dat');
 
