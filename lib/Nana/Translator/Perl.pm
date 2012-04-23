@@ -301,7 +301,17 @@ sub _compile {
         $ret .= ";}";
         return $ret;
     } elsif ($node->[0] eq 'METHOD_CALL') {
-        return 'do {local $Nana::Translator::Perl::Runtime::TORA_SELF='._compile($node->[2]).';tora_call_method($TORA_PACKAGE, $Nana::Translator::Perl::Runtime::TORA_SELF, ' . _compile($node->[3]) . ', (' . join(',', map { _compile($_) } @{$node->[4]}) . '))}';
+        return join('',
+            'do {local $Nana::Translator::Perl::Runtime::TORA_SELF='._compile($node->[2]).';',
+                'tora_call_method3(',
+                    'tora_get_method($TORA_PACKAGE,',
+                        '$Nana::Translator::Perl::Runtime::TORA_SELF,',
+                        _compile($node->[3]) . ',',
+                        '(' . join(',', map { _compile($_) } @{$node->[4]}) . ')',
+                    '),',
+                ')',
+            '}'
+        );
     } elsif ($node->[0] eq 'STMTS') {
         my $ret = '';
         for (@{$node->[2]}) {

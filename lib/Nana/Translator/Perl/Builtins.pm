@@ -63,7 +63,14 @@ our %TORA_BUILTIN_FUNCTIONS = (
         if (@_==0) {
             return rand()
         } elsif (@_==1) {
-            return rand($_[0]);
+            my $type = typeof($_[0]);
+            if ($type eq 'Int') {
+                return int rand($_[0]);
+            } elsif ($type eq 'Double') {
+                return rand($_[0]);
+            } else {
+                _runtime_error("Bad argument for rand(): $_[0]");
+            }
         } else {
             _runtime_error("Too much arguments for rand");
         }
@@ -351,7 +358,6 @@ my %built_class_src = (
     Time => do {
         my $hash = +{
             new => sub {
-                shift; # $class
                 require Time::Piece;
                 $TORA_BUILTIN_CLASSES{Time}->create_instance(
                     Time::Piece->new(@_)
