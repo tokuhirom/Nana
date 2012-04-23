@@ -248,6 +248,15 @@ my %built_class_src = (
                 die "ARGUMENT MISSING";
             }
         },
+        replace => sub {
+            my ($self, $a, $b) = @_;
+            if (!ref $a) {
+                $self =~ s/$a/$b/g;
+                $self;
+            } else {
+                ...
+            }
+        },
     },
     'Object' => {
         tora => sub {
