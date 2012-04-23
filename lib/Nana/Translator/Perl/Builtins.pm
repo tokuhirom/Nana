@@ -404,6 +404,8 @@ sub typeof {
         return 'Bool';
     } elsif (ref $stuff eq 'Nana::Translator::Perl::Exception') {
         return 'Exception';
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::FilePackage') {
+        return 'FilePackage';
     } elsif (ref $stuff eq 'Nana::Translator::Perl::Class') {
         return 'Class';
     } elsif (ref $stuff eq 'CODE') {

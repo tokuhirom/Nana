@@ -289,6 +289,8 @@ rule('statement', [
         } elsif (my ($c3, $primary) = primary($c)) {
             $c = $c3;
             $type = $primary;
+        } else {
+            $type = _node('UNDEF');
         }
         return ($c, _node2('USE', $START, $klass, $type));
     },

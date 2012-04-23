@@ -2,6 +2,7 @@ use Test::More *;
 $LIBPATH.push('t/tra/import/lib/');
 use IMP3;
 
+is(typeof(IMP3), 'FilePackage');
 is(IMP3.foo(), "FOO");
 
-done_testing;
+done_testing();

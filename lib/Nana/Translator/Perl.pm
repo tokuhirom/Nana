@@ -147,7 +147,7 @@ sub _compile {
     } elsif ($node->[0] eq 'GETITEM') {
         return 'tora_get_item(' . _compile($node->[2]) . ',' . _compile($node->[3]) .')';
     } elsif ($node->[0] eq 'USE') {
-        return 'tora_use($TORA_PACKAGE,' . _compile($node->[2]) . ',' . ($node->[3] eq '*' ? 'q{*}' : _compile($node->[3])) . ')';
+        return 'tora_use($TORA_PACKAGE,' . _compile($node->[2]) . ',' . ($node->[3] && $node->[3] eq '*' ? 'q{*}' : _compile($node->[3])) . ')';
     } elsif ($node->[0] eq 'DO') {
         my $ret = "do {\n";
         $ret .= _compile($node->[2]) . '}';

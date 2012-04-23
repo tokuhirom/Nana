@@ -12,6 +12,7 @@ use Nana::Translator::Perl::Class;
 use Nana::Translator::Perl::Object;
 use Nana::Translator::Perl::Range;
 use Nana::Translator::Perl::Exception;
+use Nana::Translator::Perl::FilePackage;
 use Carp qw(croak);
 use B;
 use JSON ();
@@ -128,6 +129,12 @@ sub tora_call_method {
                 return $methbody->($klass, @args);
             } else {
                 __tora_call_method_fallback($pkg, $klass, 'Hash', $methname, @args);
+            }
+        } elsif (ref $klass eq 'Nana::Translator::Perl::FilePackage') {
+            if (my $methbody = $klass->get($methname)) {
+                return __call($methbody, \@args);
+            } else {
+                __tora_call_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
             }
         } elsif (ref $klass eq 'Nana::Translator::Perl::Object') {
             if (my $methbody = $klass->get_method($methname)) {
@@ -352,6 +359,8 @@ sub tora_use {
     state $parser   = Nana::Parser->new();
     state $compiler = Nana::Translator::Perl->new();
     local $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE;
+    my $file_package = Nana::Translator::Perl::FilePackage->new($klass);
+    $pkg->{$klass} = $file_package;
     for my $libdir (@$LIBPATH) {
         my $fname = "$libdir/$path.tra";
         if (-f $fname) {
@@ -371,11 +380,12 @@ sub tora_use {
                 die "Compilation failed in use(Phase 2): $@";
             }
 
-            for my $key (keys %$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE) {
+            for my $key (grep /^[^_]/, keys %$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE) {
                 if ($pkg->{$key}) {
                     warn "overriding $key at " . (caller(0))[1] . ' line ' . (caller(0))[2] . "\n";
                 }
                 $pkg->{$key} = $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE->{$key};
+                $file_package->add($key, $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE->{$key});
             }
 
             return;
