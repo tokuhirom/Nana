@@ -40,8 +40,10 @@ sub DESTROY {
         # print STDERR "  (in cleanup) Class object was destructed before object.\n";
         return;
     }
-    if ($self->has_method('DESTROY')) {
-        Nana::Translator::Perl::Runtime::tora_call_method(+{}, $self, 'DESTROY');
+    if (my $methbody = $self->get_method('DESTROY')) {
+        local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;
+        Nana::Translator::Perl::Runtime::tora_call_method3(
+            $methbody);
     }
 }
 
