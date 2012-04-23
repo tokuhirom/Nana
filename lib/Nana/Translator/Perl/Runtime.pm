@@ -32,6 +32,11 @@ our $STDOUT = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->c
 our $STDERR = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->create_instance(*STDERR);
 our $STDIN  = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->create_instance(*STDIN);
 
+sub add_libpath {
+    my ($class, $libpaths) = @_;
+    unshift @$LIBPATH, @$libpaths;
+}
+
 our @EXPORT = qw(tora_call_func tora_call_method
     tora_op_equal tora_op_ne
     tora_op_lt tora_op_gt

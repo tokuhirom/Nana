@@ -6,6 +6,7 @@ use Nana::Translator::Perl;
 use Nana::Parser;
 use Getopt::Long::Descriptive;
 use Data::Dumper;
+use Nana::Translator::Perl::Runtime;
 
 my ($opt, $usage) = describe_options(
     'nana %o <some-arg>',
@@ -13,10 +14,13 @@ my ($opt, $usage) = describe_options(
     [ 'Dperl', "Dump perl code"   ],
     [ 'Dtree|Dt',   "Dump AST" ],
     [ 'eval|e=s',   "Eval expression" ],
+    [ 'I=s@',        "Library path" ],
     [ 'compile-only|c',   "Compile only" ],
     [ 'help|h',       "print usage message and exit" ],
 );
 print($usage) if $opt->help;
+
+Nana::Translator::Perl::Runtime->add_libpath($opt->i);
 
 my $parser = Nana::Parser->new;
 my $compiler = Nana::Translator::Perl->new();
