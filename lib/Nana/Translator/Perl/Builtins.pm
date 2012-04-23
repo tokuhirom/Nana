@@ -59,6 +59,7 @@ our %TORA_BUILTIN_FUNCTIONS = (
     'say' => \&__say,
     'typeof' => \&typeof,
     getcwd => \&Cwd::getcwd,
+    rand => sub { ... if @_; rand() },
     sqrt => sub { sqrt(shift @_) },
     abs => sub { abs(shift @_) },
     cos => sub { cos(shift @_) },
