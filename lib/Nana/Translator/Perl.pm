@@ -247,6 +247,13 @@ sub _compile {
         return 'next;'
     } elsif ($node->[0] eq 'LAST') {
         return 'last;'
+    } elsif ($node->[0] eq 'STRCONCAT') {
+        return '('. _compile($node->[2]) .'.'. $node->[3].'.'._compile($node->[4]).')';
+    } elsif ($node->[0] eq 'STR2') {
+        my $str = ${$node->[2]};
+        # TODO: more escape?
+        $str =~ s/!/\\!/g; # escape
+        return 'q!' . $str . '!';
     } elsif ($node->[0] eq 'STR') {
         my $str = $node->[2];
         # TODO: more escape?

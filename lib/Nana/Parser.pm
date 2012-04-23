@@ -1173,33 +1173,38 @@ rule('string', [
 # TODO: support qq
         ($src) = match($src, q{"})
             or return;
-        my $buf = '';
+        my $bufref = \do { my $o="" };
+        my $node = _node('STR2', $bufref);
         while (1) {
             if ($src =~ s/^"//) {
                 last;
             } elsif (length($src) == 0) {
                 die "Unexpected EOF in string literal line $START";
             } elsif ($src =~ s/^(\\0[0-7]{2})//) {
-                $buf .= eval 'qq{'.$1.'}';
+                $$bufref .= eval 'qq{'.$1.'}';
+            } elsif ($src =~ s/^(\$[a-zA-Z_][a-zA-Z0-9_]*)//) {
+                $bufref = \do { my $o="" };
+                my $node2 = _node('STR2', $bufref);
+                $node = _node('STRCONCAT', $node, $1, $node2);
             } elsif ($src =~ s/^\\0//) {
-                $buf .= qq{\0};
+                $$bufref.= qq{\0};
             } elsif ($src =~ s/^\\r//) {
-                $buf .= qq{\r};
+                $$bufref .= qq{\r};
             } elsif ($src =~ s/^\\t//) {
-                $buf .= qq{\t};
+                $$bufref .= qq{\t};
             } elsif ($src =~ s/^\\n//) {
-                $buf .= qq{\n};
+                $$bufref .= qq{\n};
             } elsif ($src =~ s/^\\n//) {
-                $buf .= qq{\n};
+                $$bufref .= qq{\n};
             } elsif ($src =~ s/^\\"//) {
-                $buf .= q{"};
-            } elsif ($src =~ s/^(.)//) {
-                $buf .= $1;
+                $$bufref .= q{"};
+            } elsif ($src =~ s/^(.)//ms) {
+                $$bufref .= $1;
             } else {
-                die 'should not reach here';
+                _err 'should not reach here';
             }
         }
-        return ($src, _node('STR', $buf));
+        return ($src, $node);
     },
     sub {
         # TODO: escape chars, etc.
