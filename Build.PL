@@ -32,6 +32,9 @@ my $build = Module::Build->new(
     share_dir => {
         dist => [ 'share' ],
     },
+    PL_files => {
+        'Config.tra.PL' => 'share/lib/Config.tra',
+    },
 
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? 't/ xt/' : 't/',
 

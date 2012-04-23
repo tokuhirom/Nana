@@ -1150,7 +1150,9 @@ rule('bytes', [
                 die "Unexpected EOF in bytes literal line $START";
             } elsif ($src =~ s/^\\'//) {
                 $buf .= q{'};
-            } elsif ($src =~ s/^(\\[0-9a-f]{2})//) {
+            } elsif ($src =~ s/^(\\[0-7]{3})//) {
+                $buf .= $1;
+            } elsif ($src =~ s/^(\\x[0-9a-f]{2})//) {
                 $buf .= $1;
             } elsif ($src =~ s/^(.)//) {
                 $buf .= $1;
@@ -1167,6 +1169,7 @@ rule('string', [
         # TODO: escape chars, etc.
         my $src = shift;
 
+# TODO: support qq
         ($src) = match($src, q{"})
             or return;
         my $buf = '';
@@ -1175,10 +1178,16 @@ rule('string', [
                 last;
             } elsif (length($src) == 0) {
                 die "Unexpected EOF in string literal line $START";
+            } elsif ($src =~ s/^(\\0[0-7]{2})//) {
+                $buf .= eval 'qq{'.$1.'}';
             } elsif ($src =~ s/^\\0//) {
                 $buf .= qq{\0};
+            } elsif ($src =~ s/^\\r//) {
+                $buf .= qq{\r};
             } elsif ($src =~ s/^\\t//) {
                 $buf .= qq{\t};
+            } elsif ($src =~ s/^\\n//) {
+                $buf .= qq{\n};
             } elsif ($src =~ s/^\\n//) {
                 $buf .= qq{\n};
             } elsif ($src =~ s/^\\"//) {

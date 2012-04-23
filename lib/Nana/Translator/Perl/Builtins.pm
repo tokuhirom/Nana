@@ -340,6 +340,32 @@ my %built_class_src = (
             return Encode::encode($charset, self->data);
         },
     },
+    Time => do {
+        my $hash = +{
+            new => sub {
+                shift; # $class
+                require Time::Piece;
+                $TORA_BUILTIN_CLASSES{Time}->create_instance(
+                    Time::Piece->new(@_)
+                );
+            },
+            strftime => sub {
+                self->data->strftime(@_)
+            },
+        };
+        for my $method (qw(year)) {
+            $hash->{$method} = sub { self->data->$method };
+        }
+        $hash->{day_of_week} = sub { self->data->wday };
+        $hash->{second} = sub { self->data->second };
+        $hash->{min} = sub { self->data->minute };
+        $hash->{minute} = sub { self->data->minute };
+        $hash->{hour} = sub { self->data->hour };
+        $hash->{month} = sub { self->data->mon };
+        $hash->{day} = sub { self->data->mday };
+        $hash->{now} = $hash->{new};
+        $hash;
+    },
 );
 while (my ($class_name, $methods) = each %built_class_src) {
     $TORA_BUILTIN_CLASSES{$class_name} = do {
