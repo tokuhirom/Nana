@@ -96,81 +96,65 @@ sub __tora_call_method_fallback {
 sub tora_call_method {
     my ($pkg, $klass, $methname, @args) = @_;
     local $Nana::Translator::Perl::Runtime::TORA_SELF = $klass;
-
-#   if (my $klaas = $pkg->{$klass}) {
-#       die "XXX WHO CAN CALL THIS PATH?";
-
-#       if (my $methbody = $klaas->{$methname}) {
-#           return __call($methbody, \@args);
-#       } else {
-#           if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
-#               my @ret = $methbody->(@args);
-#               return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
-#           }
-#           __tora_call_method_fallback($pkg, $klass, $klass, $methname, @args);
-#       }
-#   } else {
-    {
-        # builtin methods
-        if (ref $klass eq 'ARRAY') {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Array}->{$methname}) {
+    # builtin methods
+    if (ref $klass eq 'ARRAY') {
+        if (my $methbody = $TORA_BUILTIN_CLASSES{Array}->{$methname}) {
+            return $methbody->($klass, @args);
+        } else {
+            __tora_call_method_fallback($pkg, $klass, 'Array', $methname, @args);
+        }
+    } elsif (ref $klass eq 'CODE') {
+        if (my $methbody = $TORA_BUILTIN_CLASSES{Code}->{$methname}) {
+            return $methbody->($klass, @args);
+        } else {
+            __tora_call_method_fallback($pkg, $klass, 'Code', $methname, @args);
+        }
+    } elsif (ref $klass eq 'HASH') {
+        if (my $methbody = $TORA_BUILTIN_CLASSES{Hash}->{$methname}) {
+            return $methbody->($klass, @args);
+        } else {
+            __tora_call_method_fallback($pkg, $klass, 'Hash', $methname, @args);
+        }
+    } elsif (ref $klass eq 'Nana::Translator::Perl::FilePackage') {
+        if (my $methbody = $klass->get($methname)) {
+            return __call($methbody, \@args);
+        } else {
+            __tora_call_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
+        }
+    } elsif (ref $klass eq 'Nana::Translator::Perl::Object') {
+        if (my $methbody = $klass->get_method($methname)) {
+            return __call($methbody, \@args);
+        } else {
+            __tora_call_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
+        }
+    } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
+        if (my $methbody = $klass->{$methname}) {
+            return __call($methbody, [$klass, @args]);
+        } else {
+            if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
+                return $methbody->($klass, @args);
+            }
+            __tora_call_method_fallback($pkg, $klass, $klass->name, $methname, @args);
+        }
+    } elsif (!ref $klass) {
+        # IV or NV
+        my $flags = B::svref_2object(\$klass)->FLAGS;
+        # TODO: support NV class.
+        if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+            if (my $methbody = $TORA_BUILTIN_CLASSES{Int}->{$methname}) {
                 return $methbody->($klass, @args);
             } else {
-                __tora_call_method_fallback($pkg, $klass, 'Array', $methname, @args);
-            }
-        } elsif (ref $klass eq 'CODE') {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Code}->{$methname}) {
-                return $methbody->($klass, @args);
-            } else {
-                __tora_call_method_fallback($pkg, $klass, 'Code', $methname, @args);
-            }
-        } elsif (ref $klass eq 'HASH') {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Hash}->{$methname}) {
-                return $methbody->($klass, @args);
-            } else {
-                __tora_call_method_fallback($pkg, $klass, 'Hash', $methname, @args);
-            }
-        } elsif (ref $klass eq 'Nana::Translator::Perl::FilePackage') {
-            if (my $methbody = $klass->get($methname)) {
-                return __call($methbody, \@args);
-            } else {
-                __tora_call_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
-            }
-        } elsif (ref $klass eq 'Nana::Translator::Perl::Object') {
-            if (my $methbody = $klass->get_method($methname)) {
-                return __call($methbody, \@args);
-            } else {
-                __tora_call_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
-            }
-        } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
-            if (my $methbody = $klass->{$methname}) {
-                return __call($methbody, [$klass, @args]);
-            } else {
-                if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
-                    return $methbody->($klass, @args);
-                }
-                __tora_call_method_fallback($pkg, $klass, $klass->name, $methname, @args);
-            }
-        } elsif (!ref $klass) {
-            # IV or NV
-            my $flags = B::svref_2object(\$klass)->FLAGS;
-            # TODO: support NV class.
-            if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-                if (my $methbody = $TORA_BUILTIN_CLASSES{Int}->{$methname}) {
-                    return $methbody->($klass, @args);
-                } else {
-                    __tora_call_method_fallback($pkg, $klass, 'Int', $methname, @args);
-                }
-            } else {
-                if (my $methbody = $TORA_BUILTIN_CLASSES{Str}->{$methname}) {
-                    return $methbody->($klass, @args);
-                } else {
-                    __tora_call_method_fallback($pkg, $klass, 'Str', $methname, @args);
-                }
+                __tora_call_method_fallback($pkg, $klass, 'Int', $methname, @args);
             }
         } else {
-            croak "Unknown class: $klass";
+            if (my $methbody = $TORA_BUILTIN_CLASSES{Str}->{$methname}) {
+                return $methbody->($klass, @args);
+            } else {
+                __tora_call_method_fallback($pkg, $klass, 'Str', $methname, @args);
+            }
         }
+    } else {
+        croak "Unknown class: $klass";
     }
 }
 
