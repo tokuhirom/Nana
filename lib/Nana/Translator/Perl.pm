@@ -29,6 +29,7 @@ sub compile {
             'use Nana::Translator::Perl::Builtins qw(%TORA_BUILTIN_CLASSES);',
             'use JSON;',
             'use Sub::Name;',
+            'my $LIBPATH=$Nana::Translator::Perl::Runtime::LIBPATH;',
             '$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE = my $TORA_PACKAGE = {};',
             'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         ) . "\n";

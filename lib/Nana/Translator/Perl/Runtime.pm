@@ -22,6 +22,11 @@ use File::Spec;
 our $TORA_SELF;
 our $TORA_FILENAME;
 our %TORA_INC;
+our $LIBPATH = [
+    grep { defined $_ } (
+        eval { File::Spec->catfile(File::ShareDir::dist_dir('nana'), 'lib') },
+    )
+];
 
 our @EXPORT = qw(tora_call_func tora_call_method
     tora_op_equal tora_op_ne
@@ -335,11 +340,6 @@ sub tora_deref:lvalue {
     }
 }
 
-my @libdir = (
-    grep { defined $_ } (
-        eval { File::Spec->catfile(File::ShareDir::dist_dir('nana'), 'lib') },
-    )
-);
 sub tora_use {
     my ($pkg, $klass, $import) = @_;
     # TODO: $NANALIB
@@ -349,7 +349,7 @@ sub tora_use {
     state $parser   = Nana::Parser->new();
     state $compiler = Nana::Translator::Perl->new();
     local $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE;
-    for my $libdir (@libdir) {
+    for my $libdir (@$LIBPATH) {
         my $fname = "$libdir/$path.tra";
         if (-f $fname) {
             open(my $fh, '<', $fname)
@@ -378,7 +378,7 @@ sub tora_use {
             return;
         }
     }
-    die "Cannot find module $klass from:\n" . join("\n", @libdir);
+    die "Cannot find module $klass from:\n" . join("\n", @$LIBPATH);
 }
 
 sub tora_bytes {
