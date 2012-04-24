@@ -334,7 +334,6 @@ my %built_class_src = (
             return CORE::fileno($fh);
         },
         open => sub {
-            shift; # $class
             tora_open(@_);
         },
     },
