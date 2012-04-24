@@ -316,7 +316,12 @@ my %built_class_src = (
             if ($_[0]->isa("Nana::Translator::Perl::Object")) {
                 return $_[0]->class;
             } else {
-                ...
+                my $type = typeof($_[0]);
+                if (my $class = $TORA_BUILTIN_CLASSES{$type}) {
+                    $class;
+                } else {
+                    ...
+                }
             }
         },
     },
