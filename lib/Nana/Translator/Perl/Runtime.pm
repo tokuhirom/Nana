@@ -101,44 +101,26 @@ sub tora_get_method {
     my ($pkg, $klass, $methname, @args) = @_;
     my $type = typeof($klass);
     # builtin methods
-    if ($type eq 'Regexp') {
-        if (my $methbody = $TORA_BUILTIN_CLASSES{$type}->{$methname}) {
+    if ($type ~~ ['Regexp', 'Array', 'Code', 'Hash']) {
+        if (defined(my $methbody = $TORA_BUILTIN_CLASSES{$type}->{$methname})) {
             return ($methbody, $klass, @args);
         } else {
             __tora_get_method_fallback($pkg, $klass, $type, $methname);
         }
-    } elsif (ref $klass eq 'ARRAY') {
-        if (my $methbody = $TORA_BUILTIN_CLASSES{Array}->{$methname}) {
-            return ($methbody, $klass, @args);
-        } else {
-            __tora_get_method_fallback($pkg, $klass, 'Array', $methname);
-        }
-    } elsif (ref $klass eq 'CODE') {
-        if (my $methbody = $TORA_BUILTIN_CLASSES{Code}->{$methname}) {
-            return ($methbody, $klass, @args);
-        } else {
-            __tora_get_method_fallback($pkg, $klass, 'Code', $methname, @args);
-        }
-    } elsif (ref $klass eq 'HASH') {
-        if (my $methbody = $TORA_BUILTIN_CLASSES{Hash}->{$methname}) {
-            return ($methbody, $klass, @args);
-        } else {
-            __tora_get_method_fallback($pkg, $klass, 'Hash', $methname, @args);
-        }
     } elsif (ref $klass eq 'Nana::Translator::Perl::FilePackage') {
-        if (my $methbody = $klass->get($methname)) {
+        if (defined(my $methbody = $klass->get($methname))) {
             return ($methbody, $klass, @args);
         } else {
             __tora_get_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
         }
     } elsif (ref $klass eq 'Nana::Translator::Perl::Object') {
-        if (my $methbody = $klass->get_method($methname)) {
+        if (defined(my $methbody = $klass->get_method($methname))) {
             return ($methbody, @args);
         } else {
             __tora_get_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
         }
     } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
-        if (my $methbody = $klass->{$methname}) {
+        if (defined(my $methbody = $klass->{$methname})) {
             return ($methbody, @args);
         } else {
             if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
@@ -151,13 +133,13 @@ sub tora_get_method {
         my $flags = B::svref_2object(\$klass)->FLAGS;
         # TODO: support NV class.
         if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Int}->{$methname}) {
+            if (defined(my $methbody = $TORA_BUILTIN_CLASSES{Int}->{$methname})) {
                 return ($methbody, $klass, @args);
             } else {
                 __tora_get_method_fallback($pkg, $klass, 'Int', $methname, @args);
             }
         } else {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Str}->{$methname}) {
+            if (defined(my $methbody = $TORA_BUILTIN_CLASSES{Str}->{$methname})) {
                 return ($methbody, $klass, @args);
             } else {
                 __tora_get_method_fallback($pkg, $klass, 'Str', $methname, @args);
@@ -189,8 +171,14 @@ sub tora_op_equal {
 
     my $type = typeof($lhs);
     if ($type eq 'Int') {
+        if (typeof($rhs) eq 'Str') {
+            _runtime_error("Cannot compare string and Int");
+        }
         return $lhs == $rhs ? true() : false();
     } elsif ($type eq 'Double') {
+        if (typeof($rhs) eq 'Str') {
+            _runtime_error("Cannot compare string and Double");
+        }
         return $lhs == $rhs ? true() : false();
     } elsif ($type eq 'Str') {
         return $lhs eq $rhs ? true() : false();

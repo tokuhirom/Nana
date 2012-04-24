@@ -140,9 +140,9 @@ sub _compile {
     } elsif ($node->[0] eq 'DIE') {
         return "die Nana::Translator::Perl::Exception->new(" . _compile($node->[2]) . ')';
     } elsif ($node->[0] eq 'TRY') {
-        my $ret = "do {my \@ret = eval {\n";
+        my $ret = "sub {my \@ret = eval {\n";
         $ret .= _compile($node->[2]);
-        $ret .= '}; ($@ || undef, @ret); };';
+        $ret .= '}; my @ret2=($@ ? $@->val : undef, @ret); wantarray ? @ret2 : $ret2[0]; }->();';
         return $ret;
     } elsif ($node->[0] eq 'GETITEM') {
         return 'tora_get_item(' . _compile($node->[2]) . ',' . _compile($node->[3]) .')';

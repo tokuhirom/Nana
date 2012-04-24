@@ -11,6 +11,8 @@ sub new {
     bless \$e, $class;
 }
 
+sub val { ${shift @_} }
+
 sub stringify {
     my ($self) = @_;
     return $$self;

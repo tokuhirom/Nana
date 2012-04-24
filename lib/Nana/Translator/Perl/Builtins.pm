@@ -11,6 +11,7 @@ use Nana::Translator::Perl::RegexpMatched;
 use Nana::Translator::Perl::Class;
 use Carp;
 use Cwd;
+use Fcntl ();
 
 our @EXPORT = qw(
     %TORA_BUILTIN_FUNCTIONS
@@ -333,9 +334,24 @@ my %built_class_src = (
             my $fh = self->data;
             return CORE::fileno($fh);
         },
+        seek => sub {
+            my $fh = self->data;
+            return CORE::seek($fh, shift @_, shift @_);
+        },
+        tell => sub {
+            my $fh = self->data;
+            return CORE::tell($fh);
+        },
+        getc => sub {
+            my $fh = self->data;
+            return CORE::getc($fh);
+        },
         open => sub {
             tora_open(@_);
         },
+        'SEEK_END' => scalar(Fcntl::SEEK_END()),
+        'SEEK_CUR' => scalar(Fcntl::SEEK_CUR()),
+        'SEEK_SET' => scalar(Fcntl::SEEK_SET()),
     },
     'Dir' => {
         read => sub {
