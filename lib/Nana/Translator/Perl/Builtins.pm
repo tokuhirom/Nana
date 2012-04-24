@@ -19,6 +19,10 @@ our @EXPORT = qw(
 
 our %TORA_BUILTIN_CLASSES;
 
+sub _argument_error {
+    croak @_;
+}
+
 sub _runtime_error {
     croak @_;
 }
@@ -221,7 +225,7 @@ my %built_class_src = (
         grep => sub {
             my $type = typeof($_[1]);
             if ($type eq 'Regexp') {
-                return [grep { $_ =~ $_[1] } @{$_[0]}];
+                return [grep { $_ =~ $_[1]->pattern } @{$_[0]}];
             } elsif ($type eq 'Code') {
                 return [grep { $_[1]->($_) } @{$_[0]}];
             } else {
@@ -343,19 +347,20 @@ my %built_class_src = (
             $DIR_ITER_CLASS->create_instance(self->data);
         },
         new => sub {
-            my ($class, $dirname) = @_;
+            my ($dirname) = @_;
             opendir(my $dh, $dirname)
                 or _runtime_error "Cannot open directory $dirname: $!";
             return $TORA_BUILTIN_CLASSES{Dir}->create_instance($dh);
         },
         rmdir => sub {
-            my ($class, $name) = @_;
+            my ($name) = @_;
             rmdir($name)
                 or _runtime_error "Cannot remove directory $name: $!";
             undef;
         },
         mkdir => sub {
-            my ($class, $name) = @_;
+            my ($name) = @_;
+            $name // _argument_error "required directory name for mkdir";
             mkdir($name)
                 or _runtime_error "Cannot create directory $name: $!";
             undef;
