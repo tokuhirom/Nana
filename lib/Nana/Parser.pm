@@ -677,13 +677,13 @@ rule('pow', [
         my $c = shift;
         ($c, my $lhs) = incdec($c)
             or return;
-        ($c) = match($c, '**')
-            or return;
+        (my $c2) = match($c, '**')
+            or return ($c, $lhs);
+        $c = $c2;
         ($c, my $rhs) = pow($c)
             or die "Missing expression after '**'";
         return ($c, _node("**", $lhs, $rhs));
     },
-    \&incdec,
 ]);
 
 rule('incdec', [
@@ -706,7 +706,6 @@ rule('incdec', [
         $c = $c2;
         return ($c, _node2($type eq '++' ? "POSTINC" : 'POSTDEC', $START, $object));
     },
-    \&method_call,
 ]);
 
 rule('method_call', [
@@ -733,26 +732,27 @@ rule('method_call', [
 
 rule('funcall', [
     sub {
-        # $thing[$n]
         my $c = shift;
-        ($c, my $lhs) = primary($c) or return;
-        ($c) = match($c, '[')
+        ($c, my $lhs) = primary($c)
             or return;
-        ($c, my $rhs) = expression($c)
-            or return;
-        $rhs->[0] = 'IDENT' if $rhs->[0] eq 'PRIMARY_IDENT';
-        ($c) = match($c, ']')
-            or die "Unmatched bracket line $START";
-        return ($c, _node('GETITEM', $lhs, $rhs));
+        if (my ($c2) = match($c, '[')) {
+            # $thing[$n]
+            $c = $c2;
+            ($c, my $rhs) = expression($c)
+                or return;
+            $rhs->[0] = 'IDENT' if $rhs->[0] eq 'PRIMARY_IDENT';
+            ($c) = match($c, ']')
+                or die "Unmatched bracket line $START";
+            return ($c, _node('GETITEM', $lhs, $rhs));
+        } elsif (my ($c3, $args) = arguments($c)) {
+            # say()
+            $c = $c3;
+            return ($c, _node('CALL', $lhs, $args));
+        } else {
+            # primary
+            return ($c, $lhs);
+        }
     },
-    sub {
-        # say()
-        my $c = shift;
-        ($c, my $lhs) = primary($c) or return;
-        ($c, my $args) = arguments($c) or return;
-        return ($c, _node('CALL', $lhs, $args));
-    },
-    \&primary
 ]);
 
 rule('parameters', [
