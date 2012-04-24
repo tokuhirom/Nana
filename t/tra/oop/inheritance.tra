@@ -33,5 +33,8 @@ is($bar.class().isa(Foo), true);
 is($bar.class().isa(Bar), true);
 is($bar.m(), 'BAR_M');
 is($bar.n(), 'FOO_N');
+is(Foo.n(), 'FOO_N');
+is(Bar.m(), 'BAR_M');
+is(Bar.n(), 'FOO_N');
 
 done_testing();

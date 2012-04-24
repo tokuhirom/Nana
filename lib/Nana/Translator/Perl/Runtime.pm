@@ -120,20 +120,21 @@ sub tora_get_method2 {
             __tora_get_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
         }
     } elsif (ref $klass eq 'Nana::Translator::Perl::Object') {
-        if (defined(my $methbody = $klass->get_method($methname))) {
-            return ($methbody, @args);
-        } else {
-            __tora_get_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
-        }
+        tora_get_method_object($object, $object->class, $methname, @args);
     } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
-        if (defined(my $methbody = $klass->get_method($methname))) {
-            return ($methbody, @args);
-        } else {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->get_method($methname)) {
-                return ($methbody, $klass, @args);
+        {
+            my $target = $object;
+            while ($target) {
+                if (defined(my $methbody = $target->get_method($methname))) {
+                    return ($methbody, @args);
+                }
+                $target = $target->superclass();
             }
-            __tora_get_method_fallback($pkg, $klass, $klass->name, $methname, @args);
         }
+        if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->get_method($methname)) {
+            return ($methbody, $object, @args);
+        }
+        __tora_get_method_fallback($pkg, $object, $object->name, $methname, @args);
     } elsif (!ref $klass) {
         # IV or NV
         my $flags = B::svref_2object(\$klass)->FLAGS;
@@ -153,6 +154,18 @@ sub tora_get_method2 {
         }
     } else {
         croak "Unknown class: $klass";
+    }
+}
+
+sub tora_get_method_object {
+    my ($object, $klass, $methname, @args) = @_;
+
+    if (defined(my $methbody = $klass->get_method($methname))) {
+        return ($methbody, @args);
+    } elsif (defined(my $super = $klass->superclass())) {
+        return tora_get_method_object($object, $super, $methname, @args);
+    } else {
+        __tora_get_method_fallback(undef, $object, $object->class->name, $methname, @args);
     }
 }
 
