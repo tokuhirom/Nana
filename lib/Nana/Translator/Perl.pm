@@ -49,7 +49,7 @@ sub _compile {
 
     for (qw(
         **
-        * % x
+        % x
         -
         >> <<
         <=> ~~
@@ -97,6 +97,7 @@ sub _compile {
         '..' => 'tora_make_range',
         '+'  => 'tora_op_add',
         '/'  => 'tora_op_div',
+        '*'  => 'tora_op_mul',
     );
     if (my $func = $binops{$node->[0]}) {
         return "$func(". _compile($node->[2]) . ',' . _compile($node->[3]).')';

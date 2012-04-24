@@ -341,6 +341,26 @@ my %built_class_src = (
                 ...
             }
         },
+        split => sub {
+            if (@_==2) {
+                [split($_[1]->pattern, $_[0])];
+            } else {
+                [split($_[1]->pattern, $_[0], $_[2])];
+            }
+        },
+        index => sub {
+            index($_[0], $_[1]);
+        },
+        upper => sub {
+            uc($_[0]);
+        },
+        lower => sub {
+            lc($_[0]);
+        },
+        encode => sub {
+            require Encode;
+            Nana::Translator::Perl::Runtime::tora_bytes(Encode::encode($_[1], $_[0], $_[2]))
+        },
     },
     'Object' => {
         tora => sub {

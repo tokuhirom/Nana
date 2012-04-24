@@ -43,7 +43,7 @@ our @EXPORT = qw(tora_call_func
     tora_op_lt tora_op_gt
     tora_op_le tora_op_ge
     tora_make_range
-    tora_op_add tora_op_div
+    tora_op_add tora_op_div tora_op_mul
     tora_get_item
     tora_deref
     tora_use
@@ -318,6 +318,18 @@ sub tora_op_add {
         } else {
             return $lhs . $rhs;
         }
+    } else {
+        ...
+    }
+}
+
+sub tora_op_mul {
+    my ($lhs, $rhs) = @_;
+    my $flags = B::svref_2object(\$lhs)->FLAGS;
+    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
+        return $lhs * $rhs;
+    } elsif ($flags & B::SVp_POK) {
+        return $lhs x $rhs;
     } else {
         ...
     }

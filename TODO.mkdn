@@ -1,8 +1,5 @@
 TODO list
 =========
 
-Basic syntax
-------------
-
-    * try-catch
+    Str#scan t/tra/object/string.tra
 
