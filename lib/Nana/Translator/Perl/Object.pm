@@ -42,7 +42,7 @@ sub DESTROY {
     }
     if (my $methbody = $self->get_method('DESTROY')) {
         local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;
-        Nana::Translator::Perl::Runtime::tora_call_method3(
+        Nana::Translator::Perl::Runtime::tora_call_method(
             $methbody);
     }
 }

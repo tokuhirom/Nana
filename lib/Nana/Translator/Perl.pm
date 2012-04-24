@@ -244,7 +244,19 @@ sub _compile {
     } elsif ($node->[0] eq 'REGEXP') {
         my $re = $node->[2];
         $re =~ s!/!\\/!g;
-        return "qr/$re/$node->[3]";
+        my $mode = $node->[3];
+        my $global = 0;
+        if ($mode =~ s/g//) {
+            $global++;
+        }
+        return join('',
+            'do {',
+                'Nana::Translator::Perl::Regexp->new(',
+                    "qr/$re/$mode,",
+                    ($global ? '1' : '0'),
+                ');',
+            '}',
+        );
     } elsif ($node->[0] eq 'NEXT') {
         return 'next;'
     } elsif ($node->[0] eq 'LAST') {
@@ -293,11 +305,12 @@ sub _compile {
     } elsif ($node->[0] eq 'ELSE') {
         return ' else {' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'CLASS') {
-        my $ret = '{my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{' . _compile($node->[2]) . '} = Nana::Translator::Perl::Class->new(' . _compile($node->[2]) . ',+{}));';
-        $ret .= join(',', map { sprintf "BEGIN{extends '%s';}", _compile($_) } @{$node->[3]});
+        my $ret = '{my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{' . _compile($node->[2]) . '} = Nana::Translator::Perl::Class->new(' . _compile($node->[2]) . ',' . ($node->[3] ? _compile($node->[3]) : 'undef') .'));';
         $ret .= "\n";
-        local $IN_CLASS=1;
-        $ret .= _compile($node->[4]);
+        $ret .= do {
+            local $IN_CLASS=1;
+            _compile($node->[4]);
+        };
         $ret .= ";}";
         return $ret;
     } elsif ($node->[0] eq 'GET_METHOD') {
@@ -312,7 +325,7 @@ sub _compile {
     } elsif ($node->[0] eq 'METHOD_CALL') {
         return join('',
             'do {local $Nana::Translator::Perl::Runtime::TORA_SELF='._compile($node->[2]).';',
-                'tora_call_method3(',
+                'tora_call_method(',
                     'tora_get_method($TORA_PACKAGE,',
                         '$Nana::Translator::Perl::Runtime::TORA_SELF,',
                         _compile($node->[3]) . ',',
@@ -422,7 +435,7 @@ sub _compile {
     } elsif ($node->[0] eq 'UNARY-') {
         return '-' . _compile($node->[2]);
     } elsif ($node->[0] eq 'UNARY!') {
-        return '!' . _compile($node->[2]);
+        return 'tora_op_not('._compile($node->[2]).')';
     } elsif ($node->[0] eq 'UNARY~') {
         return '~' . _compile($node->[2]);
     } elsif ($node->[0] eq 'UNARY*') {

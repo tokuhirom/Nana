@@ -37,8 +37,7 @@ our @KEYWORDS = qw(
     unless if for while do else elsif
     not
     or xor and
-    lt gt eq cmp le ge ne
-    isa
+    is
     undef
     true false
     self
@@ -257,16 +256,15 @@ rule('statement', [
             or return;
         ($c, my $name) = class_name($c)
             or die "class name expected after 'class' keyword";
-        my @base;
-        if ((my $c2) = match($c, 'isa')) {
+        my $base;
+        if ((my $c2) = match($c, 'is')) {
             $c = $c2;
-            ($c, my $base) = class_name($c)
-                or die "class name expected after 'isa' keyword";
-            push @base, $base;
+            ($c, $base) = class_name($c)
+                or die "class name expected after 'is' keyword";
         }
         ($c, my $block) = block($c)
-            or die "Expected block after 'class' but not matched";
-        return ($c, _node2('CLASS', $START, $name, \@base, $block));
+            or _err "Expected block after 'class' but not matched";
+        return ($c, _node2('CLASS', $START, $name, $base, $block));
     },
     sub {
         my $c = shift;
@@ -500,7 +498,7 @@ rule('expression', [
         }
 
         ($c, my $block) = block($c)
-            or _err "expected block after sub in $name->[1]";
+            or _err "expected block after sub in $name->[2]";
         return ($c, _node2('SUB', $START, $name, $params, $block));
     },
     sub {
@@ -619,12 +617,12 @@ rule('and_expression', [
 ]);
 
 rule('equality_expression', [
-    nonassoc_op(\&cmp_expression, [qw(== != <=> eq ne cmp ~~)]),
+    nonassoc_op(\&cmp_expression, [qw(== != <=> ~~)]),
     \&cmp_expression
 ]);
 
 rule('cmp_expression', [
-    nonassoc_op(\&shift_expression, [qw(< > <= >= lt gt le ge)]),
+    nonassoc_op(\&shift_expression, [qw(< > <= >=)]),
     \&shift_expression
 ]);
 
@@ -848,8 +846,9 @@ rule('identifier', [
         local $_ = shift;
         s/^([A-Za-z_][A-Za-z0-9_]*)//
             or return;
-        return if $KEYWORDS{$1} && $1 ne 'class'; # keyword is not a identifier
-        return ($_, _node('IDENT', $1));
+        my $name = $1;
+        return if $KEYWORDS{$name} && $name ne 'class' && $name ne 'is'; # keyword is not a identifier
+        return ($_, _node('IDENT', $name));
     }
 ]);
 
@@ -1088,11 +1087,22 @@ rule('regexp', [
     sub {
         my $src = shift;
 
-        ($src) = match($src, q{/})
+        my $close2 = length($src) > 3 ? substr($src, 2, 1) : '';
+        ($src, my $close) = match($src, q{/}, [qr{^qr([!'\{\["\(])}, 'qq'])
             or return;
+        if ($close eq 'qq') {
+            $close = {
+                '!' => '!',
+                '{' => '}',
+                '[' => ']',
+                '"' => '"',
+                "'" => "'",
+                "(" => ")",
+            }->{$close2};
+        }
         my $buf = '';
         while (1) {
-            if ($src =~ s!^/!!) {
+            if ($src =~ s!^$close!!) {
                 last;
             } elsif (length($src) == 0) {
                 die "Unexpected EOF in regexp literal line $START";
@@ -1108,7 +1118,7 @@ rule('regexp', [
             }
         }
         my $flags = '';
-        if ($src =~ s/^([sxmi]+)(?![a-z0-9_-])//) {
+        if ($src =~ s/^([sxmig]+)(?![a-z0-9_-])//) {
             $flags = $1;
         }
         return ($src, _node('REGEXP', $buf, $flags));
@@ -1175,13 +1185,23 @@ rule('string', [
         # TODO: escape chars, etc.
         my $src = shift;
 
-# TODO: support qq
-        ($src) = match($src, q{"})
+        my $close2 = length($src) > 3 ? substr($src, 2, 1) : '';
+        ($src, my $close) = match($src, q{"}, [qr{^qq([!'\{\["\(])}, 'qq'])
             or return;
+        if ($close eq 'qq') {
+            $close = {
+                '!' => '!',
+                '{' => '}',
+                '[' => ']',
+                '"' => '"',
+                "'" => "'",
+                "(" => ")",
+            }->{$close2};
+        }
         my $bufref = \do { my $o="" };
         my $node = _node('STR2', $bufref);
         while (1) {
-            if ($src =~ s/^"//) {
+            if ($src =~ s/^$close//) {
                 last;
             } elsif (length($src) == 0) {
                 die "Unexpected EOF in string literal line $START";

@@ -13,6 +13,7 @@ use Nana::Translator::Perl::Object;
 use Nana::Translator::Perl::Range;
 use Nana::Translator::Perl::Exception;
 use Nana::Translator::Perl::FilePackage;
+use Nana::Translator::Perl::Regexp;
 use Carp qw(croak);
 use B;
 use JSON ();
@@ -37,7 +38,7 @@ sub add_libpath {
     unshift @$LIBPATH, @$libpaths;
 }
 
-our @EXPORT = qw(tora_call_func tora_call_method
+our @EXPORT = qw(tora_call_func
     tora_op_equal tora_op_ne
     tora_op_lt tora_op_gt
     tora_op_le tora_op_ge
@@ -47,7 +48,9 @@ our @EXPORT = qw(tora_call_func tora_call_method
     tora_deref
     tora_use
     tora_bytes
-    tora_get_method tora_call_method3
+    tora_get_method tora_call_method
+    __tora_set_regexp_global
+    tora_op_not
 );
 
 *true = *JSON::true;
@@ -89,15 +92,22 @@ sub tora_call_func {
     }
 }
 
-sub tora_call_method3 {
+sub tora_call_method {
     my ($func, @args) = @_;
     return __call($func, \@args);
 }
 
 sub tora_get_method {
     my ($pkg, $klass, $methname, @args) = @_;
+    my $type = typeof($klass);
     # builtin methods
-    if (ref $klass eq 'ARRAY') {
+    if ($type eq 'Regexp') {
+        if (my $methbody = $TORA_BUILTIN_CLASSES{$type}->{$methname}) {
+            return ($methbody, $klass, @args);
+        } else {
+            __tora_get_method_fallback($pkg, $klass, $type, $methname);
+        }
+    } elsif (ref $klass eq 'ARRAY') {
         if (my $methbody = $TORA_BUILTIN_CLASSES{Array}->{$methname}) {
             return ($methbody, $klass, @args);
         } else {
@@ -194,9 +204,24 @@ sub tora_op_equal {
             _runtime_error "You cannot compare Bytes and $rtype";
         }
     } elsif ($type eq 'Bool') {
-        return (typeof($rhs) eq 'Bool') && $lhs == $rhs;
+        return $lhs == tora_boolean($rhs);
     } else {
         die "OOPS. Cannot compare $type";
+    }
+}
+
+sub tora_op_not {
+    return tora_boolean($_[0]) ? JSON::false() : JSON::true();
+}
+
+sub tora_boolean {
+    my $type = typeof($_[0]);
+    if ($type eq 'Bool') {
+        return $_[0];
+    } elsif (!defined $_[0]) {
+        return JSON::false();
+    } else {
+        return JSON::true();
     }
 }
 
@@ -314,6 +339,7 @@ sub tora_make_range {
 
 sub tora_get_item :lvalue {
     my ($lhs, $rhs) = @_;
+    my $x;
     if (ref $lhs eq 'ARRAY') {
         $lhs->[$rhs];
     } elsif (ref $lhs eq 'HASH') {
@@ -321,9 +347,16 @@ sub tora_get_item :lvalue {
     } elsif (!defined $lhs) {
         die "You cannot get item from Undef";
         $lhs; # workaround. perl5 needs lvalue on die.
+    } elsif (ref $lhs eq 'Nana::Translator::Perl::RegexpMatched') {
+        if (typeof($rhs) eq 'Int') {
+            $lhs->parens->[$rhs];
+        } else {
+            die "There is no good solution.";
+            $lhs; # dummy
+        }
     } else {
         ...;
-        return $lhs;
+        $lhs; # dummy
     }
 }
 

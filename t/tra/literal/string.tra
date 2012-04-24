@@ -3,4 +3,6 @@ use Test::More *;
 is("\015", "\r");
 is("\012", "\n");
 
+is(qq{yay}, "yay");
+
 done_testing();

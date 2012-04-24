@@ -23,6 +23,22 @@ sub _runtime_error {
     croak @_;
 }
 
+# http://docs.python.org/library/re.html#module-contents
+use constant {
+    REGEXP_GLOBAL     => 1, # 'g'
+    REGEXP_MULTILINE  => 2, # 'm'
+    REGEXP_IGNORECASE => 4, # 'i'
+    REGEXP_EXPANDED   => 8, # 'x'
+    REGEXP_DOTALL     => 16 # 's'
+};
+my %REGEXP_FLAG_MAP = (
+    g => REGEXP_GLOBAL,
+    m => REGEXP_MULTILINE,
+    i => REGEXP_IGNORECASE,
+    x => REGEXP_EXPANDED,
+    s => REGEXP_DOTALL,
+);
+
 sub __say {
     for my $x (@_) {
         if (defined $x) {
@@ -253,7 +269,13 @@ my %built_class_src = (
             return length $_[0];
         },
         match => sub {
-            return $_[0] =~ $_[1] ? Nana::Translator::Perl::RegexpMatched->new() : undef;
+            my $pattern;
+            if (ref $_[1] eq 'Nana::Translator::Perl::Regexp') {
+                $pattern = $_[1]->pattern;
+            } else {
+                $pattern = $_[1];
+            }
+            return $_[0] =~ $pattern ? Nana::Translator::Perl::RegexpMatched->new($_[0]) : undef;
         },
         substr => sub {
             if (@_==2) {
@@ -268,6 +290,13 @@ my %built_class_src = (
             my ($self, $a, $b) = @_;
             if (!ref $a) {
                 $self =~ s/$a/$b/g;
+                $self;
+            } elsif (ref $a eq 'Nana::Translator::Perl::Regexp') {
+                if ($a->global) {
+                    $self =~ s/$a->{pattern}/$b/g;
+                } else {
+                    $self =~ s/$a->{pattern}/$b/;
+                }
                 $self;
             } else {
                 ...
@@ -355,6 +384,26 @@ my %built_class_src = (
             return Encode::encode($charset, self->data);
         },
     },
+    Regexp => {
+        flags => sub {
+            # re::regexp_pattern is 5.9.5+
+            my ($pattern, $mode) = re::regexp_pattern($_[0]->pattern);
+            my $flags = 0;
+            $mode =~ s/([gmixs])/$flags |= $REGEXP_FLAG_MAP{$1}/e;
+            if ($_[0]->global) {
+                $flags |= REGEXP_GLOBAL;
+            }
+            return $flags;
+        },
+        quotemeta => sub {
+            return quotemeta($_[0]);
+        },
+        GLOBAL     => REGEXP_GLOBAL,
+        MULTILINE  => REGEXP_MULTILINE,
+        IGNORECASE => REGEXP_IGNORECASE,
+        EXPANDED   => REGEXP_EXPANDED,
+        DOTALL     => REGEXP_DOTALL,
+    },
     Time => do {
         my $hash = +{
             new => sub {
@@ -416,8 +465,10 @@ sub typeof {
         return 'Class';
     } elsif (ref $stuff eq 'CODE') {
         return 'Code';
-    } elsif (ref $stuff eq 'Regexp') {
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::Regexp') {
         return 'Regexp';
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::RegexpMatched') {
+        return 'Regexp::Matched';
     } elsif (ref $stuff) {
         ...
     } else {

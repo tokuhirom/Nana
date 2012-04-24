@@ -4,8 +4,8 @@ use warnings;
 use utf8;
 
 sub new {
-    my ($class, $name, $klass) = @_;
-    CORE::bless {__tora_name => $name, klass => $klass}, $class;
+    my ($class, $name, $parent) = @_;
+    CORE::bless {__tora_name => $name, parent => $parent}, $class;
 }
 
 sub name {

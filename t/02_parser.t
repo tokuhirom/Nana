@@ -51,7 +51,7 @@ class Foo {
         [
             'CLASS', 1,
             [ 'IDENT', 1, 'Foo' ],
-            [],
+            undef,
             [BLOCK => 1, [
                 'STMTS', 1, [
                     [ 'SUB', 2, [ 'IDENT', 2, 'new' ], [ ], [BLOCK => 2, ['STMTS', 2, []]] ]
