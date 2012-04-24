@@ -688,40 +688,23 @@ rule('pow', [
 
 rule('incdec', [
     sub {
-        # $i++
+        # ++$i or --$i
         my $c = shift;
+        ($c, my $type ) = match($c, '++', '--')
+            or return;
         ($c, my $object) = method_call($c)
             or return;
-        ($c) = match($c, '++')
-            or return;
-        return ($c, _node2("POSTINC", $START, $object));
+        return ($c, _node2($type eq '++' ? "PREINC" : 'PREDEC', $START, $object));
     },
     sub {
-        # $i--
+        # $i++ or $i--
         my $c = shift;
         ($c, my $object) = method_call($c)
             or return;
-        ($c) = match($c, '--')
-            or return;
-        return ($c, _node2("POSTDEC", $START, $object));
-    },
-    sub {
-        # ++$i
-        my $c = shift;
-        ($c) = match($c, '++')
-            or return;
-        ($c, my $object) = method_call($c)
-            or return;
-        return ($c, _node2("PREINC", $START, $object));
-    },
-    sub {
-        # --$i
-        my $c = shift;
-        ($c) = match($c, '--')
-            or return;
-        ($c, my $object) = method_call($c)
-            or return;
-        return ($c, _node2("PREDEC", $START, $object));
+        (my $c2, my $type) = match($c, '++', '--')
+            or return ($c, $object);
+        $c = $c2;
+        return ($c, _node2($type eq '++' ? "POSTINC" : 'POSTDEC', $START, $object));
     },
     \&method_call,
 ]);
