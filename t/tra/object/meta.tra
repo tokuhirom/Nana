@@ -9,11 +9,11 @@ class Foo {
 is(Foo.meta().tora(), 'MetaClass.bless(Foo)');
 ok(Foo.meta().has_method('new'));
 ok(!Foo.meta().has_method('pew'));
-is(Foo.meta().get_method_list().tora(), '["new"]');
+is(Foo.meta().get_method_list().tora(), q"['new']");
 is(Foo.meta().name(), 'Foo');
 is(Foo.name(), 'Foo');
 
-is(3.meta().name(), 'Int');
-is(Foo.new().meta().name(), 'Foo');
+is(3.class().meta().name(), 'Int');
+is(Foo.new().class().meta().name(), 'Foo');
 
 done_testing();

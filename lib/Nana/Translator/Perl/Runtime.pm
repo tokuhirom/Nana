@@ -98,11 +98,17 @@ sub tora_call_method {
 }
 
 sub tora_get_method {
-    my ($pkg, $klass, $methname, @args) = @_;
+    my ($pkg, $object, $methname, @args) = @_;
+    return tora_get_method2($pkg, $object, $object, $methname, @args);
+}
+
+sub tora_get_method2 {
+    my ($pkg, $object, $klass, $methname, @args) = @_;
+
     my $type = typeof($klass);
     # builtin methods
     if ($type ~~ ['Regexp', 'Array', 'Code', 'Hash']) {
-        if (defined(my $methbody = $TORA_BUILTIN_CLASSES{$type}->{$methname})) {
+        if (defined(my $methbody = $TORA_BUILTIN_CLASSES{$type}->get_method($methname))) {
             return ($methbody, $klass, @args);
         } else {
             __tora_get_method_fallback($pkg, $klass, $type, $methname);
@@ -120,10 +126,10 @@ sub tora_get_method {
             __tora_get_method_fallback($pkg, $klass, $klass->class->name, $methname, @args);
         }
     } elsif (ref $klass eq 'Nana::Translator::Perl::Class') {
-        if (defined(my $methbody = $klass->{$methname})) {
+        if (defined(my $methbody = $klass->get_method($methname))) {
             return ($methbody, @args);
         } else {
-            if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->{$methname}) {
+            if (my $methbody = $TORA_BUILTIN_CLASSES{Class}->get_method($methname)) {
                 return ($methbody, $klass, @args);
             }
             __tora_get_method_fallback($pkg, $klass, $klass->name, $methname, @args);
@@ -133,13 +139,13 @@ sub tora_get_method {
         my $flags = B::svref_2object(\$klass)->FLAGS;
         # TODO: support NV class.
         if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-            if (defined(my $methbody = $TORA_BUILTIN_CLASSES{Int}->{$methname})) {
+            if (defined(my $methbody = $TORA_BUILTIN_CLASSES{Int}->get_method($methname))) {
                 return ($methbody, $klass, @args);
             } else {
                 __tora_get_method_fallback($pkg, $klass, 'Int', $methname, @args);
             }
         } else {
-            if (defined(my $methbody = $TORA_BUILTIN_CLASSES{Str}->{$methname})) {
+            if (defined(my $methbody = $TORA_BUILTIN_CLASSES{Str}->get_method($methname))) {
                 return ($methbody, $klass, @args);
             } else {
                 __tora_get_method_fallback($pkg, $klass, 'Str', $methname, @args);
@@ -153,7 +159,7 @@ sub tora_get_method {
 sub __tora_get_method_fallback {
     my ($pkg, $klass, $klass_name, $methname, @args) = @_;
     # call 'Object'
-    if (my $methbody = $TORA_BUILTIN_CLASSES{Object}->{$methname}) {
+    if (my $methbody = $TORA_BUILTIN_CLASSES{Object}->get_method($methname)) {
         return ($methbody, $klass, @args);
     }
     croak "Unknown method named $methname in $klass_name";

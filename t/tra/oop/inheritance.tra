@@ -21,16 +21,17 @@ class Bar is Foo {
 my $bar = Bar.new();
 my $foo = Foo.new();
 
-is($foo.meta().superclass(), undef);
-is($bar.meta().name, 'Bar');
-is($bar.meta().superclass().name, 'Foo');
+is($foo.class().meta().superclass(), undef);
+is($bar.class().meta().name(), 'Bar');
+is($bar.class().meta().superclass().name(), 'Foo');
 
-is($foo.isa('Foo'), true);
-is($foo.isa('Bar'), false);
+is($foo.class().isa(Foo), true);
+is($foo.class().isa(Bar), false);
 note('--- bar');
-is($bar.isa('Foo'), true);
-is($bar.isa('Bar'), true);
-is($bar.m, 'BAR_M');
+is(Bar.isa(Foo), true);
+is($bar.class().isa(Foo), true);
+is($bar.class().isa(Bar), true);
+is($bar.m(), 'BAR_M');
 is($bar.n(), 'FOO_N');
 
 done_testing();

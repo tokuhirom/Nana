@@ -186,9 +186,10 @@ sub _compile {
         return $ret;
     } elsif ($node->[0] eq 'SUB') {
         my $ret = sprintf(qq{\n#line %d "$FILENAME"\n}, $node->[1]);
+        my $end = '';
         if ($node->[2]) {
             $ret .= 'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
-            my $pkg = $IN_CLASS ? '$TORA_CLASS' : '$TORA_PACKAGE';
+            my $pkg = $IN_CLASS ? '$TORA_CLASS->{methods}' : '$TORA_PACKAGE';
             $ret .= $pkg . "->{" . _compile($node->[2]) . "} = subname(" . _compile($node->[2]) .", sub {;\n";
         } else {
             $ret .= "(sub {;\n";

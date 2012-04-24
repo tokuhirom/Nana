@@ -268,6 +268,40 @@ my %built_class_src = (
         name => sub {
             return $_[0]->name;
         },
+        meta => sub {
+            return $TORA_BUILTIN_CLASSES{MetaClass}->create_instance($_[0]);
+        },
+        isa => sub {
+            my $o = self;
+            while ($o) {
+                if ($o == $_[1]) {
+                    return JSON::true();
+                }
+                $o = $o->superclass();
+            }
+            if ($_[1] == $TORA_BUILTIN_CLASSES{Object}) {
+                return JSON::true();
+            }
+            return JSON::false();
+        },
+    },
+    MetaClass => {
+        get_method_list => sub {
+            return self->data->get_method_list($_[0]);
+        },
+        get_method => sub {
+            return self->data->get_method($_[0]);
+        },
+        has_method => sub {
+            return self->data->get_method($_[0])
+                ? JSON::true() : JSON::false();
+        },
+        superclass => sub {
+            self->data->superclass();
+        },
+        name => sub {
+            self->data->name();
+        },
     },
     'Str' => {
         length => sub {
@@ -313,17 +347,15 @@ my %built_class_src = (
             return to_tora($_[0]);
         },
         class => sub {
-            if ($_[0]->isa("Nana::Translator::Perl::Object")) {
+            my $type = typeof($_[0]);
+            if (my $class = $TORA_BUILTIN_CLASSES{$type}) {
+                $class;
+            } elsif (ref $_[0] eq 'Nana::Translator::Perl::Object') {
                 return $_[0]->class;
             } else {
-                my $type = typeof($_[0]);
-                if (my $class = $TORA_BUILTIN_CLASSES{$type}) {
-                    $class;
-                } else {
-                    ...
-                }
+                ...
             }
-        },
+        }
     },
     'File' => {
         'slurp' => sub {
@@ -454,6 +486,8 @@ my %built_class_src = (
         $hash->{now} = $hash->{new};
         $hash;
     },
+    Int => +{
+    },
 );
 while (my ($class_name, $methods) = each %built_class_src) {
     $TORA_BUILTIN_CLASSES{$class_name} = do {
@@ -522,6 +556,8 @@ sub to_tora {
             push @x, to_tora($_) . '=>' . to_tora($stuff->{$_});
         }
         return '{' . join(',', @x) . '}';
+    } elsif ($type eq 'MetaClass') {
+        return 'MetaClass.bless(' . $stuff->data->name . ')';
     } elsif ($type eq 'Undef') {
         return 'undef';
     } elsif ($type eq 'Str') {

@@ -261,6 +261,7 @@ rule('statement', [
             $c = $c2;
             ($c, $base) = class_name($c)
                 or die "class name expected after 'is' keyword";
+            $base->[0] = "PRIMARY_IDENT";
         }
         ($c, my $block) = block($c)
             or _err "Expected block after 'class' but not matched";
