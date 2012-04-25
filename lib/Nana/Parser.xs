@@ -4,22 +4,7 @@
 
 #include "../../ppport.h"
 
-enum {
-    TOKEN_EOF=0,
-    TOKEN_UNEXPECTED=0,
-    TOKEN_PLUSPLUS=1,
-    TOKEN_MINUSMINUS=2,
-    TOKEN_PLUS=3,
-    TOKEN_MINUS=4,
-    TOKEN_MULMUL=5,
-    TOKEN_MUL=6,
-    TOKEN_LSHIFT=7,
-    TOKEN_RSHIFT=8,
-    TOKEN_LSHIFT_ASSIGN=9,
-    TOKEN_LT=10,
-    TOKEN_RSHIFT_ASSIGN=11,
-    TOKEN_GT=12,
-};
+#include "token.h"
 
 int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
     int seen_nl = 0;
@@ -123,7 +108,7 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         }
         break;
     default:
-        return TOKEN_UNEXPECTED;
+        return TOKEN_EOF;
     }
 #undef CHAR2
 #undef SIMPLEOP

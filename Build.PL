@@ -27,7 +27,7 @@ my $build = $class->new(
     configure_requires   => { 'Module::Build' => '0.38' },
     requires             => {
         'perl'               => '5.010001',
-        'Module::Compile' => '0',
+        'parent' => 0,
         'Sub::Name' => '0',
         'Scalar::Util' => '0',
         'File::stat' => '0',
@@ -45,6 +45,7 @@ my $build = $class->new(
     },
     PL_files => {
         'Config.tra.PL' => 'share/lib/Config.tra',
+        'lib/Nana/Token.pm.PL' => ['lib/Nana/Token.pm', 'lib/Nana/token.h'],
     },
     use_tap_harness => 1,
     test_files => [glob('t/*.t t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra')],

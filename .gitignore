@@ -24,3 +24,5 @@ Nana-Parser-*/
 hoge.tra
 share/lib/Config.tra
 lib/Nana/Parser.c
+lib/Nana/Token.pm
+lib/Nana/token.h

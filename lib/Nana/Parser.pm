@@ -9,6 +9,7 @@ use Data::Dumper;
 use Scalar::Util qw(refaddr);
 use Sub::Name;
 use XSLoader;
+use Nana::Token;
 
 our $VERSION='0.01';
 
@@ -20,21 +21,6 @@ XSLoader::load('Nana::Parser', $VERSION);
 # arguments with types
 # do-while?
 # //x
-
-use constant {
-    TOKEN_PLUSPLUS   => 1,
-    TOKEN_MINUSMINUS => 2,
-    TOKEN_PLUS       => 3,
-    TOKEN_MINUS      => 4,
-    TOKEN_MULMUL     => 5,
-    TOKEN_MUL        => 6,
-    TOKEN_LSHIFT     => 7,
-    TOKEN_RSHIFT     => 8,
-    TOKEN_LSHIFT_ASSIGN     => 9,
-    TOKEN_LT                => 10,
-    TOKEN_RSHIFT_ASSIGN    => 11,
-    TOKEN_GT               => 12,
-};
 
 our $LINENO;
 our $START;
