@@ -36,7 +36,7 @@ sub test {
 
     note $src;
     my $ast = $parser->parse($src);
-    my $perl = $compiler->compile($ast, my $no_header = 1);
+    my $perl = $compiler->compile($ast, '<eval>', my $no_header = 1);
     $perl =~ s/#line .+\n//g;
     $perl =~ s/;$//;
     $perl =~ s/;;/;/g;

@@ -1,8 +1,18 @@
 use strict;
 use warnings FATAL => 'all';
 use Module::Build;
+use lib 'util/';
 
-my $build = Module::Build->new(
+my $class = Module::Build->subclass(
+    class => 'My::Builder',
+    code => q"
+        sub ACTION_test {
+            exec(q{PERL5LIB=./util/:\$PERL5LIB  prove -l --source TRA --source EGTRA --source TCC -r -Ilib t/ t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra});
+        }
+    "
+);
+
+my $build = $class->new(
     license              => 'perl',
     recursive_test_files => 1,
     dynamic_config       => 0,
@@ -35,6 +45,16 @@ my $build = Module::Build->new(
     PL_files => {
         'Config.tra.PL' => 'share/lib/Config.tra',
     },
+    use_tap_harness => 1,
+    test_files => [glob('t/*.t t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra')],
+    tap_harness_args => {
+        sources => {
+            'EGTRA' => [],
+            'TCC' => [],
+            'TRA' => [],
+        },
+    },
+    script_files => 'bin/nana',
 
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? 't/ xt/' : 't/',
 

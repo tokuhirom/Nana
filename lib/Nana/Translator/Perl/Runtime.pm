@@ -409,7 +409,7 @@ sub tora_use {
             my $src = do { local $/; <$fh> };
             my $perl = eval {
                 my $ast = $parser->parse($src, $fname);
-                $compiler->compile($ast, 0, $fname);
+                $compiler->compile($ast, $fname);
             };
             if ($@) {
                 die "Compilation failed in use: $@";

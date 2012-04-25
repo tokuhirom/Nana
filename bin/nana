@@ -30,7 +30,7 @@ my $compiler = Nana::Translator::Perl->new();
 if (defined $opt->eval) {
     my $ast = $parser->parse($opt->eval);
     say(Dumper($ast)) if $opt->dtree;
-    my $perl = $compiler->compile($ast, 0, '<eval>');
+    my $perl = $compiler->compile($ast, '<eval>');
     if ($opt->compile_only) {
         say($perl);
         exit(0);
@@ -44,7 +44,7 @@ if (defined $opt->eval) {
     open my $fh, '<', $fname;
     my $ast = $parser->parse(do { local $/; <$fh>; });
     say(Dumper($ast)) if $opt->dtree;
-    my $perl = $compiler->compile($ast, 0, $fname);
+    my $perl = $compiler->compile($ast, $fname);
     if ($opt->compile_only) {
         print($perl);
         exit(0);
