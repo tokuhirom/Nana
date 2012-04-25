@@ -52,8 +52,8 @@ int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
  * @return int token id.
  */
 int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) {
-#define CHAR2(c) (len-*used>=2 && *(src+1) == (c))
-#define CHAR3(c) (len-*used>=3 && *(src+2) == (c))
+#define CHAR2(c) (len-*used>=2 && *(p+1) == (c))
+#define CHAR3(c) (len-*used>=3 && *(p+2) == (c))
 #define SIMPLEOP(type,_used) do { *used+=_used; return type; } while (0)
     *used = skip_ws(src, len, found_end, lineno_inc);
     if (*found_end) {
@@ -62,8 +62,47 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
     if (*used == len) {
         return TOKEN_EOF;
     }
+    char *p = src+*used;
 
-    switch (*src) {
+    switch (*p) {
+    case '^':
+        if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_XOR_ASSIGN, 2);
+        } else {
+            SIMPLEOP(TOKEN_XOR, 1);
+        }
+    case '.':
+        if (CHAR2('.')) {
+            if (CHAR3('.')) {
+                SIMPLEOP(TOKEN_DOTDOTDOT, 3);
+            } else {
+                SIMPLEOP(TOKEN_DOTDOT, 2);
+            }
+        } else {
+            SIMPLEOP(TOKEN_DOT, 1);
+        }
+        break;
+    case '|':
+        if (CHAR2('|')) {
+            if (CHAR3('=')) {
+                SIMPLEOP(TOKEN_OROR_ASSIGN, 3);
+            } else {
+                SIMPLEOP(TOKEN_OROR, 2);
+            }
+        } else if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_OR_ASSIGN, 2);
+        } else {
+            SIMPLEOP(TOKEN_OR, 1);
+        }
+    case '&':
+        if (CHAR2('&')) {
+            SIMPLEOP(TOKEN_ANDAND, 2);
+        } else if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_AND_ASSIGN, 2);
+        } else {
+            SIMPLEOP(TOKEN_AND, 1);
+        }
+        break;
     case '<':
         if (CHAR2('<')) {
             if (CHAR3('=')) {

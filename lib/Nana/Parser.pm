@@ -607,23 +607,23 @@ rule('three_expression', [
 ]);
 
 rule('dotdot_expression', [
-    left_op(\&oror_expression, ['..', '...'])
+    left_op2(\&oror_expression, +{ TOKEN_DOTDOT() => '..', TOKEN_DOTDOTDOT() => '...'})
 ]);
 
 rule('oror_expression', [
-    left_op(\&andand_expression, ['||', '//'])
+    left_op2(\&andand_expression, +{ TOKEN_OROR() => '||' })
 ]);
 
 rule('andand_expression', [
-    left_op(\&or_expression, ['&&'])
+    left_op2(\&or_expression, {TOKEN_ANDAND() => '&&'})
 ]);
 
 rule('or_expression', [
-    left_op(\&and_expression, ['|', '^'])
+    left_op2(\&and_expression, +{TOKEN_OR() => '|', TOKEN_XOR() => '^'})
 ]);
 
 rule('and_expression', [
-    left_op(\&equality_expression, ['&'])
+    left_op2(\&equality_expression, {TOKEN_AND() => '&'})
 ]);
 
 rule('equality_expression', [

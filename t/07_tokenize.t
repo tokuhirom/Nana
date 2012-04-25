@@ -60,3 +60,91 @@ TOKEN_RSHIFT_ASSIGN
 1
 --- token
 TOKEN_LT
+
+===
+--- src
+&
+--- used
+1
+--- token
+TOKEN_AND
+
+===
+--- src
+&&
+--- used
+2
+--- token
+TOKEN_ANDAND
+
+===
+--- src
+&=
+--- used
+2
+--- token
+TOKEN_AND_ASSIGN
+
+===
+--- src
+ &&
+--- used
+3
+--- token
+TOKEN_ANDAND
+
+===
+--- src
+||
+--- used
+2
+--- token
+TOKEN_OROR
+
+===
+--- src
+||=
+--- used
+3
+--- token
+TOKEN_OROR_ASSIGN
+
+===
+--- src
+.
+--- used
+1
+--- token
+TOKEN_DOT
+
+===
+--- src
+..
+--- used
+2
+--- token
+TOKEN_DOTDOT
+
+===
+--- src
+...
+--- used
+3
+--- token
+TOKEN_DOTDOTDOT
+
+===
+--- src
+^
+--- used
+1
+--- token
+TOKEN_XOR
+
+===
+--- src
+^=
+--- used
+2
+--- token
+TOKEN_XOR_ASSIGN

@@ -11,6 +11,18 @@ my @tokens = qw(
     TOKEN_LT
     TOKEN_RSHIFT_ASSIGN
     TOKEN_GT
+    TOKEN_AND
+    TOKEN_ANDAND
+    TOKEN_AND_ASSIGN
+    TOKEN_OR
+    TOKEN_OR_ASSIGN
+    TOKEN_OROR
+    TOKEN_OROR_ASSIGN
+    TOKEN_DOT
+    TOKEN_DOTDOT
+    TOKEN_DOTDOTDOT
+    TOKEN_XOR
+    TOKEN_XOR_ASSIGN
 );
 
 &output_header; &output_pm; exit 0;
