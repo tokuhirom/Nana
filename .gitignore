@@ -23,3 +23,4 @@ README
 Nana-Parser-*/
 hoge.tra
 share/lib/Config.tra
+lib/Nana/Parser.c

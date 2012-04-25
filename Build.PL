@@ -7,7 +7,7 @@ my $class = Module::Build->subclass(
     class => 'My::Builder',
     code => q"
         sub ACTION_test {
-            exec(q{PERL5LIB=./util/:\$PERL5LIB  prove -l --source TRA --source EGTRA --source TCC -r -Ilib t/ t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra});
+            exec(q{PERL5LIB=./util/:$PERL5LIB  prove --source T --source TRA --source EGTRA --source TCC -r t/ t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra});
         }
     "
 );
@@ -22,6 +22,7 @@ my $build = $class->new(
         'TAP::Harness' => '3.23',
         'Test::Base' => 0,
         'Test::Differences' => 0,
+        'ExtUtils::CBuilder' => 0,
     },
     configure_requires   => { 'Module::Build' => '0.38' },
     requires             => {

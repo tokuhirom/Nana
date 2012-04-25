@@ -8,8 +8,11 @@ use Carp;
 use Data::Dumper;
 use Scalar::Util qw(refaddr);
 use Sub::Name;
+use XSLoader;
 
 our $VERSION='0.01';
+
+XSLoader::load('Nana::Parser', $VERSION);
 
 # TODO:
 # #{ } in string literal
@@ -453,20 +456,27 @@ rule('else_clause', [
 
 # skip whitespace with line counting
 sub skip_ws {
-    local $_ = shift;
-    confess "[BUG]" unless defined $_;
+    my $src = shift;
+    confess "[BUG]" unless defined $src;
+
+    (my $i, my $end, my $lineno_inc) = _skip_ws($src);
+    $LINENO += $lineno_inc;
+    if ($end) {
+        return ('', 1);
+    } else {
+        return (substr($src, $i), 0);
+    }
 
 std:
-    s/^[ \t\f]// && goto std;
-    s/^#[^\n]*\n/++$LINENO;''/ge && goto std;
-    if (s/^__END__\n.+//s) {
+    $src =~ s/^[ \t\f]+// && goto std;
+    $src =~ s/^#[^\n]*\n/++$LINENO;''/ge && goto std;
+    if ($src =~ s/^__END__\n.+//s) {
         # $END++;
         return ('', 1);
     }
-    s/^\n/++$LINENO;''/e && goto std;
+    $src =~ s/^\n/++$LINENO;''/e && goto std;
 
-
-    return ($_);
+    return ($src, 0);
 }
 
 rule('expression', [
