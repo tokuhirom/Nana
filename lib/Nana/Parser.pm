@@ -459,8 +459,7 @@ sub skip_ws {
     my $src = shift;
     confess "[BUG]" unless defined $src;
 
-    (my $i, my $end, my $lineno_inc) = _skip_ws($src);
-    $LINENO += $lineno_inc;
+    (my $i, my $end) = _skip_ws($src);
     if ($end) {
         return ('', 1);
     } else {

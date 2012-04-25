@@ -60,9 +60,13 @@ _skip_ws(SV * src_sv)
         int found_end, lineno_inc;
         int used = skip_ws(src, len, &found_end, &lineno_inc);
 
+        SV *lineno_sv = get_sv("Nana::Parser::LINENO", TRUE);
+        IV i = SvIV(lineno_sv) + lineno_inc;
+        sv_setiv(lineno_sv, i);
+        SvIOK_on(lineno_sv);
+
         mXPUSHi(used); /* used chars */
         mXPUSHi(found_end); /* found __END__ */
-        mXPUSHi(lineno_inc); /* lineno */
 
 void
 _token_op(SV *src_sv)
