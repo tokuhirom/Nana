@@ -677,6 +677,15 @@ rule('unary', [
     \&pow
 ]);
 
+use constant {
+    TOKEN_PLUSPLUS   => 1,
+    TOKEN_MINUSMINUS => 2,
+    TOKEN_PLUS       => 3,
+    TOKEN_MINUS      => 4,
+    TOKEN_MULMUL     => 5,
+    TOKEN_MUL        => 6,
+};
+
 # $i ** $j
 # right.
 rule('pow', [
@@ -684,12 +693,15 @@ rule('pow', [
         my $c = shift;
         ($c, my $lhs) = incdec($c)
             or return;
-        (my $c2) = match($c, '**')
-            or return ($c, $lhs);
-        $c = $c2;
-        ($c, my $rhs) = pow($c)
-            or die "Missing expression after '**'";
-        return ($c, _node("**", $lhs, $rhs));
+        my ($len, $token) = _token_op($c);
+        if ($token && $token == TOKEN_MULMUL) {
+            $c = substr($c, $len);
+            ($c, my $rhs) = pow($c)
+                or die "Missing expression after '**'";
+            return ($c, _node("**", $lhs, $rhs));
+        } else {
+            return ($c, $lhs);
+        }
     },
 ]);
 
@@ -697,21 +709,42 @@ rule('incdec', [
     sub {
         # ++$i or --$i
         my $c = shift;
-        ($c, my $type ) = match($c, '++', '--')
-            or return;
-        ($c, my $object) = method_call($c)
-            or return;
-        return ($c, _node2($type eq '++' ? "PREINC" : 'PREDEC', $START, $object));
+        my ($len, $token) = _token_op($c);
+        if ($token) {
+            if ($token == TOKEN_PLUSPLUS) {
+                $c = substr($c, $len);
+                ($c, my $object) = method_call($c)
+                    or return;
+                return ($c, _node2("PREINC", $START, $object));
+            } elsif ($token == TOKEN_MINUSMINUS) {
+                $c = substr($c, $len);
+                ($c, my $object) = method_call($c)
+                    or return;
+                return ($c, _node2('PREDEC', $START, $object));
+            }
+        }
+        return ();
     },
     sub {
         # $i++ or $i--
         my $c = shift;
         ($c, my $object) = method_call($c)
             or return;
-        (my $c2, my $type) = match($c, '++', '--')
-            or return ($c, $object);
-        $c = $c2;
-        return ($c, _node2($type eq '++' ? "POSTINC" : 'POSTDEC', $START, $object));
+
+        my ($len, $token) = _token_op($c);
+        if ($token) {
+            if ($token == TOKEN_PLUSPLUS) {
+                $c = substr($c, $len);
+                return ($c, _node2("POSTINC", $START, $object));
+            } elsif ($token == TOKEN_MINUSMINUS) {
+                $c = substr($c, $len);
+                return ($c, _node2('POSTDEC', $START, $object));
+            } else {
+                return ($c, $object); # ++, -- is optional
+            }
+        } else {
+            return ($c, $object); # ++, -- is optional
+        }
     },
 ]);
 
