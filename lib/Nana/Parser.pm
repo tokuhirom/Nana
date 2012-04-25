@@ -455,28 +455,6 @@ rule('else_clause', [
 ]);
 
 # skip whitespace with line counting
-sub skip_ws {
-    my $src = shift;
-    confess "[BUG]" unless defined $src;
-
-    (my $i, my $end) = _skip_ws($src);
-    if ($end) {
-        return ('', 1);
-    } else {
-        return (substr($src, $i), 0);
-    }
-
-std:
-    $src =~ s/^[ \t\f]+// && goto std;
-    $src =~ s/^#[^\n]*\n/++$LINENO;''/ge && goto std;
-    if ($src =~ s/^__END__\n.+//s) {
-        # $END++;
-        return ('', 1);
-    }
-    $src =~ s/^\n/++$LINENO;''/e && goto std;
-
-    return ($src, 0);
-}
 
 rule('expression', [
     sub {

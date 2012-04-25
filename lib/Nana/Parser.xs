@@ -52,21 +52,31 @@ int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
 MODULE = Nana::Parser       PACKAGE = Nana::Parser
 
 void
-_skip_ws(SV * src_sv)
+skip_ws(SV * src_sv)
     PPCODE:
+        /* skip white space, comments. */
         dTARG;
         STRLEN len;
         char *src = SvPV(src_sv, len);
         int found_end, lineno_inc;
         int used = skip_ws(src, len, &found_end, &lineno_inc);
 
+        if (!SvPOK(src_sv)) {
+            croak("[BUG]");
+        }
+
+        /* increment lineno */
         SV *lineno_sv = get_sv("Nana::Parser::LINENO", TRUE);
         IV i = SvIV(lineno_sv) + lineno_inc;
         sv_setiv(lineno_sv, i);
-        SvIOK_on(lineno_sv);
 
-        mXPUSHi(used); /* used chars */
-        mXPUSHi(found_end); /* found __END__ */
+        if (found_end) {
+            mXPUSHs(&PL_sv_undef);
+            mXPUSHs(&PL_sv_yes);
+        } else {
+            mXPUSHs(newSVpv(src+used, len-used)); /* rest chars */
+            mXPUSHs(&PL_sv_no);   /* found __END__? */
+        }
 
 void
 _token_op(SV *src_sv)
