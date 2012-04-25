@@ -5,6 +5,8 @@
 #include "../../ppport.h"
 
 enum {
+    TOKEN_EOF=-1,
+    TOKEN_UNEXPECTED=0,
     TOKEN_PLUSPLUS=1,
     TOKEN_MINUSMINUS=2,
     TOKEN_PLUS=3,
@@ -19,7 +21,6 @@ int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
     char *p = src;
 
     *found_end = 0;
-    *lineno_inc = 0;
 
     while (p<end) {
         if (*p==' ' || *p=='\t' || *p == '\f') {
@@ -49,6 +50,56 @@ int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
     return p-src;
 }
 
+/**
+ * Take a token from string.
+ *
+ * @args src: source string.
+ * @args len: length for 'src'.
+ * @args output *used: used chars in src
+ * @args output *found_end: make true if found __END__
+ * @args output *lineno_inc: incremented line numbers.
+ * @return int token id.
+ */
+int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) {
+#define CHAR2(c) (len-*used>=2 && *(src+1) == (c))
+#define SIMPLEOP(type,_used) do { *used+=_used; return type; } while (0)
+    *used = skip_ws(src, len, found_end, lineno_inc);
+    if (*found_end) {
+        return TOKEN_EOF;
+    }
+    if (*used == len) {
+        return TOKEN_EOF;
+    }
+
+    switch (*src) {
+    case '*':
+        if (CHAR2('*')) {
+            SIMPLEOP(TOKEN_MULMUL, 2);
+        } else {
+            SIMPLEOP(TOKEN_MUL, 1);
+        }
+        break;
+    case '+':
+        if (CHAR2('+')) {
+            SIMPLEOP(TOKEN_PLUSPLUS, 2);
+        } else {
+            SIMPLEOP(TOKEN_PLUS, 1);
+        }
+        break;
+    case '-':
+        if (CHAR2('-')) {
+            SIMPLEOP(TOKEN_MINUSMINUS, 2);
+        } else {
+            SIMPLEOP(TOKEN_MINUS, 1);
+        }
+        break;
+    default:
+        return TOKEN_UNEXPECTED;
+    }
+#undef CHAR2
+#undef SIMPLEOP
+}
+
 MODULE = Nana::Parser       PACKAGE = Nana::Parser
 
 void
@@ -58,7 +109,7 @@ skip_ws(SV * src_sv)
         dTARG;
         STRLEN len;
         char *src = SvPV(src_sv, len);
-        int found_end, lineno_inc;
+        int found_end=0, lineno_inc=0;
         int used = skip_ws(src, len, &found_end, &lineno_inc);
 
         if (!SvPOK(src_sv)) {
@@ -81,35 +132,11 @@ skip_ws(SV * src_sv)
 void
 _token_op(SV *src_sv)
     PPCODE:
-#define CHAR2(c) (len>=2 && *(src+1) == (c))
-#define SIMPLEOP(s,m) do { mXPUSHi(m); mXPUSHi(s); } while (0)
         dTARG;
         STRLEN len;
         char *src = SvPV(src_sv, len);
-        switch (*src) {
-        case '*':
-            if (CHAR2('*')) {
-                SIMPLEOP(TOKEN_MULMUL, 2);
-            } else {
-                SIMPLEOP(TOKEN_MUL, 1);
-            }
-            break;
-        case '+':
-            if (CHAR2('+')) {
-                SIMPLEOP(TOKEN_PLUSPLUS, 2);
-            } else {
-                SIMPLEOP(TOKEN_PLUS, 1);
-            }
-            break;
-        case '-':
-            if (CHAR2('-')) {
-                SIMPLEOP(TOKEN_MINUSMINUS, 2);
-            } else {
-                SIMPLEOP(TOKEN_MINUS, 1);
-            }
-            break;
-        default:
-            XPUSHs(&PL_sv_undef);
-            XPUSHs(&PL_sv_undef);
-        }
+        int used=0, found_end=0, lineno_inc=0;
+        int token_id = token_op(src, len, &used, &found_end, &lineno_inc);
+        mXPUSHi(used);
+        mXPUSHi(token_id);
 
