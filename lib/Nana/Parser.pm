@@ -12,17 +12,11 @@ use Sub::Name;
 our $VERSION='0.01';
 
 # TODO:
-# qr() q() qq()
-# "" ''
 # #{ } in string literal
 # <<'...' <<"..."
-# class call
-# -> { } lambda.
 # arguments with types
 # do-while?
 # //x
-# last
-# next
 
 our $LINENO;
 our $START;
