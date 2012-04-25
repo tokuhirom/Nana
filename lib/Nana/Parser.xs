@@ -5,7 +5,7 @@
 #include "../../ppport.h"
 
 enum {
-    TOKEN_EOF=-1,
+    TOKEN_EOF=0,
     TOKEN_UNEXPECTED=0,
     TOKEN_PLUSPLUS=1,
     TOKEN_MINUSMINUS=2,
@@ -13,6 +13,12 @@ enum {
     TOKEN_MINUS=4,
     TOKEN_MULMUL=5,
     TOKEN_MUL=6,
+    TOKEN_LSHIFT=7,
+    TOKEN_RSHIFT=8,
+    TOKEN_LSHIFT_ASSIGN=9,
+    TOKEN_LT=10,
+    TOKEN_RSHIFT_ASSIGN=11,
+    TOKEN_GT=12,
 };
 
 int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
@@ -62,6 +68,7 @@ int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
  */
 int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) {
 #define CHAR2(c) (len-*used>=2 && *(src+1) == (c))
+#define CHAR3(c) (len-*used>=3 && *(src+2) == (c))
 #define SIMPLEOP(type,_used) do { *used+=_used; return type; } while (0)
     *used = skip_ws(src, len, found_end, lineno_inc);
     if (*found_end) {
@@ -72,6 +79,28 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
     }
 
     switch (*src) {
+    case '<':
+        if (CHAR2('<')) {
+            if (CHAR3('=')) {
+                SIMPLEOP(TOKEN_LSHIFT_ASSIGN, 3);
+            } else {
+                SIMPLEOP(TOKEN_LSHIFT, 2);
+            }
+        } else {
+            SIMPLEOP(TOKEN_GT, 1);
+        }
+        break;
+    case '>':
+        if (CHAR2('>')) {
+            if (CHAR3('=')) {
+                SIMPLEOP(TOKEN_RSHIFT_ASSIGN, 3);
+            } else {
+                SIMPLEOP(TOKEN_RSHIFT, 2);
+            }
+        } else {
+            SIMPLEOP(TOKEN_LT, 1);
+        }
+        break;
     case '*':
         if (CHAR2('*')) {
             SIMPLEOP(TOKEN_MULMUL, 2);

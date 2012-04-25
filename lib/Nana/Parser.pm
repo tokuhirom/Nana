@@ -21,6 +21,21 @@ XSLoader::load('Nana::Parser', $VERSION);
 # do-while?
 # //x
 
+use constant {
+    TOKEN_PLUSPLUS   => 1,
+    TOKEN_MINUSMINUS => 2,
+    TOKEN_PLUS       => 3,
+    TOKEN_MINUS      => 4,
+    TOKEN_MULMUL     => 5,
+    TOKEN_MUL        => 6,
+    TOKEN_LSHIFT     => 7,
+    TOKEN_RSHIFT     => 8,
+    TOKEN_LSHIFT_ASSIGN     => 9,
+    TOKEN_LT                => 10,
+    TOKEN_RSHIFT_ASSIGN    => 11,
+    TOKEN_GT               => 12,
+};
+
 our $LINENO;
 our $START;
 our $CACHE;
@@ -92,6 +107,7 @@ sub any {
 sub left_op {
     my ($upper, $ops) = @_;
     confess "\$ops must be ArrayRef" unless ref $ops eq 'ARRAY';
+    # TODO: will be deprecate
 
     sub {
         my $c = shift;
@@ -100,6 +116,30 @@ sub left_op {
         my $ret = $lhs;
         while (my ($c2, $op) = match($c, @$ops)) {
             $c = $c2;
+            ($c, my $rhs) = $upper->($c)
+                or die "syntax error  after '$op' line $LINENO";
+            $ret = _node($op, $ret, $rhs);
+        }
+        return ($c, $ret);
+    }
+}
+sub left_op2 {
+    my ($upper, $ops) = @_;
+    confess "\$ops must be HashRef" unless ref $ops eq 'HASH';
+
+    sub {
+        my $c = shift;
+        ($c, my $lhs) = $upper->($c)
+            or return;
+        my $ret = $lhs;
+        while (1) {
+            my ($used, $token_id) = _token_op($c);
+            last unless $token_id;
+
+            my $op = $ops->{$token_id}
+                or last;
+
+            $c = substr($c, $used);
             ($c, my $rhs) = $upper->($c)
                 or die "syntax error  after '$op' line $LINENO";
             $ret = _node($op, $ret, $rhs);
@@ -611,7 +651,7 @@ rule('cmp_expression', [
 ]);
 
 rule('shift_expression', [
-    left_op(\&additive_expression, ['<<', '>>'])
+    left_op2(\&additive_expression, +{ TOKEN_LSHIFT() => '<<', TOKEN_RSHIFT() => '>>'})
 ]);
 
 rule('additive_expression', [
@@ -653,15 +693,6 @@ rule('unary', [
     },
     \&pow
 ]);
-
-use constant {
-    TOKEN_PLUSPLUS   => 1,
-    TOKEN_MINUSMINUS => 2,
-    TOKEN_PLUS       => 3,
-    TOKEN_MINUS      => 4,
-    TOKEN_MULMUL     => 5,
-    TOKEN_MUL        => 6,
-};
 
 # $i ** $j
 # right.
