@@ -97,7 +97,7 @@ class Foo { sub new() { } }
 --- expected
 {my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},undef));
 {
-local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = subname(q{new}, sub {;
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{methods}->{q{new}} = subname(q{new}, sub {;
 undef; });
 };}
 
@@ -106,9 +106,9 @@ undef; });
 class Foo is Bar { sub new() { } }
 
 --- expected
-{my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},q{Bar}));
+{my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{q{Foo}} = Nana::Translator::Perl::Class->new(q{Foo},($TORA_PACKAGE->{q!Bar!} || $TORA_BUILTIN_CLASSES{q!Bar!} || die qq{Unknown stuff named Bar})));
 {
-local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{q{new}} = subname(q{new}, sub {;
+local $Nana::Translator::Perl::Runtime::TORA_FILENAME="<eval>";$TORA_CLASS->{methods}->{q{new}} = subname(q{new}, sub {;
 undef; });
 };}
 
@@ -176,7 +176,7 @@ return (3);
 (1+2)*3
 
 --- expected
-((tora_op_add(1,2))*3)
+tora_op_mul((tora_op_add(1,2)),3)
 
 ===
 --- input
@@ -218,7 +218,7 @@ tora_op_add((1-2),3)
 1*2*3
 
 --- expected
-((1*2)*3)
+tora_op_mul(tora_op_mul(1,2),3)
 
 ===
 --- input

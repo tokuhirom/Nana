@@ -401,7 +401,6 @@ sub tora_use {
     state $compiler = Nana::Translator::Perl->new();
     local $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE;
     my $file_package = Nana::Translator::Perl::FilePackage->new($klass);
-    $pkg->{$klass} = $file_package;
     for my $libdir (@$LIBPATH) {
         my $fname = "$libdir/$path.tra";
         if (-f $fname) {
@@ -428,6 +427,7 @@ sub tora_use {
                 $pkg->{$key} = $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE->{$key};
                 $file_package->add($key, $Nana::Translator::Perl::Runtime::CURRENT_PACKAGE->{$key});
             }
+            $pkg->{$klass} ||= $file_package;
 
             return;
         }
