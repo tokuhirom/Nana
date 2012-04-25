@@ -18,7 +18,10 @@ my ($opt, $usage) = describe_options(
     [ 'compile-only|c',   "Compile only" ],
     [ 'help|h',       "print usage message and exit" ],
 );
-print($usage) if $opt->help;
+if ($opt->help) {
+    print $usage;
+    exit 0;
+}
 
 Nana::Translator::Perl::Runtime->add_libpath($opt->i || []);
 
@@ -73,4 +76,29 @@ if (defined $opt->eval) {
         die $@ if $@;
     }
 }
+
+__END__
+
+=head1 NAME
+
+nana - tora language interpreter
+
+=head1 SYNPOSIS
+
+    nana [-cehI] [long options...] <some-arg>
+                        
+        --Dperl             Dump perl code
+        --Dt --Dtree        Dump AST
+        -e --eval           Eval expression
+        -I                  Library path
+        -c --compile-only   Compile only
+        -h --help           print usage message and exit
+
+=head1 DESCRIPTION
+
+Yet another tora language interpreter on Perl5.
+
+=head1 SEE ALSO
+
+L<http://tora-lang.org>
 

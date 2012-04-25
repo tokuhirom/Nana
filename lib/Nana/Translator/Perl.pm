@@ -13,7 +13,7 @@ our $FILENAME;
 our $IN_CLASS;
 
 sub compile {
-    my ($self, $ast, $no_header, $filename) = @_;
+    my ($self, $ast, $filename, $no_header) = @_;
 
     local $FILENAME = $filename || "<eval>";
 
@@ -454,6 +454,10 @@ sub _compile {
 1;
 __END__
 
+=head1 NAME
+
+Nana::Translator::Perl - AST to Perl
+
 =head1 SYNOPSIS
 
     use Nana::Translator::Perl;
@@ -462,3 +466,24 @@ __END__
     my $perl = $compiler->compile($ast);
     eval $perl;
 
+=head1 DESCRIPTION
+
+This class translates tora AST to perl code. And you can eval() the code.
+
+=head1 MEHOTDS
+
+=over 4
+
+=item my $compiler = Nana::Translator::Perl->new()
+
+Create a new instance.
+
+=item my $perl = $compiler->compile(ArrayRef $ast, Str $filename)
+
+Compile a AST to perl code.
+
+=back
+
+=head1 AUTHOR
+
+Tokuhiro Matsuno

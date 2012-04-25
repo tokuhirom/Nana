@@ -1255,7 +1255,7 @@ __END__
 
 =head1 NAME
 
-Nana::Parser - parser for Nana
+Nana::Parser - parser for Tora language
 
 =head1 SYNOPSIS
 
@@ -1263,4 +1263,36 @@ Nana::Parser - parser for Nana
 
     my $parser = Nana::Parser->new();
     my $ast = $parser->parse();
+
+=head1 DESCRIPTION
+
+This is a parser class for Tora language.
+
+=head1 METHODS
+
+=over 4
+
+=item my $parser = Nana::Parser->new();
+
+Create a new instance of Nana::Parser.
+
+=item my $ast = $parser->parse(Str $src[, Str $fname])
+
+Parse a $src and return abstract syntax tree. AST is pure perl arrayref. It's not object.
+
+You can pass $fname for debuggability and __FILE__.
+
+=back
+
+=head1 NOTE
+
+This version of Nana::Parser is very slow. I want to rewrite this class by C.
+
+=head1 AUTHOR
+
+Tokuhiro Matsuno
+
+=head1 SEE ALSO
+
+L<http://tora-lang.org> for more details.
 
