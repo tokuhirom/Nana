@@ -25,7 +25,7 @@ my $build = $class->new(
     },
     configure_requires   => { 'Module::Build' => '0.38' },
     requires             => {
-        'perl'               => '5.008001',
+        'perl'               => '5.010001',
         'Module::Compile' => '0',
         'Sub::Name' => '0',
         'Scalar::Util' => '0',

@@ -17,11 +17,17 @@ my ($opt, $usage) = describe_options(
     [ 'I=s@',        "Library path" ],
     [ 'compile-only|c',   "Compile only" ],
     [ 'help|h',       "print usage message and exit" ],
+    [ 'version|v',    'print version'],
 );
 if ($opt->help) {
     print $usage;
     exit 0;
 }
+if ($opt->version) {
+    print "Nana $Nana::Parser::VERSION\n";
+    exit 0;
+}
+
 
 Nana::Translator::Perl::Runtime->add_libpath($opt->i || []);
 

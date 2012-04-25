@@ -9,6 +9,8 @@ use Data::Dumper;
 use Scalar::Util qw(refaddr);
 use Sub::Name;
 
+our $VERSION='0.01';
+
 # TODO:
 # qr() q() qq()
 # "" ''

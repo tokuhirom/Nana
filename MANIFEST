@@ -1,13 +1,11 @@
 .gitignore
 bin/nana
 Build.PL
+Changes
 Config.tra.PL
 eg/class.nn
 eg/fizzbuzz.nn
 eg/hoge.tra
-hoge.pl
-hoge.tra
-lib/Nana/Filter.pm
 lib/Nana/Parser.pm
 lib/Nana/Translator/Perl.pm
 lib/Nana/Translator/Perl/Builtins.pm
@@ -16,14 +14,18 @@ lib/Nana/Translator/Perl/Exception.pm
 lib/Nana/Translator/Perl/FilePackage.pm
 lib/Nana/Translator/Perl/Object.pm
 lib/Nana/Translator/Perl/Range.pm
+lib/Nana/Translator/Perl/Regexp.pm
 lib/Nana/Translator/Perl/RegexpMatched.pm
 lib/Nana/Translator/Perl/Runtime.pm
-log
+LICENSE
 MANIFEST			This list of files
+META.json
+META.yml
 notes/call.mkdn
 notes/class.mkdn
 notes/difference.mkdn
 notes/funcall.tra
+README
 share/lib/Config.tra
 share/lib/Test/More.tra
 t/01_basic.dat
@@ -115,6 +117,8 @@ t/tra/if.tra
 t/tra/import/lib/IMP1.tra
 t/tra/import/lib/IMP2.tra
 t/tra/import/lib/IMP3.tra
+t/tra/import/lib/IMP4.tra
+t/tra/import/no_import_class.tra
 t/tra/import/no_import_funcall.tra
 t/tra/import/simple.tra
 t/tra/lambda.tra
