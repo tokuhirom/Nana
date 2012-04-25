@@ -90,11 +90,14 @@ sub any {
 # see http://en.wikipedia.org/wiki/Parsing_expression_grammar#Indirect_left_recursion
 # %left operator.
 sub left_op {
-    my ($upper, $ops) = @_;
+    my ($name, $upper, $ops) = @_;
     confess "\$ops must be ArrayRef" unless ref $ops eq 'ARRAY';
 
-    sub {
-        my $c = shift;
+    no strict 'refs';
+    *{__PACKAGE__."::$name"} = subname $name, sub {
+        my ($c, $got_end) = skip_ws(shift);
+        return () if $got_end;
+
         ($c, my $lhs) = $upper->($c)
             or return;
         my $ret = $lhs;
@@ -545,13 +548,9 @@ rule('block', [
     }
 ]);
 
-rule('str_or_expression', [
-    left_op(\&str_and_expression, ['or', 'xor']),
-]);
+left_op('str_or_expression', \&str_and_expression, ['or', 'xor']),
 
-rule('str_and_expression', [
-    left_op(\&not_expression, ['and']),
-]);
+left_op('str_and_expression', \&not_expression, ['and']);
 
 rule('not_expression', [
     sub {
@@ -565,9 +564,7 @@ rule('not_expression', [
     \&comma_expression,
 ]);
 
-rule('comma_expression', [
-    left_op(\&assign_expression, [','])
-]);
+left_op('comma_expression', \&assign_expression, [',']);
 
 # %right
 rule('assign_expression', [
@@ -603,25 +600,11 @@ rule('three_expression', [
     \&dotdot_expression
 ]);
 
-rule('dotdot_expression', [
-    left_op(\&oror_expression, ['..', '...'])
-]);
-
-rule('oror_expression', [
-    left_op(\&andand_expression, ['||', '//'])
-]);
-
-rule('andand_expression', [
-    left_op(\&or_expression, ['&&'])
-]);
-
-rule('or_expression', [
-    left_op(\&and_expression, ['|', '^'])
-]);
-
-rule('and_expression', [
-    left_op(\&equality_expression, ['&'])
-]);
+left_op('dotdot_expression', \&oror_expression, ['..', '...']);
+left_op('oror_expression', \&andand_expression, ['||', '//']);
+left_op('andand_expression', \&or_expression, ['&&']);
+left_op('or_expression', \&and_expression, ['|', '^']);
+left_op('and_expression', \&equality_expression, ['&']);
 
 rule('equality_expression', [
     nonassoc_op(\&cmp_expression, [qw(== != <=> ~~)]),
@@ -633,23 +616,13 @@ rule('cmp_expression', [
     \&shift_expression
 ]);
 
-rule('shift_expression', [
-    left_op(\&additive_expression, ['<<', '>>'])
-]);
+left_op('shift_expression', \&additive_expression, ['<<', '>>']);
+left_op('additive_expression', \&term, [[qr{^-(?![=a-z>-])}, '-'], [qr{^\+(?![\+=])}, '+']]);
 
-rule('additive_expression', [
-    left_op(\&term, [[qr{^-(?![=a-z>-])}, '-'], [qr{^\+(?![\+=])}, '+']])
-]);
-
-rule('term', [
-    left_op(\&regexp_match, ['*', '/', '%', [
-        qr{^x(?![a-zA-Z])}, 'x'
-    ]]),
-]);
-
-rule('regexp_match', [
-    left_op(\&unary, ['=~', '!~'])
-]);
+left_op('term', \&regexp_match, ['*', '/', '%', [
+        qr{^x(?![a-zA-Z0-9_])}, 'x'
+]]);
+left_op('regexp_match', \&unary, ['=~', '!~']);
 
 rule('unary', [
     sub {
