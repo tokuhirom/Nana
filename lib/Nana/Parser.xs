@@ -167,6 +167,10 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
             SIMPLEOP(TOKEN_LT, 1);
         }
         break;
+    case '$':
+        if (CHAR2('{')) { /* ${ */
+            SIMPLEOP(TOKEN_DEREF, 2);
+        }
     case '*':
         if (CHAR2('*')) {
             if (CHAR3('=')) {
@@ -205,9 +209,8 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
             SIMPLEOP(TOKEN_MINUS, 1);
         }
         break;
-    default:
-        return TOKEN_EOF;
     }
+    return TOKEN_EOF;
 #undef CHAR2
 #undef SIMPLEOP
 }

@@ -912,24 +912,35 @@ rule('variable', [
 
 rule('primary', [
     sub {
-        # -> $x { }
         my $c = shift;
 
-        ($c) = match($c, [qr{^->(?![>])}, '->'])
-            or return;
+        my ($used, $token_id) = _token_op($c);
+        if ($token_id == TOKEN_LAMBDA) { # -> $x { }
+            $c = substr($c, $used);
 
-        my @params;
-        while ((my $c2, my $param) = variable($c)) {
-            push @params, $param;
-            $c = $c2;
-            my ($c3) = match($c, ',')
-                or last;
-            $c = $c3;
+            my @params;
+            while ((my $c2, my $param) = variable($c)) {
+                push @params, $param;
+                $c = $c2;
+                my ($c3) = match($c, ',')
+                    or last;
+                $c = $c3;
+            }
+
+            ($c, my $block) = block($c)
+                or _err "expected block after ->";
+            return ($c, _node2('LAMBDA', $START, \@params, $block));
+        } elsif ($token_id == TOKEN_DEREF) {
+            $c = substr($c, $used);
+
+            ($c, my $ret) = expression($c)
+                or return;
+            ($c) = match($c, '}')
+                or _err "Closing brace is not found after \${ operator";
+            return ($c, _node("DEREF", $ret));
+        } else {
+            return;
         }
-
-        ($c, my $block) = block($c)
-            or _err "expected block after ->";
-        return ($c, _node2('LAMBDA', $START, \@params, $block));
     },
     sub {
         # NV
@@ -947,16 +958,6 @@ rule('primary', [
     \&string,
     \&bytes,
     \&regexp,
-    sub {
-        my $c = shift;
-        ($c) = match($c, '${')
-            or return;
-        ($c, my $ret) = expression($c)
-            or return;
-        ($c) = match($c, '}')
-            or return;
-        ($c, _node("DEREF", $ret));
-    },
     sub {
         my $c = shift;
         ($c, my $ret) = _qw_literal($c)

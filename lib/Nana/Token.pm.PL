@@ -48,6 +48,7 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_ASSIGN
     TOKEN_POW_ASSIGN
     TOKEN_DIV_ASSIGN
+    TOKEN_DEREF
 );
 
 &output_header; &output_pm; exit 0;

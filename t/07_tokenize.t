@@ -342,3 +342,7 @@ TOKEN_LE
 --- src: |=
 --- token: TOKEN_OR_ASSIGN
 
+===
+--- src: ${
+--- token: TOKEN_DEREF
+
