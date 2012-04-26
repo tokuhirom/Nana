@@ -9,7 +9,7 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_MINUSMINUS
     TOKEN_PLUS
     TOKEN_MINUS
-    TOKEN_MULMUL
+    TOKEN_POW
     TOKEN_MUL
     TOKEN_MUL_ASSIGN
     TOKEN_LSHIFT
@@ -38,14 +38,16 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_REGEXP_NOT_MATCH
     TOKEN_EQUAL_EQUAL
     TOKEN_NOT_EQUAL
-    TOKEN_EQUAL
+    TOKEN_ASSIGN
     TOKEN_FAT_COMMA
     TOKEN_NOT
     TOKEN_COMMA
     TOKEN_DIV
-    TOKEN_DIV_EQUAL
     TOKEN_MOD
-    TOKEN_MOD_EQUAL
+    TOKEN_MOD_ASSIGN
+    TOKEN_ASSIGN
+    TOKEN_POW_ASSIGN
+    TOKEN_DIV_ASSIGN
 );
 
 &output_header; &output_pm; exit 0;

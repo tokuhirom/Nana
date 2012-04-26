@@ -69,13 +69,13 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
     switch (*p) {
     case '/':
         if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_DIV_EQUAL, 2);
+            SIMPLEOP(TOKEN_DIV_ASSIGN, 2);
         } else {
             SIMPLEOP(TOKEN_DIV, 1);
         }
     case '%':
         if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_MOD_EQUAL, 2);
+            SIMPLEOP(TOKEN_MOD_ASSIGN, 2);
         } else {
             SIMPLEOP(TOKEN_MOD, 1);
         }
@@ -97,7 +97,7 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         } else if (CHAR2('~')) { /* =~ */
             SIMPLEOP(TOKEN_REGEXP_MATCH, 2);
         } else {
-            SIMPLEOP(TOKEN_EQUAL, 1);
+            SIMPLEOP(TOKEN_ASSIGN, 1);
         }
     case '^':
         if (CHAR2('=')) {
@@ -169,8 +169,12 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         break;
     case '*':
         if (CHAR2('*')) {
-            SIMPLEOP(TOKEN_MULMUL, 2);
-        } else if (CHAR2('=')) {
+            if (CHAR3('=')) {
+                SIMPLEOP(TOKEN_POW_ASSIGN, 3);
+            } else {
+                SIMPLEOP(TOKEN_POW, 2);
+            }
+        } else if (CHAR2('=')) { /* *= */
             SIMPLEOP(TOKEN_MUL_ASSIGN, 2);
         } else {
             SIMPLEOP(TOKEN_MUL, 1);

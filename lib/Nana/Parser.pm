@@ -581,13 +581,31 @@ rule('assign_expression', [
         my $c = shift;
         ($c, my $rhs) = three_expression($c)
             or return;
-        ($c, my $op) = match($c, [qr{^=(?![=><])}, '='], qw(*= += /= %= x= -= <<= >>= **= &= |= ^=), [qr{^\|\|=}, '||='])
-            or return;
-        ($c, my $lhs) = expression($c)
-            or _err "Cannot get expression after $op";
-        return ($c, _node($op, $rhs, $lhs));
-    },
-    \&three_expression
+        my ($used, $token_id) = _token_op($c);
+        my $op = +{
+            TOKEN_ASSIGN()        => '=',
+            TOKEN_MUL_ASSIGN()    => '*=',
+            TOKEN_PLUS_ASSIGN()   => '+=',
+            TOKEN_DIV_ASSIGN()    => '/=',
+            TOKEN_MOD_ASSIGN()    => '%=',
+            TOKEN_MINUS_ASSIGN()  => '-=',
+            TOKEN_LSHIFT_ASSIGN() => '<<=',
+            TOKEN_RSHIFT_ASSIGN() => '>>=',
+            TOKEN_POW_ASSIGN()    => '**=',
+            TOKEN_AND_ASSIGN()    => '&=',
+            TOKEN_OR_ASSIGN()     => '|=',
+            TOKEN_XOR_ASSIGN()    => '^=',
+            TOKEN_OROR_ASSIGN()   => '||=',
+        }->{$token_id};
+        if ($op) {
+            $c = substr($c, $used);
+            ($c, my $lhs) = expression($c)
+                or _err "Cannot get expression after $op";
+            return ($c, _node($op, $rhs, $lhs));
+        } else {
+            return ($c, $rhs);
+        }
+    }
 ]);
 
 # %right
@@ -691,7 +709,7 @@ rule('pow', [
         ($c, my $lhs) = incdec($c)
             or return;
         my ($len, $token) = _token_op($c);
-        if ($token && $token == TOKEN_MULMUL) {
+        if ($token && $token == TOKEN_POW) {
             $c = substr($c, $len);
             ($c, my $rhs) = pow($c)
                 or die "Missing expression after '**'";

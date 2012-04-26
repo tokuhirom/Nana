@@ -11,15 +11,21 @@ filters {
     token => ['chomp'],
 };
 
+sub eeeol {
+    local $_ = shift;
+    s/\n$//;
+    $_;
+}
+
 run {
     my $block = shift;
     my ($used, $token_id) = Nana::Parser::_token_op($block->src);
-    is($used, $block->used, $block->src);
+    is($used, $block->used || length($block->src), eeeol($block->src));
     my $code = Nana::Parser->can($block->token)
         or die "Unknown token: " . $block->token;
     is($token_id, $code->());
-    $block->src
 };
+
 
 __END__
 
@@ -37,7 +43,7 @@ TOKEN_PLUSPLUS
 --- used
 2
 --- token
-TOKEN_MULMUL
+TOKEN_POW
 
 ===
 --- src
@@ -225,22 +231,6 @@ TOKEN_MOD
 
 ===
 --- src
-%=
---- used
-2
---- token
-TOKEN_MOD_EQUAL
-
-===
---- src
-/=
---- used
-2
---- token
-TOKEN_DIV_EQUAL
-
-===
---- src
 /
 --- used
 1
@@ -302,4 +292,53 @@ TOKEN_GE
 2
 --- token
 TOKEN_LE
+
+===
+--- src: -=
+--- token: TOKEN_MINUS_ASSIGN
+
+===
+--- src: >>=
+--- token: TOKEN_RSHIFT_ASSIGN
+
+===
+--- src: %=
+--- token: TOKEN_MOD_ASSIGN
+
+===
+--- src: =
+--- token: TOKEN_ASSIGN
+
+===
+--- src: +=
+--- token: TOKEN_PLUS_ASSIGN
+
+===
+--- src: <<=
+--- token: TOKEN_LSHIFT_ASSIGN
+
+===
+--- src: **=
+--- used: 3
+--- token: TOKEN_POW_ASSIGN
+
+===
+--- src: /=
+--- token: TOKEN_DIV_ASSIGN
+
+===
+--- src: ^=
+--- token: TOKEN_XOR_ASSIGN
+
+===
+--- src: *=
+--- token: TOKEN_MUL_ASSIGN
+
+===
+--- src: &=
+--- token: TOKEN_AND_ASSIGN
+
+===
+--- src: |=
+--- token: TOKEN_OR_ASSIGN
 
