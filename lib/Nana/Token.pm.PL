@@ -90,6 +90,9 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_FALSE
     TOKEN_SELF
     TOKEN_FILE
+    TOKEN_STR_OR
+    TOKEN_STR_XOR
+    TOKEN_STR_AND
 );
 
 &output_header; &output_pm; exit 0;

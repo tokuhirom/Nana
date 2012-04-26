@@ -90,25 +90,6 @@ sub any {
 
 # see http://en.wikipedia.org/wiki/Parsing_expression_grammar#Indirect_left_recursion
 # %left operator.
-sub left_op {
-    my ($upper, $ops) = @_;
-    confess "\$ops must be ArrayRef" unless ref $ops eq 'ARRAY';
-    # TODO: will be deprecate
-
-    sub {
-        my $c = shift;
-        ($c, my $lhs) = $upper->($c)
-            or return;
-        my $ret = $lhs;
-        while (my ($c2, $op) = match($c, @$ops)) {
-            $c = $c2;
-            ($c, my $rhs) = $upper->($c)
-                or die "syntax error  after '$op' line $LINENO";
-            $ret = _node($op, $ret, $rhs);
-        }
-        return ($c, $ret);
-    }
-}
 sub left_op2 {
     my ($upper, $ops) = @_;
     confess "\$ops must be HashRef" unless ref $ops eq 'HASH';
@@ -524,11 +505,11 @@ rule('block', [
 ]);
 
 rule('str_or_expression', [
-    left_op(\&str_and_expression, ['or', 'xor']),
+    left_op2(\&str_and_expression, +{ TOKEN_STR_OR() => 'or', TOKEN_STR_XOR() => 'xor'}),
 ]);
 
 rule('str_and_expression', [
-    left_op(\&not_expression, ['and']),
+    left_op2(\&not_expression, +{ TOKEN_STR_AND() => 'and'}),
 ]);
 
 rule('not_expression', [

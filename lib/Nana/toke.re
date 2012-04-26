@@ -54,6 +54,9 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         "not" { OP(TOKEN_STR_NOT); }
         "die" { OP(TOKEN_DIE); }
         "try" { OP(TOKEN_TRY); }
+        "or" { OP(TOKEN_STR_OR); }
+        "xor" { OP(TOKEN_STR_XOR); }
+        "and" { OP(TOKEN_STR_AND); }
         "elsif" { OP(TOKEN_ELSIF); }
         "last" { OP(TOKEN_LAST); }
         "next" { OP(TOKEN_NEXT); }
