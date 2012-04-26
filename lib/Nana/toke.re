@@ -1,3 +1,6 @@
+/* vim: set filetype=cpp: */
+#include<stdio.h>
+
 /**
  * Take a token from string.
  *
@@ -9,13 +12,7 @@
  * @return int token id.
  */
 int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) {
-#define HAVE2(c) (len-*used>=2)
-#define HAVE3(c) (len-*used>=3)
-#define ALPHA2(c) (HAVE2() && isALPHA(*(p+1)))
-#define IDENT3(c) (HAVE3() && (isALNUM(*(p+2)) || *(p+2)=='_'))
-#define CHAR2(c) (HAVE2() && *(p+1) == (c))
-#define CHAR3(c) (HAVE3() && *(p+2) == (c))
-#define SIMPLEOP(type,_used) do { *used+=_used; return type; } while (0)
+#define OP(type) do { *used+=(cursor-orig); return type; } while (0)
     *used = skip_ws(src, len, found_end, lineno_inc);
     if (*found_end) {
         return TOKEN_EOF;
@@ -23,198 +20,93 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
     if (*used == len) {
         return TOKEN_EOF;
     }
-    char *p = src+*used;
+    char *cursor = src+*used;
+    char *orig = cursor;
+    char *marker = cursor;
 
-    switch (*p) {
-    case '/':
-        if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_DIV_ASSIGN, 2);
-        } else {
-            SIMPLEOP(TOKEN_DIV, 1);
-        }
-    case '%':
-        if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_MOD_ASSIGN, 2);
-        } else {
-            SIMPLEOP(TOKEN_MOD, 1);
-        }
-    case ',':
-        SIMPLEOP(TOKEN_COMMA, 1);
-    case '!':
-        if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_NOT_EQUAL, 2);
-        } else if (CHAR2('~')) {
-            SIMPLEOP(TOKEN_REGEXP_NOT_MATCH, 2);
-        } else {
-            SIMPLEOP(TOKEN_NOT, 1);
-        }
-    case '=':
-        if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_EQUAL_EQUAL, 2);
-        } else if (CHAR2('>')) { /* => */
-            SIMPLEOP(TOKEN_FAT_COMMA, 2);
-        } else if (CHAR2('~')) { /* =~ */
-            SIMPLEOP(TOKEN_REGEXP_MATCH, 2);
-        } else {
-            SIMPLEOP(TOKEN_ASSIGN, 1);
-        }
-    case '^':
-        if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_XOR_ASSIGN, 2);
-        } else {
-            SIMPLEOP(TOKEN_XOR, 1);
-        }
-    case '.':
-        if (CHAR2('.')) {
-            if (CHAR3('.')) {
-                SIMPLEOP(TOKEN_DOTDOTDOT, 3);
-            } else {
-                SIMPLEOP(TOKEN_DOTDOT, 2);
-            }
-        } else {
-            SIMPLEOP(TOKEN_DOT, 1);
-        }
-        break;
-    case '|':
-        if (CHAR2('|')) {
-            if (CHAR3('=')) {
-                SIMPLEOP(TOKEN_OROR_ASSIGN, 3);
-            } else {
-                SIMPLEOP(TOKEN_OROR, 2);
-            }
-        } else if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_OR_ASSIGN, 2);
-        } else {
-            SIMPLEOP(TOKEN_OR, 1);
-        }
-    case '&':
-        if (CHAR2('&')) {
-            SIMPLEOP(TOKEN_ANDAND, 2);
-        } else if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_AND_ASSIGN, 2);
-        } else {
-            SIMPLEOP(TOKEN_AND, 1);
-        }
-        break;
-    case '<':
-        if (CHAR2('<')) {
-            if (CHAR3('=')) {
-                SIMPLEOP(TOKEN_LSHIFT_ASSIGN, 3);
-            } else if (CHAR3('\'')) { /* <<' */
-                SIMPLEOP(TOKEN_HEREDOC_SQ_START, 3);
-            } else {
-                SIMPLEOP(TOKEN_LSHIFT, 2);
-            }
-        } else if (CHAR2('=')) {
-            if (CHAR3('>')) { /* <=> */
-                SIMPLEOP(TOKEN_CMP, 3);
-            } else {
-                SIMPLEOP(TOKEN_GE, 2);
-            }
-        } else {
-            SIMPLEOP(TOKEN_GT, 1);
-        }
-        break;
-    case '>':
-        if (CHAR2('>')) {
-            if (CHAR3('=')) {
-                SIMPLEOP(TOKEN_RSHIFT_ASSIGN, 3);
-            } else {
-                SIMPLEOP(TOKEN_RSHIFT, 2);
-            }
-        } else if (CHAR2('=')) {
-            SIMPLEOP(TOKEN_LE, 2);
-        } else {
-            SIMPLEOP(TOKEN_LT, 1);
-        }
-        break;
-    case '\\':
-        SIMPLEOP(TOKEN_REF, 1);
-        break;
-    case '~':
-        SIMPLEOP(TOKEN_TILDE, 1);
-        break;
-    case '$':
-        if (CHAR2('{')) { /* ${ */
-            SIMPLEOP(TOKEN_DEREF, 2);
-        }
-        break;
-    case '*':
-        if (CHAR2('*')) {
-            if (CHAR3('=')) {
-                SIMPLEOP(TOKEN_POW_ASSIGN, 3);
-            } else {
-                SIMPLEOP(TOKEN_POW, 2);
-            }
-        } else if (CHAR2('=')) { /* *= */
-            SIMPLEOP(TOKEN_MUL_ASSIGN, 2);
-        } else {
-            SIMPLEOP(TOKEN_MUL, 1);
-        }
-        break;
-    case '+':
-        if (CHAR2('+')) {
-            SIMPLEOP(TOKEN_PLUSPLUS, 2);
-        } else if (CHAR2('=')) { /* += */
-            SIMPLEOP(TOKEN_PLUS_ASSIGN, 2);
-        } else {
-            SIMPLEOP(TOKEN_PLUS, 1);
-        }
-        break;
-    case '{':
-        SIMPLEOP(TOKEN_LBRACE, 1);
-        break;
-    case '(':
-        SIMPLEOP(TOKEN_LPAREN, 1);
-        break;
-    case 'b':
-        if (CHAR2('\'')) {
-            SIMPLEOP(TOKEN_BYTES_SQ, 2);
-        } else if (CHAR2('"')) {
-            SIMPLEOP(TOKEN_BYTES_DQ, 2);
-        }
-        break;
-    case 'q':
-        if (CHAR2('q') && HAVE3() && is_opening(*(p+2))) { /* qq{ */
-            SIMPLEOP(TOKEN_STRING_QQ_START, 3);
-        }
-        if (CHAR2('r') && HAVE3() && is_opening(*(p+2))) { /* qr{ */
-            SIMPLEOP(TOKEN_REGEXP_QR_START, 3);
-        }
-        if (CHAR2('w') && HAVE3() && is_opening(*(p+2))) { /* qw{ */
-            SIMPLEOP(TOKEN_QW_START, 3);
-        }
-        if (HAVE2() && is_opening(*(p+1))) { /* q{ */
-            SIMPLEOP(TOKEN_STRING_Q_START, 2);
-        }
-        break;
-    case '"':
-        SIMPLEOP(TOKEN_STRING_DQ, 1);
-        break;
-    case '\'':
-        SIMPLEOP(TOKEN_STRING_SQ, 1);
-        break;
-    case '[':
-        SIMPLEOP(TOKEN_LBRACKET, 1);
-        break;
-    case '-':
-        /* [[qr{^-(?![=a-z>-])}, '-'], [qr{^\+(?![\+=])}, '+']]) */
-        if (ALPHA2() && !IDENT3()) {
-            SIMPLEOP(TOKEN_FILETEST, 2);
-        }
+    /*!re2c
+        re2c:define:YYCTYPE  = "char";
+        re2c:define:YYCURSOR = cursor;
+        re2c:define:YYMARKER = marker;
+        re2c:yyfill:enable   = 0;
+        re2c:yych:conversion = 1;
+        re2c:indent:top      = 1;
 
-        if (CHAR2('-')) { /* -- */
-            SIMPLEOP(TOKEN_MINUSMINUS, 2);
-        } else if (CHAR2('>')) { /* -> */
-            SIMPLEOP(TOKEN_LAMBDA, 2);
-        } else if (CHAR2('=')) { /* -= */
-            SIMPLEOP(TOKEN_MINUS_ASSIGN, 2);
-        } else {
-            SIMPLEOP(TOKEN_MINUS, 1);
-        }
-        break;
-    }
-    return TOKEN_EOF;
-#undef CHAR2
-#undef SIMPLEOP
+        OPENCHAR = [!'\{\["\(];
+        ANY_CHAR = [^];
+
+        */
+
+    /*!re2c
+        "++" { OP(TOKEN_PLUSPLUS); }
+        "+="  { OP(TOKEN_PLUS_ASSIGN);  }
+        "+"  { OP(TOKEN_PLUS);  }
+        "b\""  { OP(TOKEN_BYTES_DQ);  }
+        "b\'"  { OP(TOKEN_BYTES_SQ);  }
+        "("  { OP(TOKEN_LPAREN);  }
+        "<<'"  { OP(TOKEN_HEREDOC_SQ_START);  }
+        "/=" { OP(TOKEN_DIV_ASSIGN); }
+        "/" { OP(TOKEN_DIV); }
+        "%=" { OP(TOKEN_MOD_ASSIGN); }
+        "%" { OP(TOKEN_MOD); }
+        "," { OP(TOKEN_COMMA); }
+        "!=" { OP(TOKEN_NOT_EQUAL); }
+        "!~" { OP(TOKEN_REGEXP_NOT_MATCH); }
+        "!" { OP(TOKEN_NOT); }
+        "==" { OP(TOKEN_EQUAL_EQUAL); }
+        "=>" { OP(TOKEN_FAT_COMMA); }
+        "=~" { OP(TOKEN_REGEXP_MATCH); }
+        "=" { OP(TOKEN_ASSIGN); }
+        "^=" { OP(TOKEN_XOR_ASSIGN); }
+        "^" { OP(TOKEN_XOR); }
+        "..." { OP(TOKEN_DOTDOTDOT); }
+        ".." { OP(TOKEN_DOTDOT); }
+        "." { OP(TOKEN_DOT); }
+        "||=" { OP(TOKEN_OROR_ASSIGN); }
+        "||" { OP(TOKEN_OROR); }
+        "|=" { OP(TOKEN_OR_ASSIGN); }
+        "|" { OP(TOKEN_OR); }
+        "&&" { OP(TOKEN_ANDAND); }
+        "&=" { OP(TOKEN_AND_ASSIGN); }
+        "&" { OP(TOKEN_AND); }
+        "<<=" { OP(TOKEN_LSHIFT_ASSIGN); }
+        "<<'" { OP(TOKEN_HEREDOC_SQ_START); }
+        "<<" { OP(TOKEN_LSHIFT); }
+        "<=>" { OP(TOKEN_CMP); }
+        "<=" { OP(TOKEN_GE); }
+        "<" { OP(TOKEN_GT); }
+        ">>=" { OP(TOKEN_RSHIFT_ASSIGN); }
+        ">>" { OP(TOKEN_RSHIFT); }
+        ">=" { OP(TOKEN_LE); }
+        ">" { OP(TOKEN_LT); }
+        "\\" { OP(TOKEN_REF); }
+        "~" { OP(TOKEN_TILDE); }
+        "${" { OP(TOKEN_DEREF); }
+        "**=" { OP(TOKEN_POW_ASSIGN); }
+        "**" { OP(TOKEN_POW); }
+        "*=" { OP(TOKEN_MUL_ASSIGN); }
+        "*" { OP(TOKEN_MUL); }
+        "++" { OP(TOKEN_PLUSPLUS); }
+        "+=" { OP(TOKEN_PLUS_ASSIGN); }
+        "+" { OP(TOKEN_PLUS); }
+        "{" { OP(TOKEN_LBRACE); }
+        "(" { OP(TOKEN_LPAREN); }
+        "b\'" { OP(TOKEN_BYTES_SQ); }
+        "b\"" { OP(TOKEN_BYTES_DQ); }
+        "qq" OPENCHAR { OP(TOKEN_STRING_QQ_START); }
+        "qr" OPENCHAR { OP(TOKEN_REGEXP_QR_START); }
+        "qw" OPENCHAR { OP(TOKEN_QW_START); }
+        "q" OPENCHAR { OP(TOKEN_STRING_Q_START); }
+        "\"" { OP(TOKEN_STRING_DQ); }
+        "'" { OP(TOKEN_STRING_SQ); }
+        "[" { OP(TOKEN_LBRACKET); }
+        "-" [a-z] { OP(TOKEN_FILETEST); }
+        "--" { OP(TOKEN_MINUSMINUS); }
+        "->" { OP(TOKEN_LAMBDA); }
+        "-=" { OP(TOKEN_MINUS_ASSIGN); }
+        "-" { OP(TOKEN_MINUS); }
+        ANY_CHAR { return TOKEN_EOF; }
+
+      */
+    abort(); /* should not reach here */
 }
