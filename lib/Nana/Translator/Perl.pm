@@ -421,7 +421,9 @@ sub _compile {
     } elsif ($node->[0] eq 'TRUE') {
         return 'JSON::true()';
     } elsif ($node->[0] eq 'DOUBLE') {
-        return $node->[2];
+        my $ret = "$node->[2]";
+        $ret .= ".0" unless $ret =~ /\./;
+        return $ret;
     } elsif ($node->[0] eq 'BLOCK') {
         return '{' . _compile($node->[2]) . '}';
     } elsif ($node->[0] eq 'EXPRESSIONS') {

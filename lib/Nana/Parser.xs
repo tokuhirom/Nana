@@ -93,7 +93,9 @@ _token_op(SV *src_sv)
         STRLEN len;
         char *src = SvPV(src_sv, len);
         int used=0, found_end=0, lineno_inc=0;
-        int token_id = token_op(src, len, &used, &found_end, &lineno_inc);
+        SV *yylval = &PL_sv_undef;
+        int token_id = token_op(src, len, &used, &found_end, &lineno_inc, &yylval);
         mXPUSHi(used);
         mXPUSHi(token_id);
+        XPUSHs(yylval);
 

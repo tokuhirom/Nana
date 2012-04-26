@@ -93,6 +93,8 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_STR_OR
     TOKEN_STR_XOR
     TOKEN_STR_AND
+    TOKEN_CLASS_NAME
+    TOKEN_VARIABLE
 );
 
 &output_header; &output_pm; exit 0;

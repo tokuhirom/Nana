@@ -4,7 +4,7 @@ use utf8;
 use Test::Base;
 use Nana::Parser;
 
-plan tests => 2*blocks;
+plan 'no_plan';
 
 filters {
     used => ['chomp'],
@@ -14,17 +14,20 @@ filters {
 sub eeeol {
     local $_ = shift;
     s/\n$//;
-    s/^0$/+0/;
+    s/^(\d+)$/+$1/;
     $_;
 }
 
 run {
     my $block = shift;
-    my ($used, $token_id) = Nana::Parser::_token_op($block->src);
+    my ($used, $token_id, $val) = Nana::Parser::_token_op($block->src);
     is($used, $block->used || length($block->src), eeeol($block->src));
     my $code = Nana::Parser->can($block->token)
         or die "Unknown token: " . $block->token;
     is($token_id, $code->());
+    if (defined $block->lval) {
+        is($val, $block->lval);
+    }
 };
 
 
@@ -382,6 +385,7 @@ TOKEN_LE
 ===
 --- src: classA
 --- token: TOKEN_IDENT
+--- lval: classA
 
 ===
 --- src: class
@@ -398,8 +402,34 @@ TOKEN_LE
 ===
 --- src: 0
 --- token: TOKEN_INTEGER
+--- lval: 0
+
+===
+--- src: 4649
+--- token: TOKEN_INTEGER
+--- lval: 4649
+
+===
+--- src: 0xdeadbeef
+--- token: TOKEN_INTEGER
+--- lval: 3735928559
 
 ===
 --- src: 0.5
 --- token: TOKEN_DOUBLE
+--- lval: 0.5
 
+===
+--- src: 0.0
+--- token: TOKEN_DOUBLE
+--- lval: 0
+
+===
+--- src: Foo::Bar
+--- token: TOKEN_CLASS_NAME
+--- lval: Foo::Bar
+
+===
+--- src: $var
+--- token: TOKEN_VARIABLE
+--- lval: $var

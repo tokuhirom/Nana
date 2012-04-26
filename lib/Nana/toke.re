@@ -1,6 +1,12 @@
 /* vim: set filetype=cpp: */
-#include<stdio.h>
-#include<stdlib.h>
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+
+#include "../../ppport.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include "token.h"
 
 /**
@@ -11,9 +17,10 @@
  * @args output *used: used chars in src
  * @args output *found_end: make true if found __END__
  * @args output *lineno_inc: incremented line numbers.
+ * @args output *yylval: value itself in string
  * @return int token id.
  */
-int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) {
+int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc, SV**yylval) {
 #define OP(type) do { *used+=(cursor-orig); return type; } while (0)
     *used = skip_ws(src, len, found_end, lineno_inc);
     if (*found_end) {
@@ -38,8 +45,9 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         IDENT = [a-zA-Z_] [a-zA-Z0-9_]*;
         ANY_CHAR = [^];
         HEX = "0x" [0-9a-fA-F]+;
-        INTEGER = HEX | "0" | [1-9][0-9]*;
+        INTEGER = HEX;
         DOUBLE = ([1-9] [0-9]* | "0") "." [0-9]+;
+        CLASS_NAME = IDENT ( "::" IDENT )*;
 
         */
 
@@ -70,9 +78,35 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         "self" { OP(TOKEN_SELF); }
         "__FILE__" { OP(TOKEN_FILE); }
         "__LINE__" { OP(TOKEN_LINE); }
-        IDENT { OP(TOKEN_IDENT); }
-        INTEGER { OP(TOKEN_INTEGER); }
-        DOUBLE { OP(TOKEN_DOUBLE); }
+
+        "0" {
+            *yylval = sv_2mortal(newSViv(0));
+            OP(TOKEN_INTEGER);
+        }
+        [1-9] [0-9]* {
+            *yylval = sv_2mortal(newSViv(strtol(orig, &cursor, 10)));
+            OP(TOKEN_INTEGER);
+        }
+        "0x" [0-9a-fA-F]+ {
+            *yylval = sv_2mortal(newSViv(strtol(orig+2, &cursor, 16)));
+            OP(TOKEN_INTEGER);
+        }
+        IDENT {
+            *yylval = sv_2mortal(newSVpvn(orig, cursor-orig));
+            OP(TOKEN_IDENT);
+        }
+        CLASS_NAME {
+            *yylval = sv_2mortal(newSVpvn(orig, cursor-orig));
+            OP(TOKEN_CLASS_NAME);
+        }
+        "$" IDENT {
+            *yylval = sv_2mortal(newSVpvn(orig, cursor-orig));
+            OP(TOKEN_VARIABLE);
+        }
+        DOUBLE {
+            *yylval = sv_2mortal(newSVnv(strtod(orig, &cursor)));
+            OP(TOKEN_DOUBLE);
+        }
         "?" { OP(TOKEN_QUESTION); }
         "++" { OP(TOKEN_PLUSPLUS); }
         "+="  { OP(TOKEN_PLUS_ASSIGN);  }

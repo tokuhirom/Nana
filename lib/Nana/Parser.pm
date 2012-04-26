@@ -877,7 +877,7 @@ rule('primary', [
     sub {
         my $c = shift;
 
-        my ($used, $token_id) = _token_op($c);
+        my ($used, $token_id, $val) = _token_op($c);
         if ($token_id == TOKEN_LAMBDA) { # -> $x { }
             $c = substr($c, $used);
 
@@ -977,12 +977,9 @@ rule('primary', [
                 # or die "} not found on hash at line $LINENO";
             return ($c, _node2('{}', $START, \@content));
         } elsif ($token_id == TOKEN_INTEGER) {
-            $c =~ s/^(0x[0-9a-fA-F]+|0|[1-9][0-9]*)//
-                or return;
-            return ($c, _node('INT', $1));
+            return (substr($c, $used), _node('INT', $val));
         } elsif ($token_id == TOKEN_DOUBLE) {
-            $c =~ s/^((?:[1-9][0-9]*|0)\.[0-9]+)// or return;
-            return ($c, _node('DOUBLE', $1));
+            return (substr($c, $used), _node('DOUBLE', $val));
         } elsif ($token_id == TOKEN_UNDEF) {
             $c = substr($c, $used);
             return ($c, _node('UNDEF', $LINENO));
@@ -1001,6 +998,12 @@ rule('primary', [
         } elsif ($token_id == TOKEN_LINE) {
             $c = substr($c, $used);
             return ($c, _node('INT', $LINENO));
+        } elsif ($token_id == TOKEN_IDENT) {
+            return (substr($c, $used), _node('PRIMARY_IDENT', $val));
+        } elsif ($token_id == TOKEN_CLASS_NAME) {
+            return (substr($c, $used), _node('PRIMARY_IDENT', $val));
+        } elsif ($token_id == TOKEN_VARIABLE) {
+            return (substr($c, $used), _node('VARIABLE', $val));
         } else {
             return;
         }
@@ -1036,26 +1039,6 @@ rule('primary', [
         );
         return unless defined $c;
         return ($c, _node2('MY', $START, \@body));
-    },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = class_name($c)
-            or return;
-        $ret->[0] = "PRIMARY_IDENT";
-        ($c, $ret);
-    },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = identifier($c)
-            or return;
-        $ret->[0] = "PRIMARY_IDENT";
-        ($c, $ret);
-    },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = variable($c)
-            or return;
-        ($c, $ret);
     },
     sub {
         my $c = shift;
