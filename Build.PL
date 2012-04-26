@@ -45,6 +45,7 @@ my $build = $class->new(
     },
     PL_files => {
         'Config.tra.PL' => 'share/lib/Config.tra',
+        'lib/Nana/toke.re.PL' => 'lib/Nana/toke.c',
         'lib/Nana/Token.pm.PL' => ['lib/Nana/Token.pm', 'lib/Nana/token.h'],
     },
     use_tap_harness => 1,
