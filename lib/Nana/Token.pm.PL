@@ -1,5 +1,10 @@
 my %seen;
 my @tokens = grep { !$seen{$_}++ } qw(
+    TOKEN_CMP
+    TOKEN_GE
+    TOKEN_LE
+    TOKEN_GT
+    TOKEN_LT
     TOKEN_PLUSPLUS
     TOKEN_MINUSMINUS
     TOKEN_PLUS

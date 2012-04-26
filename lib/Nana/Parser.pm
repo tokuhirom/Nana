@@ -141,9 +141,11 @@ sub nonassoc_op {
         my $c = shift;
         ($c, my $lhs) = $upper->($c)
             or return;
-        (my $c2, my $op) = match($c, @$ops)
+        my ($used, $token_id) = _token_op($c);
+        return ($c, $lhs) unless $token_id;
+        my $op = $ops->{$token_id}
             or return ($c, $lhs);
-        $c = $c2;
+        $c = substr($c, $used);
         ($c, my $rhs) = $upper->($c)
             or die "Expression required after $op line $LINENO";
         return ($c, _node2($op, $START, $lhs, $rhs));
@@ -628,11 +630,11 @@ rule('and_expression', [
 ]);
 
 rule('equality_expression', [
-    nonassoc_op(\&cmp_expression, [qw(== != <=> ~~)])
+    nonassoc_op(\&cmp_expression, {TOKEN_EQUAL_EQUAL() => '==', TOKEN_NOT_EQUAL() => '!=', TOKEN_CMP() => '<=>'})
 ]);
 
 rule('cmp_expression', [
-    nonassoc_op(\&shift_expression, [qw(< > <= >=)])
+    nonassoc_op(\&shift_expression, {TOKEN_GT() => '<', TOKEN_LT() => '>', TOKEN_GE() => '<=', TOKEN_LE() => '>='})
 ]);
 
 rule('shift_expression', [

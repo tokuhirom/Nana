@@ -14,8 +14,10 @@ filters {
 run {
     my $block = shift;
     my ($used, $token_id) = Nana::Parser::_token_op($block->src);
-    is($used, $block->used);
-    is($token_id, Nana::Parser->can($block->token)->());
+    is($used, $block->used, $block->src);
+    my $code = Nana::Parser->can($block->token)
+        or die "Unknown token: " . $block->token;
+    is($token_id, $code->());
     $block->src
 };
 
@@ -244,3 +246,60 @@ TOKEN_DIV_EQUAL
 1
 --- token
 TOKEN_DIV
+
+===
+--- src
+==
+--- used
+2
+--- token
+TOKEN_EQUAL_EQUAL
+
+===
+--- src
+!=
+--- used
+2
+--- token
+TOKEN_NOT_EQUAL
+
+===
+--- src
+<=>
+--- used
+3
+--- token
+TOKEN_CMP
+
+===
+--- src
+<
+--- used
+1
+--- token
+TOKEN_GT
+
+===
+--- src
+>
+--- used
+1
+--- token
+TOKEN_LT
+
+===
+--- src
+<=
+--- used
+2
+--- token
+TOKEN_GE
+
+===
+--- src
+>=
+--- used
+2
+--- token
+TOKEN_LE
+

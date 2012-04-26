@@ -144,6 +144,12 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
             } else {
                 SIMPLEOP(TOKEN_LSHIFT, 2);
             }
+        } else if (CHAR2('=')) {
+            if (CHAR3('>')) { /* <=> */
+                SIMPLEOP(TOKEN_CMP, 3);
+            } else {
+                SIMPLEOP(TOKEN_GE, 2);
+            }
         } else {
             SIMPLEOP(TOKEN_GT, 1);
         }
@@ -155,6 +161,8 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
             } else {
                 SIMPLEOP(TOKEN_RSHIFT, 2);
             }
+        } else if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_LE, 2);
         } else {
             SIMPLEOP(TOKEN_LT, 1);
         }
