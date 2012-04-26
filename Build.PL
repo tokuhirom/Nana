@@ -7,7 +7,7 @@ my $class = Module::Build->subclass(
     class => 'My::Builder',
     code => q"
         sub ACTION_test {
-            exec(q{PERL5LIB=./util/:$PERL5LIB  prove --source T --source TRA --source EGTRA --source TCC -r t/ t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra});
+            exec($^X . q{ util/myprove --source T --source TRA --source EGTRA --source TCC -r t/ t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra});
         }
     "
 );
