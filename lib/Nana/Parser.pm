@@ -436,25 +436,26 @@ rule('statement', [
 rule('else_clause', [
     sub {
         my $c = shift;
-        ($c) = match($c, 'elsif')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression is required after 'elsif' keyword";
-        ($c, my $block) = block($c)
-            or die "block is required after elsif keyword.";
-        my $else;
-        if ((my $c2, $else) = else_clause($c)) { # optional
-            $c = $c2;
+        my ($used, $token_id) = _token_op($c);
+        if ($token_id == TOKEN_ELSIF) {
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or _err "expression is required after 'elsif' keyword";
+            ($c, my $block) = block($c)
+                or _err "block is required after elsif keyword.";
+            my $else;
+            if ((my $c2, $else) = else_clause($c)) { # optional
+                $c = $c2;
+            }
+            return ($c, _node2('ELSIF', $START, $expression, $block, $else));
+        } elsif ($token_id == TOKEN_ELSE) {
+            $c = substr($c, $used);
+            ($c, my $block) = block($c)
+                or _err "block is required after else keyword.";
+            return ($c, _node2('ELSE', $START, $block));
+        } else {
+            return;
         }
-        return ($c, _node2('ELSIF', $START, $expression, $block, $else));
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, 'else')
-            or return;
-        ($c, my $block) = block($c)
-            or die "block is required after elsif keyword.";
-        return ($c, _node2('ELSE', $START, $block));
     },
 ]);
 

@@ -72,6 +72,8 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_WHILE
     TOKEN_FOR
     TOKEN_DO
+    TOKEN_ELSIF
+    TOKEN_ELSE
 );
 
 &output_header; &output_pm; exit 0;
