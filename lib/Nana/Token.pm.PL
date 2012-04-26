@@ -52,6 +52,10 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_REF
     TOKEN_TILDE
     TOKEN_LBRACKET
+    TOKEN_STRING_QQ_START
+    TOKEN_STRING_Q_START
+    TOKEN_STRING_DQ
+    TOKEN_STRING_SQ
 );
 
 &output_header; &output_pm; exit 0;

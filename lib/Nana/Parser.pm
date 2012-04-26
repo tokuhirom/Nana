@@ -959,6 +959,32 @@ rule('primary', [
             ($c) = match($c, "]")
                 or return;
             return ($c, _node2('ARRAY', $START, \@body));
+        } elsif ($token_id == TOKEN_STRING_SQ) { # '
+            return _sq_string(substr($c, $used), q{'});
+        } elsif ($token_id == TOKEN_STRING_Q_START) { # q{
+            my $openchar = substr($c, $used-1, 1);
+            my $closechar = {
+                '!' => '!',
+                '{' => '}',
+                '[' => ']',
+                '"' => '"',
+                "'" => "'",
+                "(" => ")",
+            }->{$openchar};
+            return _sq_string(substr($c, $used), $closechar);
+        } elsif ($token_id == TOKEN_STRING_DQ) { # "
+            return _dq_string(substr($c, $used), q{"});
+        } elsif ($token_id == TOKEN_STRING_QQ_START) { # qq{
+            my $openchar = substr($c, $used-1, 1);
+            my $closechar = {
+                '!' => '!',
+                '{' => '}',
+                '[' => ']',
+                '"' => '"',
+                "'" => "'",
+                "(" => ")",
+            }->{$openchar};
+            return _dq_string(substr($c, $used), $closechar);
         } else {
             return;
         }
@@ -976,7 +1002,6 @@ rule('primary', [
             or return;
         return ($c, _node('INT', $1));
     },
-    \&string,
     \&bytes,
     \&regexp,
     sub {
@@ -1223,91 +1248,62 @@ rule('bytes', [
     },
 ]);
 
-rule('string', [
-    sub {
-        # TODO: escape chars, etc.
-        my $src = shift;
+sub _dq_string {
+    # TODO: escape chars, etc.
+    my ($src, $close) = @_;
 
-        my $close2 = length($src) > 3 ? substr($src, 2, 1) : '';
-        ($src, my $close) = match($src, q{"}, [qr{^qq([!'\{\["\(])}, 'qq'])
-            or return;
-        if ($close eq 'qq') {
-            $close = {
-                '!' => '!',
-                '{' => '}',
-                '[' => ']',
-                '"' => '"',
-                "'" => "'",
-                "(" => ")",
-            }->{$close2};
+    my $bufref = \do { my $o="" };
+    my $node = _node('STR2', $bufref);
+    while (1) {
+        if ($src =~ s/^$close//) {
+            last;
+        } elsif (length($src) == 0) {
+            die "Unexpected EOF in string literal line $START";
+        } elsif ($src =~ s/^(\\0[0-7]{2})//) {
+            $$bufref .= eval 'qq{'.$1.'}';
+        } elsif ($src =~ s/^(\$[a-zA-Z_][a-zA-Z0-9_]*)//) {
+            $bufref = \do { my $o="" };
+            my $node2 = _node('STR2', $bufref);
+            $node = _node('STRCONCAT', $node, $1, $node2);
+        } elsif ($src =~ s/^\\0//) {
+            $$bufref.= qq{\0};
+        } elsif ($src =~ s/^\\r//) {
+            $$bufref .= qq{\r};
+        } elsif ($src =~ s/^\\t//) {
+            $$bufref .= qq{\t};
+        } elsif ($src =~ s/^\\n//) {
+            $$bufref .= qq{\n};
+        } elsif ($src =~ s/^\\n//) {
+            $$bufref .= qq{\n};
+        } elsif ($src =~ s/^\\"//) {
+            $$bufref .= q{"};
+        } elsif ($src =~ s/^(.)//ms) {
+            $$bufref .= $1;
+        } else {
+            _err 'should not reach here';
         }
-        my $bufref = \do { my $o="" };
-        my $node = _node('STR2', $bufref);
-        while (1) {
-            if ($src =~ s/^$close//) {
-                last;
-            } elsif (length($src) == 0) {
-                die "Unexpected EOF in string literal line $START";
-            } elsif ($src =~ s/^(\\0[0-7]{2})//) {
-                $$bufref .= eval 'qq{'.$1.'}';
-            } elsif ($src =~ s/^(\$[a-zA-Z_][a-zA-Z0-9_]*)//) {
-                $bufref = \do { my $o="" };
-                my $node2 = _node('STR2', $bufref);
-                $node = _node('STRCONCAT', $node, $1, $node2);
-            } elsif ($src =~ s/^\\0//) {
-                $$bufref.= qq{\0};
-            } elsif ($src =~ s/^\\r//) {
-                $$bufref .= qq{\r};
-            } elsif ($src =~ s/^\\t//) {
-                $$bufref .= qq{\t};
-            } elsif ($src =~ s/^\\n//) {
-                $$bufref .= qq{\n};
-            } elsif ($src =~ s/^\\n//) {
-                $$bufref .= qq{\n};
-            } elsif ($src =~ s/^\\"//) {
-                $$bufref .= q{"};
-            } elsif ($src =~ s/^(.)//ms) {
-                $$bufref .= $1;
-            } else {
-                _err 'should not reach here';
-            }
-        }
-        return ($src, $node);
-    },
-    sub {
-        # TODO: escape chars, etc.
-        my $src = shift;
+    }
+    return ($src, $node);
+}
 
-        my $close2 = length($src) > 2 ? substr($src, 1, 1) : '';
-        ($src, my $close) = match($src, q{'}, [qr{^q([!'\{\["\(])}, 'q'])
-            or return;
-        if ($close eq 'q') {
-            $close = {
-                '!' => '!',
-                '{' => '}',
-                '[' => ']',
-                '"' => '"',
-                "'" => "'",
-                "(" => ")",
-            }->{$close2};
+sub _sq_string {
+    my ($src, $close) = @_;
+    my $buf = '';
+    while (1) {
+        if ($src =~ s/^$close//) {
+            last;
+        } elsif (length($src) == 0) {
+            die "Unexpected EOF in string literal line $START";
+        } elsif ($src =~ s/^\\'//) {
+            $buf .= q{'};
+        } elsif ($src =~ s/^(.)//) {
+            $buf .= $1;
+        } else {
+            die 'should not reach here';
         }
-        my $buf = '';
-        while (1) {
-            if ($src =~ s/^$close//) {
-                last;
-            } elsif (length($src) == 0) {
-                die "Unexpected EOF in string literal line $START";
-            } elsif ($src =~ s/^\\'//) {
-                $buf .= q{'};
-            } elsif ($src =~ s/^(.)//) {
-                $buf .= $1;
-            } else {
-                die 'should not reach here';
-            }
-        }
-        return ($src, _node('STR', $buf));
-    },
-]);
+    }
+    return ($src, _node('STR', $buf));
+}
 
 1;
 __END__

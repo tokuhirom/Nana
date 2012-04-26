@@ -354,3 +354,11 @@ TOKEN_LE
 --- src: [
 --- token: TOKEN_LBRACKET
 
+===
+--- src: "
+--- token: TOKEN_STRING_DQ
+
+===
+--- src: qq{
+--- token: TOKEN_STRING_QQ_START
+

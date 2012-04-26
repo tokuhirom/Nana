@@ -202,6 +202,37 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
             SIMPLEOP(TOKEN_PLUS, 1);
         }
         break;
+    case 'q':
+        if (
+            CHAR2('q') && HAVE3() && (
+                   *(p+2) == '!'
+                || *(p+2) == '\''
+                || *(p+2) == '{'
+                || *(p+2) == '['
+                || *(p+2) == '"'
+                || *(p+2) == '('
+            )
+        ) {
+            SIMPLEOP(TOKEN_STRING_QQ_START, 3);
+        }
+        if (HAVE2() && (
+                   *(p+1) == '!'
+                || *(p+1) == '\''
+                || *(p+1) == '{'
+                || *(p+1) == '['
+                || *(p+1) == '"'
+                || *(p+1) == '('
+            )
+        ) {
+            SIMPLEOP(TOKEN_STRING_Q_START, 2);
+        }
+        break;
+    case '"':
+        SIMPLEOP(TOKEN_STRING_DQ, 1);
+        break;
+    case '\'':
+        SIMPLEOP(TOKEN_STRING_SQ, 1);
+        break;
     case '[':
         SIMPLEOP(TOKEN_LBRACKET, 1);
         break;
