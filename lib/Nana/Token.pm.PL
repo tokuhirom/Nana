@@ -6,6 +6,7 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_MINUS
     TOKEN_MULMUL
     TOKEN_MUL
+    TOKEN_MUL_ASSIGN
     TOKEN_LSHIFT
     TOKEN_RSHIFT
     TOKEN_LSHIFT_ASSIGN

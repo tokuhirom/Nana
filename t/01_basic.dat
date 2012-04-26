@@ -229,13 +229,6 @@ tora_op_mul(tora_op_mul(1,2),3)
 
 ===
 --- input
-1x2x3
-
---- expected
-((1 x 2) x 3)
-
-===
---- input
 1>>2>>3
 
 --- expected

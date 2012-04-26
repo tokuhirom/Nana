@@ -39,6 +39,22 @@ TOKEN_MULMUL
 
 ===
 --- src
+*=
+--- used
+2
+--- token
+TOKEN_MUL_ASSIGN
+
+===
+--- src
+*
+--- used
+1
+--- token
+TOKEN_MUL
+
+===
+--- src
 >>
 --- used
 2

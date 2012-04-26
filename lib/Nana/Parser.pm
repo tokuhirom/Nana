@@ -141,8 +141,9 @@ sub nonassoc_op {
         my $c = shift;
         ($c, my $lhs) = $upper->($c)
             or return;
-        ($c, my $op) = match($c, @$ops)
-            or return;
+        (my $c2, my $op) = match($c, @$ops)
+            or return ($c, $lhs);
+        $c = $c2;
         ($c, my $rhs) = $upper->($c)
             or die "Expression required after $op line $LINENO";
         return ($c, _node2($op, $START, $lhs, $rhs));
@@ -627,13 +628,11 @@ rule('and_expression', [
 ]);
 
 rule('equality_expression', [
-    nonassoc_op(\&cmp_expression, [qw(== != <=> ~~)]),
-    \&cmp_expression
+    nonassoc_op(\&cmp_expression, [qw(== != <=> ~~)])
 ]);
 
 rule('cmp_expression', [
-    nonassoc_op(\&shift_expression, [qw(< > <= >=)]),
-    \&shift_expression
+    nonassoc_op(\&shift_expression, [qw(< > <= >=)])
 ]);
 
 rule('shift_expression', [

@@ -162,6 +162,8 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
     case '*':
         if (CHAR2('*')) {
             SIMPLEOP(TOKEN_MULMUL, 2);
+        } else if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_MUL_ASSIGN, 2);
         } else {
             SIMPLEOP(TOKEN_MUL, 1);
         }
