@@ -58,6 +58,7 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         "while" { OP(TOKEN_WHILE); }
         "for" { OP(TOKEN_FOR); }
         IDENT { OP(TOKEN_IDENT); }
+        "?" { OP(TOKEN_QUESTION); }
         "++" { OP(TOKEN_PLUSPLUS); }
         "+="  { OP(TOKEN_PLUS_ASSIGN);  }
         "+"  { OP(TOKEN_PLUS);  }

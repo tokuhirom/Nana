@@ -589,17 +589,20 @@ rule('three_expression', [
         my $c = shift;
         ($c, my $t1) = dotdot_expression($c)
             or return;
-        ($c) = match($c, '?')
-            or return;
-        ($c, my $t2) = three_expression($c)
-            or return;
-        ($c) = match($c, ':')
-            or return;
-        ($c, my $t3) = three_expression($c)
-            or return;
-        return ($c, _node('?:', $t1, $t2, $t3));
+        my ($used, $token_id) = _token_op($c);
+        if ($token_id == TOKEN_QUESTION) {
+            $c = substr($c, $used);
+            ($c, my $t2) = three_expression($c)
+                or return;
+            ($c) = match($c, ':')
+                or return;
+            ($c, my $t3) = three_expression($c)
+                or return;
+            return ($c, _node('?:', $t1, $t2, $t3));
+        } else {
+            return ($c, $t1);
+        }
     },
-    \&dotdot_expression
 ]);
 
 rule('dotdot_expression', [
