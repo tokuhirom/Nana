@@ -1004,47 +1004,38 @@ rule('primary', [
             return (substr($c, $used), _node('PRIMARY_IDENT', $val));
         } elsif ($token_id == TOKEN_VARIABLE) {
             return (substr($c, $used), _node('VARIABLE', $val));
+        } elsif ($token_id == TOKEN_MY) {
+            $c = substr($c, $used);
+            ($c, my @body) = any(
+                $c,
+                sub {
+                    my $c = shift;
+                    ($c, my $body) = variable($c)
+                        or return;
+                    return ($c, $body);
+                },
+                sub {
+                    my $c = shift;
+                    ($c) = match($c, '(')
+                        or return;
+                    my @body;
+                    while ((my $c2, my $body) = variable($c)) {
+                        $c = $c2;
+                        push @body, $body;
+                        (my $c3) = match($c, ',')
+                            or last;
+                        $c = $c3;
+                    }
+                    ($c) = match($c, ')')
+                        or die "Missing ')' in my expression.";
+                    return ($c, @body);
+                }
+            );
+            return unless defined $c;
+            return ($c, _node2('MY', $START, \@body));
         } else {
             return;
         }
-    },
-    sub {
-        my $c = shift;
-        $c =~ s/^my\b//
-            or return;
-        ($c, my @body) = any(
-            $c,
-            sub {
-                my $c = shift;
-                ($c, my $body) = variable($c)
-                    or return;
-                return ($c, $body);
-            },
-            sub {
-                my $c = shift;
-                ($c) = match($c, '(')
-                    or return;
-                my @body;
-                while ((my $c2, my $body) = variable($c)) {
-                    $c = $c2;
-                    push @body, $body;
-                    (my $c3) = match($c, ',')
-                        or last;
-                    $c = $c3;
-                }
-                ($c) = match($c, ')')
-                    or die "Missing ')' in my expression.";
-                return ($c, @body);
-            }
-        );
-        return unless defined $c;
-        return ($c, _node2('MY', $START, \@body));
-    },
-    sub {
-        my $c = shift;
-        ($c, my $word) = match($c, 'self', '__FILE__')
-            or return;
-        return ($c, _node2(uc($word), $START));
     },
 ]);
 
