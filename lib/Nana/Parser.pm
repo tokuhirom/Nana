@@ -140,11 +140,7 @@ sub match {
     ($c, my $got_end) = skip_ws($c);
     return if $got_end;
     for my $word (@words) {
-        if (ref $word eq 'ARRAY') {
-            if ($c =~ s/$word->[0]//) {
-                return ($c, $word->[1]);
-            }
-        } elsif ($word =~ /^[a-z]+$/) {
+        if ($word =~ /^[a-z]+$/) {
             die "Is not registered to keyword: $word"
                 unless $KEYWORDS{$word};
             if ($c =~ s/^$word(?![a-zA-Z0-9_])//) {
@@ -732,8 +728,10 @@ rule('method_call', [
         ($c, my $object) = funcall($c)
             or return;
         my $ret = $object;
-        while (my ($c2, $op) = match($c, [qr{^\.(?![\.0-9])}, '.'])) {
-            $c = $c2;
+        while (1) {
+            my ($used, $token_id, $val) = _token_op($c);
+            last unless $token_id == TOKEN_DOT;
+            $c = substr($c, $used);
             ($c, my $rhs) = identifier($c)
                 or _err "There is no identifier after '.' operator in method call";
             if ((my $c3, my $param) = arguments($c)) {
