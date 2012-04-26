@@ -19,7 +19,6 @@
 ^\.shipit$
 \.sw[po]$
 ^Build$
-^ppport.h$
 ^xshelper.h$
 cover_db
 nytprof
@@ -37,3 +36,5 @@ perltidy.ERR$
 ^nana-.*/
 \.o$
 ^lib/Nana/Parser.c$
+^lib/Nana/Token.pm$
+^lib/Nana/token.h$

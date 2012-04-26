@@ -28,3 +28,6 @@ lib/Nana/Token.pm
 lib/Nana/token.h
 lib/Nana/Parser.o
 lib/Nana/toke.c
+nytprof/
+nytprof.out
+*.o

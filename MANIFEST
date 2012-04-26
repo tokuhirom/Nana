@@ -6,15 +6,11 @@ Config.tra.PL
 eg/class.nn
 eg/fizzbuzz.nn
 eg/hoge.tra
-lib/Nana/Parser.c
-lib/Nana/Parser.o
 lib/Nana/Parser.pm
 lib/Nana/Parser.xs
 lib/Nana/toke.c
 lib/Nana/toke.re
 lib/Nana/toke.re.PL
-lib/Nana/token.h
-lib/Nana/Token.pm
 lib/Nana/Token.pm.PL
 lib/Nana/Translator/Perl.pm
 lib/Nana/Translator/Perl/Builtins.pm
@@ -34,6 +30,7 @@ notes/call.mkdn
 notes/class.mkdn
 notes/difference.mkdn
 notes/funcall.tra
+ppport.h
 README
 share/lib/Config.tra
 share/lib/Test/More.tra
