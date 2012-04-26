@@ -42,6 +42,20 @@ int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
 }
 
 /**
+ * is opening char for q{ qr{ qq{ ?
+ */
+int is_opening(char c) {
+    return (
+           c == '!'
+        || c == '\''
+        || c == '{'
+        || c == '['
+        || c == '"'
+        || c == '('
+    ) ? 1 : 0;
+}
+
+/**
  * Take a token from string.
  *
  * @args src: source string.
@@ -203,27 +217,13 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         }
         break;
     case 'q':
-        if (
-            CHAR2('q') && HAVE3() && (
-                   *(p+2) == '!'
-                || *(p+2) == '\''
-                || *(p+2) == '{'
-                || *(p+2) == '['
-                || *(p+2) == '"'
-                || *(p+2) == '('
-            )
-        ) {
+        if (CHAR2('q') && HAVE3() && is_opening(*(p+2))) { /* qq{ */
             SIMPLEOP(TOKEN_STRING_QQ_START, 3);
         }
-        if (HAVE2() && (
-                   *(p+1) == '!'
-                || *(p+1) == '\''
-                || *(p+1) == '{'
-                || *(p+1) == '['
-                || *(p+1) == '"'
-                || *(p+1) == '('
-            )
-        ) {
+        if (CHAR2('r') && HAVE3() && is_opening(*(p+2))) { /* qr{ */
+            SIMPLEOP(TOKEN_REGEXP_QR_START, 3);
+        }
+        if (HAVE2() && is_opening(*(p+1))) { /* q{ */
             SIMPLEOP(TOKEN_STRING_Q_START, 2);
         }
         break;

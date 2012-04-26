@@ -962,29 +962,15 @@ rule('primary', [
         } elsif ($token_id == TOKEN_STRING_SQ) { # '
             return _sq_string(substr($c, $used), q{'});
         } elsif ($token_id == TOKEN_STRING_Q_START) { # q{
-            my $openchar = substr($c, $used-1, 1);
-            my $closechar = {
-                '!' => '!',
-                '{' => '}',
-                '[' => ']',
-                '"' => '"',
-                "'" => "'",
-                "(" => ")",
-            }->{$openchar};
-            return _sq_string(substr($c, $used), $closechar);
+            return _sq_string(substr($c, $used), _closechar(substr($c, $used-1, 1)));
         } elsif ($token_id == TOKEN_STRING_DQ) { # "
             return _dq_string(substr($c, $used), q{"});
         } elsif ($token_id == TOKEN_STRING_QQ_START) { # qq{
-            my $openchar = substr($c, $used-1, 1);
-            my $closechar = {
-                '!' => '!',
-                '{' => '}',
-                '[' => ']',
-                '"' => '"',
-                "'" => "'",
-                "(" => ")",
-            }->{$openchar};
-            return _dq_string(substr($c, $used), $closechar);
+            return _dq_string(substr($c, $used), _closechar(substr($c, $used-1, 1)));
+        } elsif ($token_id == TOKEN_DIV) { # /
+            return _regexp(substr($c, $used), q{/});
+        } elsif ($token_id == TOKEN_REGEXP_QR_START) { # qr{
+            return _regexp(substr($c, $used), _closechar(substr($c, $used-1, 1)));
         } else {
             return;
         }
@@ -1003,7 +989,6 @@ rule('primary', [
         return ($c, _node('INT', $1));
     },
     \&bytes,
-    \&regexp,
     sub {
         my $c = shift;
         ($c, my $ret) = _qw_literal($c)
@@ -1151,47 +1136,32 @@ rule('_qw_literal', [
     }
 ]);
 
-rule('regexp', [
-    sub {
-        my $src = shift;
+sub _regexp {
+    my ($src, $close) = @_;
 
-        my $close2 = length($src) > 3 ? substr($src, 2, 1) : '';
-        ($src, my $close) = match($src, q{/}, [qr{^qr([!'\{\["\(])}, 'qq'])
-            or return;
-        if ($close eq 'qq') {
-            $close = {
-                '!' => '!',
-                '{' => '}',
-                '[' => ']',
-                '"' => '"',
-                "'" => "'",
-                "(" => ")",
-            }->{$close2};
+    my $buf = '';
+    while (1) {
+        if ($src =~ s!^$close!!) {
+            last;
+        } elsif (length($src) == 0) {
+            die "Unexpected EOF in regexp literal line $START";
+        } elsif ($src =~ s!^\\/!!) {
+            $buf .= q{/};
+        } elsif ($src =~ s/^(.)//) {
+            $buf .= $1;
+        } elsif ($src =~ s/^\n//) {
+            $buf .= "\n";
+            $LINENO++;
+        } else {
+            die 'should not reach here';
         }
-        my $buf = '';
-        while (1) {
-            if ($src =~ s!^$close!!) {
-                last;
-            } elsif (length($src) == 0) {
-                die "Unexpected EOF in regexp literal line $START";
-            } elsif ($src =~ s!^\\/!!) {
-                $buf .= q{/};
-            } elsif ($src =~ s/^(.)//) {
-                $buf .= $1;
-            } elsif ($src =~ s/^\n//) {
-                $buf .= "\n";
-                $LINENO++;
-            } else {
-                die 'should not reach here';
-            }
-        }
-        my $flags = '';
-        if ($src =~ s/^([sxmig]+)(?![a-z0-9_-])//) {
-            $flags = $1;
-        }
-        return ($src, _node('REGEXP', $buf, $flags));
-    },
-]);
+    }
+    my $flags = '';
+    if ($src =~ s/^([sxmig]+)(?![a-z0-9_-])//) {
+        $flags = $1;
+    }
+    return ($src, _node('REGEXP', $buf, $flags));
+}
 
 rule('bytes', [
     sub {
@@ -1303,6 +1273,18 @@ sub _sq_string {
         }
     }
     return ($src, _node('STR', $buf));
+}
+
+sub _closechar {
+    my $openchar = shift;
+    {
+        '!' => '!',
+        '{' => '}',
+        '[' => ']',
+        '"' => '"',
+        "'" => "'",
+        "(" => ")",
+    }->{$openchar};
 }
 
 1;
