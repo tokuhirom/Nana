@@ -350,3 +350,7 @@ TOKEN_LE
 --- src: \
 --- token: TOKEN_REF
 
+===
+--- src: [
+--- token: TOKEN_LBRACKET
+

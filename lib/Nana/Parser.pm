@@ -679,34 +679,28 @@ rule('unary', [
     sub {
         my $c = shift;
         my ($used, $token_id) = _token_op($c);
-        my $op = +{
-            TOKEN_NOT() => '!',
-            TOKEN_TILDE() => '~',
-            TOKEN_REF() => '\\',
-            TOKEN_PLUS() => '+',
-            TOKEN_MINUS() => '-',
-            TOKEN_MUL() => '*',
-        }->{$token_id};
-        return unless $op;
-        $c = substr($c, $used);
-        ($c, my $ex) = unary($c)
-            or _err "Missing expression after $op";
-        return ($c, _node("UNARY$op", $ex));
-    },
-    sub {
-        # file test
-        my $c = shift;
-        ($c, my $op) = match($c,
-                # filetest
-                +[qr{^-s(?=[\( \t])}, "-s"],
-                +[qr{^-e(?=[\( \t])}, "-e"],
-                +[qr{^-f(?=[\( \t])}, "-f"],
-                +[qr{^-x(?=[\( \t])}, "-x"],
-                +[qr{^-d(?=[\( \t])}, "-d"],
-            ) or return;
-        ($c, my $ex) = pow($c)
-            or return;
-        return ($c, _node("UNARY$op", $ex));
+        if ($token_id == TOKEN_FILETEST) {
+            # file test
+            my $op = substr($c, $used-2, 2);
+            $c = substr($c, $used);
+            ($c, my $ex) = pow($c)
+                or return;
+            return ($c, _node("UNARY$op", $ex));
+        } else {
+            my $op = +{
+                TOKEN_NOT() => '!',
+                TOKEN_TILDE() => '~',
+                TOKEN_REF() => '\\',
+                TOKEN_PLUS() => '+',
+                TOKEN_MINUS() => '-',
+                TOKEN_MUL() => '*',
+            }->{$token_id};
+            return unless $op;
+            $c = substr($c, $used);
+            ($c, my $ex) = unary($c)
+                or _err "Missing expression after $op";
+            return ($c, _node("UNARY$op", $ex));
+        }
     },
     \&pow
 ]);
@@ -948,6 +942,23 @@ rule('primary', [
             ($c) = match($c, '}')
                 or _err "Closing brace is not found after \${ operator";
             return ($c, _node("DEREF", $ret));
+        } elsif ($token_id == TOKEN_LBRACKET) {
+            # array creation
+            # [1, 2, 3]
+
+            $c = substr($c, $used);
+            my @body;
+            while (my ($c2, $part) = assign_expression($c)) {
+                $c = $c2;
+                push @body, $part;
+
+                my ($c3) = match($c, ',');
+                last unless defined $c3;
+                $c = $c3;
+            }
+            ($c) = match($c, "]")
+                or return;
+            return ($c, _node2('ARRAY', $START, \@body));
         } else {
             return;
         }
@@ -1031,23 +1042,6 @@ rule('primary', [
         ($c, my $ret) = variable($c)
             or return;
         ($c, $ret);
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, "[")
-            or return;
-        my @body;
-        while (my ($c2, $part) = assign_expression($c)) {
-            $c = $c2;
-            push @body, $part;
-
-            my ($c3) = match($c, ',');
-            last unless defined $c3;
-            $c = $c3;
-        }
-        ($c) = match($c, "]")
-            or return;
-        return ($c, _node2('ARRAY', $START, \@body));
     },
     sub {
         my $c = shift;

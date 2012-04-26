@@ -53,9 +53,11 @@ int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
  */
 int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) {
 #define HAVE2(c) (len-*used>=2)
+#define HAVE3(c) (len-*used>=3)
 #define ALPHA2(c) (HAVE2() && isALPHA(*(p+1)))
+#define IDENT3(c) (HAVE3() && (isALNUM(*(p+2)) || *(p+2)=='_'))
 #define CHAR2(c) (HAVE2() && *(p+1) == (c))
-#define CHAR3(c) (len-*used>=3 && *(p+2) == (c))
+#define CHAR3(c) (HAVE3() && *(p+2) == (c))
 #define SIMPLEOP(type,_used) do { *used+=_used; return type; } while (0)
     *used = skip_ws(src, len, found_end, lineno_inc);
     if (*found_end) {
@@ -200,9 +202,12 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
             SIMPLEOP(TOKEN_PLUS, 1);
         }
         break;
+    case '[':
+        SIMPLEOP(TOKEN_LBRACKET, 1);
+        break;
     case '-':
         /* [[qr{^-(?![=a-z>-])}, '-'], [qr{^\+(?![\+=])}, '+']]) */
-        if (ALPHA2()) {
+        if (ALPHA2() && !IDENT3()) {
             SIMPLEOP(TOKEN_FILETEST, 2);
         }
 
