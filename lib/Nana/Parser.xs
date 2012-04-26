@@ -167,10 +167,17 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
             SIMPLEOP(TOKEN_LT, 1);
         }
         break;
+    case '\\':
+        SIMPLEOP(TOKEN_REF, 1);
+        break;
+    case '~':
+        SIMPLEOP(TOKEN_TILDE, 1);
+        break;
     case '$':
         if (CHAR2('{')) { /* ${ */
             SIMPLEOP(TOKEN_DEREF, 2);
         }
+        break;
     case '*':
         if (CHAR2('*')) {
             if (CHAR3('=')) {

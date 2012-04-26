@@ -678,9 +678,19 @@ rule('regexp_match', [
 rule('unary', [
     sub {
         my $c = shift;
-        ($c, my $op) = match($c, '!', '~', '\\', , [qr{^\+(?![\+=])}, '+'], [qr{^-(?![=>a-z-])}, '-'], '*') or return;
+        my ($used, $token_id) = _token_op($c);
+        my $op = +{
+            TOKEN_NOT() => '!',
+            TOKEN_TILDE() => '~',
+            TOKEN_REF() => '\\',
+            TOKEN_PLUS() => '+',
+            TOKEN_MINUS() => '-',
+            TOKEN_MUL() => '*',
+        }->{$token_id};
+        return unless $op;
+        $c = substr($c, $used);
         ($c, my $ex) = unary($c)
-            or return;
+            or _err "Missing expression after $op";
         return ($c, _node("UNARY$op", $ex));
     },
     sub {

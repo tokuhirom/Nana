@@ -346,3 +346,7 @@ TOKEN_LE
 --- src: ${
 --- token: TOKEN_DEREF
 
+===
+--- src: \
+--- token: TOKEN_REF
+
