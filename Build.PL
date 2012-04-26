@@ -5,13 +5,27 @@ use lib 'util/';
 
 my $class = Module::Build->subclass(
     class => 'My::Builder',
-    code => q"
+    code => <<'...'
         sub ACTION_test {
             my $self = shift;
             $self->depends_on('code');
             exec($^X . q{ util/myprove --source T --source TRA --source EGTRA --source TCC -r t/ t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra});
         }
-    "
+        sub ACTION_code {
+            my $self = shift;
+            $self->SUPER::process_PL_files();
+            unless(
+                   $self->up_to_date('lib/Nana/toke.re.PL' => 'lib/Nana/toke.c')
+                && $self->up_to_date('lib/Nana/toke.re' => 'lib/Nana/toke.c')
+            ) {
+                $self->run_perl_script('lib/Nana/toke.re.PL', [], ['lib/Nana/toke.c']) or die "lib/Nana/toke.re.PL failed";
+                $self->add_to_cleanup('lib/Nana/toke.c');
+                unlink 'lib/Nana/Parser.c';
+                unlink 'lib/Nana/Parser.o';
+            }
+            $self->SUPER::ACTION_code(@_);
+        }
+...
 );
 
 my $build = $class->new(
@@ -47,8 +61,10 @@ my $build = $class->new(
     },
     PL_files => {
         'Config.tra.PL' => 'share/lib/Config.tra',
-        'lib/Nana/toke.re.PL' => 'lib/Nana/toke.c',
         'lib/Nana/Token.pm.PL' => ['lib/Nana/Token.pm', 'lib/Nana/token.h'],
+    },
+    xs_files => +{
+        'lib/Nana/Parser.xs' => 'lib/Nana/Parser.xs',
     },
     use_tap_harness => 1,
     test_files => [glob('t/*.t t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra')],

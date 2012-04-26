@@ -63,6 +63,14 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_LPAREN
     TOKEN_LBRACE
     TOKEN_QW_START
+    TOKEN_CLASS
+    TOKEN_IDENT
+    TOKEN_USE
+    TOKEN_RETURN
+    TOKEN_UNLESS
+    TOKEN_IF
+    TOKEN_WHILE
+    TOKEN_FOR
 );
 
 &output_header; &output_pm; exit 0;

@@ -280,80 +280,69 @@ rule('statement', [
     sub {
         my $c = shift;
         # class Name [isa Parent] {}
-        ($c) = match($c, 'class')
-            or return;
-        ($c, my $name) = class_name($c)
-            or die "class name expected after 'class' keyword";
-        my $base;
-        if ((my $c2) = match($c, 'is')) {
-            $c = $c2;
-            ($c, $base) = class_name($c)
-                or die "class name expected after 'is' keyword";
-            $base->[0] = "PRIMARY_IDENT";
-        }
-        ($c, my $block) = block($c)
-            or _err "Expected block after 'class' but not matched";
-        return ($c, _node2('CLASS', $START, $name, $base, $block));
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, 'return')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression expected after 'return' keyword";
-        return ($c, _node2('RETURN', $START, $expression));
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, 'use')
-            or return;
-        ($c, my $klass) = class_name($c)
-            or _err "class name is required after 'use' keyword";
-        my $type;
-        if ((my $c2) = match($c, '*')) {
-            $c = $c2;
-            $type = '*';
-        } elsif (my ($c3, $primary) = primary($c)) {
-            $c = $c3;
-            $type = $primary;
+        my ($used, $token_id) = _token_op($c);
+        if ($token_id == TOKEN_CLASS) {
+            $c = substr($c, $used);
+            ($c, my $name) = class_name($c)
+                or die "class name expected after 'class' keyword";
+            my $base;
+            if ((my $c2) = match($c, 'is')) {
+                $c = $c2;
+                ($c, $base) = class_name($c)
+                    or die "class name expected after 'is' keyword";
+                $base->[0] = "PRIMARY_IDENT";
+            }
+            ($c, my $block) = block($c)
+                or _err "Expected block after 'class' but not matched";
+            return ($c, _node2('CLASS', $START, $name, $base, $block));
+        } elsif ($token_id == TOKEN_RETURN) {
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or die "expression expected after 'return' keyword";
+            return ($c, _node2('RETURN', $START, $expression));
+        } elsif ($token_id == TOKEN_USE) {
+            $c = substr($c, $used);
+            ($c, my $klass) = class_name($c)
+                or _err "class name is required after 'use' keyword";
+            my $type;
+            if ((my $c2) = match($c, '*')) {
+                $c = $c2;
+                $type = '*';
+            } elsif (my ($c3, $primary) = primary($c)) {
+                $c = $c3;
+                $type = $primary;
+            } else {
+                $type = _node('UNDEF');
+            }
+            return ($c, _node2('USE', $START, $klass, $type));
+        } elsif ($token_id == TOKEN_UNLESS) {
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or die "expression is required after 'unless' keyword";
+            ($c, my $block) = block($c)
+                or die "block is required after unless keyword.";
+            return ($c, _node2('UNLESS', $START, $expression, $block));
+        } elsif ($token_id == TOKEN_IF) {
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or die "expression is required after 'if' keyword line $LINENO";
+            ($c, my $block) = block($c)
+                or die "block is required after if keyword line $LINENO.";
+            my $else;
+            if ((my $c2, $else) = else_clause($c)) { # optional
+                $c = $c2;
+            }
+            return ($c, _node2('IF', $START, $expression, $block, $else));
+        } elsif ($token_id == TOKEN_WHILE) {
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or die "expression is required after 'while' keyword";
+            ($c, my $block) = block($c)
+                or die "block is required after while keyword.";
+            return ($c, _node2('WHILE', $START, $expression, $block));
         } else {
-            $type = _node('UNDEF');
+            return;
         }
-        return ($c, _node2('USE', $START, $klass, $type));
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, 'unless')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression is required after 'unless' keyword";
-        ($c, my $block) = block($c)
-            or die "block is required after unless keyword.";
-        return ($c, _node2('UNLESS', $START, $expression, $block));
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, 'if')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression is required after 'if' keyword line $LINENO";
-        ($c, my $block) = block($c)
-            or die "block is required after if keyword line $LINENO.";
-        my $else;
-        if ((my $c2, $else) = else_clause($c)) { # optional
-            $c = $c2;
-        }
-        return ($c, _node2('IF', $START, $expression, $block, $else));
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, 'while')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression is required after 'while' keyword";
-        ($c, my $block) = block($c)
-            or die "block is required after while keyword.";
-        return ($c, _node2('WHILE', $START, $expression, $block));
     },
     sub { # foreach
         my $c = shift;

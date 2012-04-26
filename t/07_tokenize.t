@@ -377,3 +377,20 @@ TOKEN_LE
 ===
 --- src: (
 --- token: TOKEN_LPAREN
+
+===
+--- src: classA
+--- token: TOKEN_IDENT
+
+===
+--- src: class
+--- token: TOKEN_CLASS
+
+===
+--- src: return
+--- token: TOKEN_RETURN
+
+===
+--- src: use
+--- token: TOKEN_USE
+

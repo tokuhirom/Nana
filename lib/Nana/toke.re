@@ -1,5 +1,7 @@
 /* vim: set filetype=cpp: */
 #include<stdio.h>
+#include<stdlib.h>
+#include "token.h"
 
 /**
  * Take a token from string.
@@ -33,11 +35,20 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         re2c:indent:top      = 1;
 
         OPENCHAR = [!'\{\["\(];
+        IDENT = [a-zA-Z_] [a-zA-Z0-9_]*;
         ANY_CHAR = [^];
 
         */
 
     /*!re2c
+        "class" { OP(TOKEN_CLASS);  }
+        "return" { OP(TOKEN_RETURN); }
+        "use" { OP(TOKEN_USE); }
+        "unless" { OP(TOKEN_UNLESS); }
+        "if" { OP(TOKEN_IF); }
+        "while" { OP(TOKEN_WHILE); }
+        "for" { OP(TOKEN_FOR); }
+        IDENT { OP(TOKEN_IDENT); }
         "++" { OP(TOKEN_PLUSPLUS); }
         "+="  { OP(TOKEN_PLUS_ASSIGN);  }
         "+"  { OP(TOKEN_PLUS);  }

@@ -3,8 +3,10 @@ use Test::More *;
 sub orr { 1 }
 sub andd { 2 }
 sub xorr { 3 }
+sub classy { 4 }
 ok(orr());
 is(andd(), 2);
 is(xorr(), 3);
+is(classy(), 4);
 
 done_testing();
