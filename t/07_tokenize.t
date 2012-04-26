@@ -374,3 +374,6 @@ TOKEN_LE
 --- src: b"
 --- token: TOKEN_BYTES_DQ
 
+===
+--- src: (
+--- token: TOKEN_LPAREN

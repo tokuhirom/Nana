@@ -986,6 +986,35 @@ rule('primary', [
             return _bytes_sq(substr($c, $used), 0);
         } elsif ($token_id ==TOKEN_BYTES_DQ) { # b"
             return _bytes_dq(substr($c, $used), 0);
+        } elsif ($token_id == TOKEN_LPAREN) { # (
+            $c = substr($c, $used);
+            ($c, my $body) = expression($c)
+                or return;
+            ($c) = match($c, ")")
+                or return;
+            return ($c, _node2('()', $START, $body));
+        } elsif ($token_id == TOKEN_LBRACE) { # {
+            $c = substr($c, $used);
+            my @content;
+            while (my ($c2, $lhs) = assign_expression($c)) {
+                $lhs->[0] = 'IDENT' if $lhs->[0] eq 'PRIMARY_IDENT';
+                push @content, $lhs;
+                $c = $c2;
+                ($c2) = match($c, '=>')
+                    or return;
+                    # or die "Missing => in hash creation '@{[ substr($c, 10) ]}...' line $LINENO\n";
+                $c = $c2;
+                ($c, my $rhs) = assign_expression($c);
+                push @content, $rhs;
+
+                my ($c3) = match($c, ',');
+                last unless defined $c3;
+                $c = $c3;
+            }
+            ($c) = match($c, "}")
+                or return;
+                # or die "} not found on hash at line $LINENO";
+            return ($c, _node2('{}', $START, \@content));
         } else {
             return;
         }
@@ -1066,40 +1095,6 @@ rule('primary', [
         ($c, my $ret) = variable($c)
             or return;
         ($c, $ret);
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, "{")
-            or return;
-        my @content;
-        while (my ($c2, $lhs) = assign_expression($c)) {
-            $lhs->[0] = 'IDENT' if $lhs->[0] eq 'PRIMARY_IDENT';
-            push @content, $lhs;
-            $c = $c2;
-            ($c2) = match($c, '=>')
-                or return;
-                # or die "Missing => in hash creation '@{[ substr($c, 10) ]}...' line $LINENO\n";
-            $c = $c2;
-            ($c, my $rhs) = assign_expression($c);
-            push @content, $rhs;
-
-            my ($c3) = match($c, ',');
-            last unless defined $c3;
-            $c = $c3;
-        }
-        ($c) = match($c, "}")
-            or return;
-            # or die "} not found on hash at line $LINENO";
-        return ($c, _node2('{}', $START, \@content));
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, "(")
-            or return;
-        ($c, my $body) = expression($c);
-        ($c) = match($c, ")")
-            or return;
-        return ($c, _node2('()', $START, $body));
     },
     sub {
         my $c = shift;

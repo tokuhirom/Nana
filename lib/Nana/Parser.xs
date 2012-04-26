@@ -218,6 +218,12 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
             SIMPLEOP(TOKEN_PLUS, 1);
         }
         break;
+    case '{':
+        SIMPLEOP(TOKEN_LBRACE, 1);
+        break;
+    case '(':
+        SIMPLEOP(TOKEN_LPAREN, 1);
+        break;
     case 'b':
         if (CHAR2('\'')) {
             SIMPLEOP(TOKEN_BYTES_SQ, 2);

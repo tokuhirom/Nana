@@ -60,6 +60,8 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_HEREDOC_SQ_START
     TOKEN_BYTES_SQ
     TOKEN_BYTES_DQ
+    TOKEN_LPAREN
+    TOKEN_LBRACE
 );
 
 &output_header; &output_pm; exit 0;
