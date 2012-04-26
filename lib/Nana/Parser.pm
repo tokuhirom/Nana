@@ -995,22 +995,34 @@ rule('primary', [
                 or return;
                 # or die "} not found on hash at line $LINENO";
             return ($c, _node2('{}', $START, \@content));
+        } elsif ($token_id == TOKEN_INTEGER) {
+            $c =~ s/^(0x[0-9a-fA-F]+|0|[1-9][0-9]*)//
+                or return;
+            return ($c, _node('INT', $1));
+        } elsif ($token_id == TOKEN_DOUBLE) {
+            $c =~ s/^((?:[1-9][0-9]*|0)\.[0-9]+)// or return;
+            return ($c, _node('DOUBLE', $1));
+        } elsif ($token_id == TOKEN_UNDEF) {
+            $c = substr($c, $used);
+            return ($c, _node('UNDEF', $LINENO));
+        } elsif ($token_id == TOKEN_TRUE) {
+            $c = substr($c, $used);
+            return ($c, _node('TRUE', $LINENO));
+        } elsif ($token_id == TOKEN_FALSE) {
+            $c = substr($c, $used);
+            return ($c, _node('FALSE', $LINENO));
+        } elsif ($token_id == TOKEN_SELF) {
+            $c = substr($c, $used);
+            return ($c, _node('SELF', $LINENO));
+        } elsif ($token_id == TOKEN_FILE) {
+            $c = substr($c, $used);
+            return ($c, _node('__FILE__', $LINENO));
+        } elsif ($token_id == TOKEN_LINE) {
+            $c = substr($c, $used);
+            return ($c, _node('INT', $LINENO));
         } else {
             return;
         }
-    },
-    sub {
-        # NV
-        my $c = shift;
-        $c =~ s/^((?:[1-9][0-9]*|0)\.[0-9]+)// or return;
-        return ($c, _node('DOUBLE', $1));
-    },
-    sub {
-        # int
-        my $c = shift;
-        $c =~ s/^(0x[0-9a-fA-F]+|0|[1-9][0-9]*)//
-            or return;
-        return ($c, _node('INT', $1));
     },
     sub {
         my $c = shift;
@@ -1046,12 +1058,6 @@ rule('primary', [
     },
     sub {
         my $c = shift;
-        $c =~ s/^__LINE__//
-            or return;
-        return ($c, _node('INT', $LINENO));
-    },
-    sub {
-        my $c = shift;
         ($c, my $ret) = class_name($c)
             or return;
         $ret->[0] = "PRIMARY_IDENT";
@@ -1072,7 +1078,7 @@ rule('primary', [
     },
     sub {
         my $c = shift;
-        ($c, my $word) = match($c, 'undef', 'true', 'false', 'self', '__FILE__', '__LINE__')
+        ($c, my $word) = match($c, 'self', '__FILE__')
             or return;
         return ($c, _node2(uc($word), $START));
     },

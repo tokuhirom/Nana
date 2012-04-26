@@ -37,6 +37,9 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         OPENCHAR = [!'\{\["\(];
         IDENT = [a-zA-Z_] [a-zA-Z0-9_]*;
         ANY_CHAR = [^];
+        HEX = "0x" [0-9a-fA-F]+;
+        INTEGER = HEX | "0" | [1-9][0-9]*;
+        DOUBLE = ([1-9] [0-9]* | "0") "." [0-9]+;
 
         */
 
@@ -57,7 +60,16 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         "else" { OP(TOKEN_ELSE); }
         "while" { OP(TOKEN_WHILE); }
         "for" { OP(TOKEN_FOR); }
+        "my" { OP(TOKEN_MY); }
+        "undef" { OP(TOKEN_UNDEF); }
+        "true" { OP(TOKEN_TRUE); }
+        "false" { OP(TOKEN_FALSE); }
+        "self" { OP(TOKEN_SELF); }
+        "__FILE__" { OP(TOKEN_FILE); }
+        "__LINE__" { OP(TOKEN_LINE); }
         IDENT { OP(TOKEN_IDENT); }
+        INTEGER { OP(TOKEN_INTEGER); }
+        DOUBLE { OP(TOKEN_DOUBLE); }
         "?" { OP(TOKEN_QUESTION); }
         "++" { OP(TOKEN_PLUSPLUS); }
         "+="  { OP(TOKEN_PLUS_ASSIGN);  }

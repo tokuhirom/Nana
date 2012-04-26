@@ -81,6 +81,15 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_DIE
     TOKEN_STR_NOT
     TOKEN_QUESTION
+    TOKEN_INTEGER
+    TOKEN_DOUBLE
+    TOKEN_MY
+    TOKEN_LINE
+    TOKEN_UNDEF
+    TOKEN_TRUE
+    TOKEN_FALSE
+    TOKEN_SELF
+    TOKEN_FILE
 );
 
 &output_header; &output_pm; exit 0;

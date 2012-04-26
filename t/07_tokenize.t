@@ -14,6 +14,7 @@ filters {
 sub eeeol {
     local $_ = shift;
     s/\n$//;
+    s/^0$/+0/;
     $_;
 }
 
@@ -393,4 +394,12 @@ TOKEN_LE
 ===
 --- src: use
 --- token: TOKEN_USE
+
+===
+--- src: 0
+--- token: TOKEN_INTEGER
+
+===
+--- src: 0.5
+--- token: TOKEN_DOUBLE
 
