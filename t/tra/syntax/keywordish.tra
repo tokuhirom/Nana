@@ -1,0 +1,10 @@
+use Test::More *;
+
+sub orr { 1 }
+sub andd { 2 }
+sub xorr { 3 }
+ok(orr());
+is(andd(), 2);
+is(xorr(), 3);
+
+done_testing();

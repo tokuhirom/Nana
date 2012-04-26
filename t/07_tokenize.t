@@ -148,3 +148,51 @@ TOKEN_XOR
 2
 --- token
 TOKEN_XOR_ASSIGN
+
+===
+--- src
+-f
+--- used
+2
+--- token
+TOKEN_FILETEST
+
+===
+--- src
+->
+--- used
+2
+--- token
+TOKEN_LAMBDA
+
+===
+--- src
+-=
+--- used
+2
+--- token
+TOKEN_MINUS_ASSIGN
+
+===
+--- src
++=
+--- used
+2
+--- token
+TOKEN_PLUS_ASSIGN
+
+===
+--- src
+==
+--- used
+2
+--- token
+TOKEN_EQUAL_EQUAL
+
+===
+--- src
+,
+--- used
+1
+--- token
+TOKEN_COMMA

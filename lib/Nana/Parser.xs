@@ -52,7 +52,9 @@ int skip_ws(char *src, size_t len, int *found_end, int *lineno_inc) {
  * @return int token id.
  */
 int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) {
-#define CHAR2(c) (len-*used>=2 && *(p+1) == (c))
+#define HAVE2(c) (len-*used>=2)
+#define ALPHA2(c) (HAVE2() && isALPHA(*(p+1)))
+#define CHAR2(c) (HAVE2() && *(p+1) == (c))
 #define CHAR3(c) (len-*used>=3 && *(p+2) == (c))
 #define SIMPLEOP(type,_used) do { *used+=_used; return type; } while (0)
     *used = skip_ws(src, len, found_end, lineno_inc);
@@ -65,6 +67,26 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
     char *p = src+*used;
 
     switch (*p) {
+    case ',':
+        SIMPLEOP(TOKEN_COMMA, 1);
+    case '!':
+        if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_NOT_EQUAL, 2);
+        } else if (CHAR2('~')) {
+            SIMPLEOP(TOKEN_REGEXP_NOT_MATCH, 2);
+        } else {
+            SIMPLEOP(TOKEN_NOT, 1);
+        }
+    case '=':
+        if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_EQUAL_EQUAL, 2);
+        } else if (CHAR2('>')) { /* => */
+            SIMPLEOP(TOKEN_FAT_COMMA, 2);
+        } else if (CHAR2('~')) { /* =~ */
+            SIMPLEOP(TOKEN_REGEXP_MATCH, 2);
+        } else {
+            SIMPLEOP(TOKEN_EQUAL, 1);
+        }
     case '^':
         if (CHAR2('=')) {
             SIMPLEOP(TOKEN_XOR_ASSIGN, 2);
@@ -135,13 +157,24 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
     case '+':
         if (CHAR2('+')) {
             SIMPLEOP(TOKEN_PLUSPLUS, 2);
+        } else if (CHAR2('=')) { /* += */
+            SIMPLEOP(TOKEN_PLUS_ASSIGN, 2);
         } else {
             SIMPLEOP(TOKEN_PLUS, 1);
         }
         break;
     case '-':
-        if (CHAR2('-')) {
+        /* [[qr{^-(?![=a-z>-])}, '-'], [qr{^\+(?![\+=])}, '+']]) */
+        if (ALPHA2()) {
+            SIMPLEOP(TOKEN_FILETEST, 2);
+        }
+
+        if (CHAR2('-')) { /* -- */
             SIMPLEOP(TOKEN_MINUSMINUS, 2);
+        } else if (CHAR2('>')) { /* -> */
+            SIMPLEOP(TOKEN_LAMBDA, 2);
+        } else if (CHAR2('=')) { /* -= */
+            SIMPLEOP(TOKEN_MINUS_ASSIGN, 2);
         } else {
             SIMPLEOP(TOKEN_MINUS, 1);
         }

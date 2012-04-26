@@ -569,7 +569,7 @@ rule('not_expression', [
 ]);
 
 rule('comma_expression', [
-    left_op(\&assign_expression, [','])
+    left_op2(\&assign_expression, +{TOKEN_COMMA() => ','})
 ]);
 
 # %right
@@ -641,7 +641,7 @@ rule('shift_expression', [
 ]);
 
 rule('additive_expression', [
-    left_op(\&term, [[qr{^-(?![=a-z>-])}, '-'], [qr{^\+(?![\+=])}, '+']])
+    left_op2(\&term, +{ TOKEN_MINUS() => '-', TOKEN_PLUS() => '+'})
 ]);
 
 rule('term', [
@@ -651,7 +651,7 @@ rule('term', [
 ]);
 
 rule('regexp_match', [
-    left_op(\&unary, ['=~', '!~'])
+    left_op2(\&unary, +{ TOKEN_REGEXP_MATCH() =>'=~', TOKEN_REGEXP_NOT_MATCH() => '!~'})
 ]);
 
 rule('unary', [
