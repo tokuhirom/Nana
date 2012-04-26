@@ -67,6 +67,18 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
     char *p = src+*used;
 
     switch (*p) {
+    case '/':
+        if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_DIV_EQUAL, 2);
+        } else {
+            SIMPLEOP(TOKEN_DIV, 1);
+        }
+    case '%':
+        if (CHAR2('=')) {
+            SIMPLEOP(TOKEN_MOD_EQUAL, 2);
+        } else {
+            SIMPLEOP(TOKEN_MOD, 1);
+        }
     case ',':
         SIMPLEOP(TOKEN_COMMA, 1);
     case '!':

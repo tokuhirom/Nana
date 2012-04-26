@@ -1,4 +1,5 @@
-my @tokens = qw(
+my %seen;
+my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_PLUSPLUS
     TOKEN_MINUSMINUS
     TOKEN_PLUS
@@ -35,6 +36,10 @@ my @tokens = qw(
     TOKEN_FAT_COMMA
     TOKEN_NOT
     TOKEN_COMMA
+    TOKEN_DIV
+    TOKEN_DIV_EQUAL
+    TOKEN_MOD
+    TOKEN_MOD_EQUAL
 );
 
 &output_header; &output_pm; exit 0;

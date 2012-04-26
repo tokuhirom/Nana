@@ -196,3 +196,35 @@ TOKEN_EQUAL_EQUAL
 1
 --- token
 TOKEN_COMMA
+
+===
+--- src
+%
+--- used
+1
+--- token
+TOKEN_MOD
+
+===
+--- src
+%=
+--- used
+2
+--- token
+TOKEN_MOD_EQUAL
+
+===
+--- src
+/=
+--- used
+2
+--- token
+TOKEN_DIV_EQUAL
+
+===
+--- src
+/
+--- used
+1
+--- token
+TOKEN_DIV

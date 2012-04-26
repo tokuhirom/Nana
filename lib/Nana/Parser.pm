@@ -645,9 +645,11 @@ rule('additive_expression', [
 ]);
 
 rule('term', [
-    left_op(\&regexp_match, ['*', '/', '%', [
-        qr{^x(?![a-zA-Z])}, 'x'
-    ]]),
+    left_op2(\&regexp_match, +{
+        TOKEN_MUL() => '*',
+        TOKEN_DIV() => '/',
+        TOKEN_MOD() => '%',
+    }),
 ]);
 
 rule('regexp_match', [
