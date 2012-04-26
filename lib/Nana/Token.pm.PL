@@ -62,6 +62,7 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_BYTES_DQ
     TOKEN_LPAREN
     TOKEN_LBRACE
+    TOKEN_QW_START
 );
 
 &output_header; &output_pm; exit 0;

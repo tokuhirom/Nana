@@ -238,6 +238,9 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         if (CHAR2('r') && HAVE3() && is_opening(*(p+2))) { /* qr{ */
             SIMPLEOP(TOKEN_REGEXP_QR_START, 3);
         }
+        if (CHAR2('w') && HAVE3() && is_opening(*(p+2))) { /* qw{ */
+            SIMPLEOP(TOKEN_QW_START, 3);
+        }
         if (HAVE2() && is_opening(*(p+1))) { /* q{ */
             SIMPLEOP(TOKEN_STRING_Q_START, 2);
         }

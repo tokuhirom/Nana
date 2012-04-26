@@ -971,6 +971,8 @@ rule('primary', [
             return _regexp(substr($c, $used), q{/});
         } elsif ($token_id == TOKEN_REGEXP_QR_START) { # qr{
             return _regexp(substr($c, $used), _closechar(substr($c, $used-1, 1)));
+        } elsif ($token_id == TOKEN_QW_START) { # qw{
+            return _qw_literal(substr($c, $used), _closechar(substr($c, $used-1, 1)));
         } elsif ($token_id ==TOKEN_HEREDOC_SQ_START) { # <<'
             $c = substr($c, $used);
             $c =~ s/^([^, \t\n']+)//
@@ -1031,12 +1033,6 @@ rule('primary', [
         $c =~ s/^(0x[0-9a-fA-F]+|0|[1-9][0-9]*)//
             or return;
         return ($c, _node('INT', $1));
-    },
-    sub {
-        my $c = shift;
-        ($c, my $ret) = _qw_literal($c)
-            or return;
-        ($c, $ret);
     },
     sub {
         my $c = shift;
@@ -1104,32 +1100,23 @@ rule('primary', [
     },
 ]);
 
-rule('_qw_literal', [
-    sub {
-        my $src = shift;
+sub _qw_literal {
+    my ($src, $close) = @_;
+    $close = quotemeta($close);
 
-        $src =~ s!^qw([\(\[\!\{"])!!smx or return;
-        my $close = quotemeta +{
-            '(' => ')',
-            '[' => ']',
-            '{' => '}',
-            '!' => '!',
-            '"' => '"',
-        }->{$1};
-        my $ret = [];
-        while (1) {
-            ($src, my $got_end) = skip_ws($src);
-            return if $got_end;
-            if ($src =~ s!^([^ \t\Q$close\E]+)!!) {
-                push @$ret, $1;
-            } elsif ($src =~ s!^$close!!smx) {
-                return ($src, _node('QW', $ret));
-            } else {
-                die "Parse failed in qw() literal: $src";
-            }
+    my $ret = [];
+    while (1) {
+        ($src, my $got_end) = skip_ws($src);
+        return if $got_end;
+        if ($src =~ s!^([^ \t\Q$close\E]+)!!) {
+            push @$ret, $1;
+        } elsif ($src =~ s!^$close!!smx) {
+            return ($src, _node('QW', $ret));
+        } else {
+            die "Parse failed in qw() literal: $src";
         }
     }
-]);
+}
 
 sub _regexp {
     my ($src, $close) = @_;
