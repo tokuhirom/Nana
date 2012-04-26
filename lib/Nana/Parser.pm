@@ -464,47 +464,43 @@ rule('else_clause', [
 rule('expression', [
     sub {
         my $c = shift;
-        ($c, my $word) = match($c, 'last', 'next')
-            or return;
-        return ($c, _node2(uc($word), $START));
-    },
-    sub {
-        my $c = shift;
+        my ($used, $token_id) = _token_op($c);
+        if ($token_id == TOKEN_LAST) {
+            return (substr($c, $used), _node2('LAST', $START));
+        } elsif ($token_id == TOKEN_NEXT) {
+            return (substr($c, $used), _node2('NEXT', $START));
+        } elsif ($token_id == TOKEN_SUB) {
+            $c = substr($c, $used);
+            # name is optional thing.
+            # you can use anon sub.
+            my $name;
+            if ((my $c2, $name) = identifier($c)) {
+                $c = $c2;
+            }
 
-        ($c)           = match($c, 'sub') or return;
+            my $params;
+            if ((my $c2, $params) = parameters($c)) {
+                # optional
+                $c = $c2;
+            }
 
-        # name is optional thing.
-        # you can use anon sub.
-        my $name;
-        if ((my $c2, $name) = identifier($c)) {
-            $c = $c2;
+            ($c, my $block) = block($c)
+                or _err "expected block after sub in $name->[2]";
+            return ($c, _node2('SUB', $START, $name, $params, $block));
+        } elsif ($token_id == TOKEN_TRY) {
+            $c = substr($c, $used);
+            ($c, my $block) = block($c)
+                or _err "expected block after try keyword";
+            return ($c, _node2('TRY', $START, $block));
+        } elsif ($token_id == TOKEN_DIE) {
+            $c = substr($c, $used);
+            ($c, my $block) = expression($c)
+                or die "expected expression after die keyword";
+            return ($c, _node2('DIE', $START, $block));
+        } else {
+            return str_or_expression($c);
         }
-
-        my $params;
-        if ((my $c2, $params) = parameters($c)) {
-            # optional
-            $c = $c2;
-        }
-
-        ($c, my $block) = block($c)
-            or _err "expected block after sub in $name->[2]";
-        return ($c, _node2('SUB', $START, $name, $params, $block));
     },
-    sub {
-        my $c = shift;
-        ($c) = match($c, 'try') or return;
-        ($c, my $block) = block($c)
-            or die "expected block after try keyword";
-        return ($c, _node2('TRY', $START, $block));
-    },
-    sub {
-        my $c = shift;
-        ($c) = match($c, 'die') or return;
-        ($c, my $block) = expression($c)
-            or die "expected expression after die keyword";
-        return ($c, _node2('DIE', $START, $block));
-    },
-    \&str_or_expression,
 ]);
 
 rule('block', [

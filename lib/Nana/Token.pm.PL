@@ -74,6 +74,11 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_DO
     TOKEN_ELSIF
     TOKEN_ELSE
+    TOKEN_LAST
+    TOKEN_NEXT
+    TOKEN_SUB
+    TOKEN_TRY
+    TOKEN_DIE
 );
 
 &output_header; &output_pm; exit 0;
