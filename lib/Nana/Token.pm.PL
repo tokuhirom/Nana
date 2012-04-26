@@ -57,6 +57,9 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_STRING_DQ
     TOKEN_STRING_SQ
     TOKEN_REGEXP_QR_START
+    TOKEN_HEREDOC_SQ_START
+    TOKEN_BYTES_SQ
+    TOKEN_BYTES_DQ
 );
 
 &output_header; &output_pm; exit 0;

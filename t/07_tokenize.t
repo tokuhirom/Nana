@@ -362,3 +362,15 @@ TOKEN_LE
 --- src: qq{
 --- token: TOKEN_STRING_QQ_START
 
+===
+--- src: <<'
+--- token: TOKEN_HEREDOC_SQ_START
+
+===
+--- src: b'
+--- token: TOKEN_BYTES_SQ
+
+===
+--- src: b"
+--- token: TOKEN_BYTES_DQ
+

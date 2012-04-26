@@ -971,6 +971,21 @@ rule('primary', [
             return _regexp(substr($c, $used), q{/});
         } elsif ($token_id == TOKEN_REGEXP_QR_START) { # qr{
             return _regexp(substr($c, $used), _closechar(substr($c, $used-1, 1)));
+        } elsif ($token_id ==TOKEN_HEREDOC_SQ_START) { # <<'
+            $c = substr($c, $used);
+            $c =~ s/^([^, \t\n']+)//
+                or die "Parsing failed on heredoc LINE $LINENO";
+            my $marker = $1;
+            ($c) = match($c, q{'})
+                or die "Parsing failed on heredoc LINE $LINENO";
+            my $buf = '';
+            push @HEREDOC_BUFS, \$buf;
+            push @HEREDOC_MARKERS, $marker;
+            return ($c, _node2('HEREDOC', $START, \$buf));
+        } elsif ($token_id ==TOKEN_BYTES_SQ) { # b'
+            return _bytes_sq(substr($c, $used), 0);
+        } elsif ($token_id ==TOKEN_BYTES_DQ) { # b"
+            return _bytes_dq(substr($c, $used), 0);
         } else {
             return;
         }
@@ -988,7 +1003,6 @@ rule('primary', [
             or return;
         return ($c, _node('INT', $1));
     },
-    \&bytes,
     sub {
         my $c = shift;
         ($c, my $ret) = _qw_literal($c)
@@ -1093,20 +1107,6 @@ rule('primary', [
             or return;
         return ($c, _node2(uc($word), $START));
     },
-    sub {
-        my $c = shift;
-        ($c) = match($c, q{<<'})
-            or return;
-        $c =~ s/^([^, \t\n']+)//
-            or die "Parsing failed on heredoc LINE $LINENO";
-        my $marker = $1;
-        ($c) = match($c, q{'})
-            or die "Parsing failed on heredoc LINE $LINENO";
-        my $buf = '';
-        push @HEREDOC_BUFS, \$buf;
-        push @HEREDOC_MARKERS, $marker;
-        return ($c, _node2('HEREDOC', $START, \$buf));
-    },
 ]);
 
 rule('_qw_literal', [
@@ -1163,60 +1163,55 @@ sub _regexp {
     return ($src, _node('REGEXP', $buf, $flags));
 }
 
-rule('bytes', [
-    sub {
-        # TODO: escape chars, etc.
-        my $src = shift;
+sub _bytes_dq {
+    # TODO: escape chars, etc.
+    my $src = shift;
 
-        ($src) = match($src, q{b"})
-            or return;
-        my $buf = '';
-        while (1) {
-            if ($src =~ s/^"//) {
-                last;
-            } elsif (length($src) == 0) {
-                die "Unexpected EOF in bytes literal line $START";
-            } elsif ($src =~ s/^\\"//) {
-                $buf .= q{"};
-            } elsif ($src =~ s/^(\\[0-7]{3})//) {
-                $buf .= $1;
-            } elsif ($src =~ s/^(\\x[0-9a-f]{2})//) {
-                $buf .= $1;
-            } elsif ($src =~ s/^(.)//) {
-                $buf .= $1;
-            } else {
-                die 'should not reach here';
-            }
+    my $buf = '';
+    while (1) {
+        if ($src =~ s/^"//) {
+            last;
+        } elsif (length($src) == 0) {
+            die "Unexpected EOF in bytes literal line $START";
+        } elsif ($src =~ s/^\\"//) {
+            $buf .= q{"};
+        } elsif ($src =~ s/^(\\[0-7]{3})//) {
+            $buf .= $1;
+        } elsif ($src =~ s/^(\\x[0-9a-f]{2})//) {
+            $buf .= $1;
+        } elsif ($src =~ s/^(.)//) {
+            $buf .= $1;
+        } else {
+            die 'should not reach here';
         }
-        return ($src, _node('BYTES', $buf));
-    },
-    sub {
-        # TODO: escape chars, etc.
-        my $src = shift;
+    }
+    return ($src, _node('BYTES', $buf));
+}
 
-        ($src) = match($src, q{b'})
-            or return;
-        my $buf = '';
-        while (1) {
-            if ($src =~ s/^'//) {
-                last;
-            } elsif (length($src) == 0) {
-                die "Unexpected EOF in bytes literal line $START";
-            } elsif ($src =~ s/^\\'//) {
-                $buf .= q{'};
-            } elsif ($src =~ s/^(\\[0-7]{3})//) {
-                $buf .= $1;
-            } elsif ($src =~ s/^(\\x[0-9a-f]{2})//) {
-                $buf .= $1;
-            } elsif ($src =~ s/^(.)//) {
-                $buf .= $1;
-            } else {
-                die 'should not reach here';
-            }
+sub _bytes_sq {
+    # TODO: escape chars, etc.
+    my $src = shift;
+
+    my $buf = '';
+    while (1) {
+        if ($src =~ s/^'//) {
+            last;
+        } elsif (length($src) == 0) {
+            die "Unexpected EOF in bytes literal line $START";
+        } elsif ($src =~ s/^\\'//) {
+            $buf .= q{'};
+        } elsif ($src =~ s/^(\\[0-7]{3})//) {
+            $buf .= $1;
+        } elsif ($src =~ s/^(\\x[0-9a-f]{2})//) {
+            $buf .= $1;
+        } elsif ($src =~ s/^(.)//) {
+            $buf .= $1;
+        } else {
+            die 'should not reach here';
         }
-        return ($src, _node('BYTES', $buf));
-    },
-]);
+    }
+    return ($src, _node('BYTES', $buf));
+}
 
 sub _dq_string {
     # TODO: escape chars, etc.
