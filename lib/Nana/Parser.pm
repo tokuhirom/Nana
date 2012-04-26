@@ -340,6 +340,13 @@ rule('statement', [
             ($c, my $block) = block($c)
                 or die "block is required after while keyword.";
             return ($c, _node2('WHILE', $START, $expression, $block));
+        } elsif ($token_id == TOKEN_DO) {
+            $c = substr($c, $used);
+            ($c, my $block) = block($c)
+                or die "block is required after 'do' keyword.";
+            return ($c, _node2('DO', $START, $block));
+        } elsif ($token_id == TOKEN_LBRACE) {
+            return block($c);
         } else {
             return;
         }
@@ -393,58 +400,37 @@ rule('statement', [
     },
     sub {
         my $c = shift;
-        ($c) = match($c, 'do')
-            or return;
-        ($c, my $block) = block($c)
-            or die "block is required after 'do' keyword.";
-        return ($c, _node2('DO', $START, $block));
-    },
-    sub {
-        # foo if bar
-        my $c = shift;
         ($c, my $block) = expression($c)
             or return;
-        ($c) = match($c, 'if')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression required after postfix-if statement";
-        return ($c, _node2('IF', $START, $expression, _node('BLOCK', $block), undef));
+        my ($used, $token_id) = _token_op($c);
+        if ($token_id == TOKEN_IF) {
+            # foo if bar
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or die "expression required after postfix-if statement";
+            return ($c, _node2('IF', $START, $expression, _node('BLOCK', $block), undef));
+        } elsif ($token_id == TOKEN_UNLESS) {
+            # foo unless bar
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or die "expression required after postfix-unless statement";
+            return ($c, _node2('UNLESS', $START, $expression, _node('BLOCK', $block), undef));
+        } elsif ($token_id == TOKEN_FOR) {
+            # foo for bar
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or die "expression required after postfix-for statement";
+            return ($c, _node2('FOREACH', $START, $expression, [], _node('BLOCK', $block)));
+        } elsif ($token_id == TOKEN_WHILE) {
+            # foo while bar
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or die "expression required after postfix-if statement";
+            return ($c, _node2('WHILE', $START, $expression, _node('BLOCK', $block)));
+        } else {
+            return ($c, $block);
+        }
     },
-    sub {
-        # foo if bar
-        my $c = shift;
-        ($c, my $block) = expression($c)
-            or return;
-        ($c) = match($c, 'unless')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression required after postfix-if statement";
-        return ($c, _node2('UNLESS', $START, $expression, _node('BLOCK', $block), undef));
-    },
-    sub {
-        # foo for bar
-        my $c = shift;
-        ($c, my $block) = expression($c)
-            or return;
-        ($c) = match($c, 'for')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression required after postfix-if statement";
-        return ($c, _node2('FOREACH', $START, $expression, [], _node('BLOCK', $block)));
-    },
-    sub {
-        # foo while bar
-        my $c = shift;
-        ($c, my $block) = expression($c)
-            or return;
-        ($c) = match($c, 'while')
-            or return;
-        ($c, my $expression) = expression($c)
-            or die "expression required after postfix-if statement";
-        return ($c, _node2('WHILE', $START, $expression, _node('BLOCK', $block)));
-    },
-    \&expression,
-    \&block,
 ]);
 
 rule('else_clause', [
