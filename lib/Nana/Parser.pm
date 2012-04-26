@@ -534,13 +534,16 @@ rule('str_and_expression', [
 rule('not_expression', [
     sub {
         my $src = shift;
-        ($src) = match($src, 'not')
-            or return;
-        ($src, my $body) = not_expression($src)
-            or die "Cannot get expression after 'not'";
-        return ($src, _node('not', $body));
+        my ($used, $token_id) = _token_op($src);
+        if ($token_id == TOKEN_STR_NOT) {
+            $src = substr($src, $used);
+            ($src, my $body) = not_expression($src)
+                or die "Cannot get expression after 'not'";
+            return ($src, _node('not', $body));
+        } else {
+            return comma_expression($src);
+        }
     },
-    \&comma_expression,
 ]);
 
 rule('comma_expression', [

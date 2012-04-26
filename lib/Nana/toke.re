@@ -48,6 +48,7 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc) 
         "if" { OP(TOKEN_IF); }
         "do" { OP(TOKEN_DO); }
         "sub" { OP(TOKEN_SUB); }
+        "not" { OP(TOKEN_STR_NOT); }
         "die" { OP(TOKEN_DIE); }
         "try" { OP(TOKEN_TRY); }
         "elsif" { OP(TOKEN_ELSIF); }

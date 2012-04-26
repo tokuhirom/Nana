@@ -79,6 +79,7 @@ my @tokens = grep { !$seen{$_}++ } qw(
     TOKEN_SUB
     TOKEN_TRY
     TOKEN_DIE
+    TOKEN_STR_NOT
 );
 
 &output_header; &output_pm; exit 0;
