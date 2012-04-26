@@ -34,3 +34,6 @@ perltidy.ERR$
 \.bak$
 ^inc/
 ^Nana-Parser-
+^nana-.*/
+\.o$
+^lib/Nana/Parser.c$

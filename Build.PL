@@ -7,6 +7,8 @@ my $class = Module::Build->subclass(
     class => 'My::Builder',
     code => q"
         sub ACTION_test {
+            my $self = shift;
+            $self->depends_on('code');
             exec($^X . q{ util/myprove --source T --source TRA --source EGTRA --source TCC -r t/ t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra});
         }
     "

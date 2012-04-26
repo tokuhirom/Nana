@@ -1,4 +1,9 @@
 Revision history for Perl extension nana
 
+0.02
+
+    - fixed testing issue
+    - optimize tokenizer
+
 0.01
         - original version

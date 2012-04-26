@@ -6,7 +6,16 @@ Config.tra.PL
 eg/class.nn
 eg/fizzbuzz.nn
 eg/hoge.tra
+lib/Nana/Parser.c
+lib/Nana/Parser.o
 lib/Nana/Parser.pm
+lib/Nana/Parser.xs
+lib/Nana/toke.c
+lib/Nana/toke.re
+lib/Nana/toke.re.PL
+lib/Nana/token.h
+lib/Nana/Token.pm
+lib/Nana/Token.pm.PL
 lib/Nana/Translator/Perl.pm
 lib/Nana/Translator/Perl/Builtins.pm
 lib/Nana/Translator/Perl/Class.pm
@@ -28,6 +37,7 @@ notes/funcall.tra
 README
 share/lib/Config.tra
 share/lib/Test/More.tra
+t/00_compile.t
 t/01_basic.dat
 t/01_basic.t
 t/01_import.tra
@@ -35,6 +45,7 @@ t/02_parser.t
 t/04_bar.t
 t/05_func.t
 t/06_class.t
+t/07_tokenize.t
 t/dat/dir/x
 t/dat/dir/y
 t/dat/dir/z
@@ -152,6 +163,7 @@ t/tra/string-embed-var.tra
 t/tra/swap.tra
 t/tra/syntax/arguments.tra
 t/tra/syntax/flexible_args.tra
+t/tra/syntax/keywordish.tra
 t/tra/syntax/method.tra
 t/tra/syntax/oror_assign.tra
 t/tra/syntax/postfix-while.tra
@@ -161,10 +173,12 @@ t/tra/while-multi.tra
 t/tra/while.tra
 t/Util.pm
 TODO.mkdn
+util/myprove
 util/run_egtra
 util/run_tcc
 util/run_test
 util/TAP/Parser/SourceHandler/EGTRA.pm
+util/TAP/Parser/SourceHandler/T.pm
 util/TAP/Parser/SourceHandler/TCC.pm
 util/TAP/Parser/SourceHandler/TRA.pm
 xt/01_podspell.t
