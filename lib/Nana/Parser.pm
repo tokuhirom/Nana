@@ -11,7 +11,7 @@ use Sub::Name;
 use XSLoader;
 use Nana::Token;
 
-our $VERSION='0.06';
+our $VERSION='0.07';
 
 XSLoader::load('Nana::Parser', $VERSION);
 

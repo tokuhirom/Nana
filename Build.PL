@@ -20,6 +20,7 @@ my $class = Module::Build->subclass(
             ) {
                 $self->run_perl_script('lib/Nana/toke.re.PL', [], ['lib/Nana/toke.c']) or die "lib/Nana/toke.re.PL failed";
                 $self->add_to_cleanup('lib/Nana/toke.c');
+                $self->add_to_cleanup('lib/Nana/toke.o');
                 unlink 'lib/Nana/Parser.c';
                 unlink 'lib/Nana/Parser.o';
             }

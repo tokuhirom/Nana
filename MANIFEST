@@ -44,6 +44,7 @@ t/04_bar.t
 t/05_func.t
 t/06_class.t
 t/07_tokenize.t
+t/09_typeof.t
 t/dat/dir/x
 t/dat/dir/y
 t/dat/dir/z
