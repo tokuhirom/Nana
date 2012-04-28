@@ -84,6 +84,7 @@ sub tora_call_func {
     } else {
         my $func = $TORA_BUILTIN_FUNCTIONS{$funname};
         if ($func) {
+            local $TORA_SELF = $pkg;
             my @ret = $func->(@args);
             return wantarray ? @ret : (@ret==1 ? $ret[0] : \@ret);
         } else {
@@ -112,6 +113,18 @@ sub tora_get_method2 {
             return ($methbody, $klass, @args);
         } else {
             __tora_get_method_fallback($pkg, $klass, $type, $methname);
+        }
+    } elsif (ref $klass eq 'Nana::Translator::Perl::PerlObject') {
+        if (defined(my $methbody = $klass->get($methname))) {
+            return ($methbody, @args);
+        } else {
+            __tora_get_method_fallback($pkg, $klass, 'PerlObject', $methname, @args);
+        }
+    } elsif (ref $klass eq 'Nana::Translator::Perl::PerlPackage') {
+        if (defined(my $methbody = $klass->get($methname))) {
+            return ($methbody, @args);
+        } else {
+            __tora_get_method_fallback($pkg, $klass, 'PerlPackage', $methname, @args);
         }
     } elsif (ref $klass eq 'Nana::Translator::Perl::FilePackage') {
         if (defined(my $methbody = $klass->get($methname))) {

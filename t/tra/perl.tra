@@ -1,0 +1,17 @@
+use Test::More *;
+
+import_perl('MIME::Base64');
+
+is(encode_base64("OK"), "T0s=\n");
+is(decode_base64("T0s=\n"), "OK");
+
+is(MIME::Base64.CALL('encode_base64', "OK"), "T0s=\n");
+
+import_perl('Digest::MD5');
+
+my $md5 = Digest::MD5.new();
+$md5.add("OK");
+$md5.add("YO");
+is($md5.hexdigest(), '96881aa45354dce66a77ba44f40f7011');
+
+done_testing();

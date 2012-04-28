@@ -12,6 +12,7 @@ use Nana::Translator::Perl::Class;
 use Carp;
 use Cwd;
 use Fcntl ();
+use Nana::Translator::Perl::PerlPackage;
 
 our @EXPORT = qw(
     %TORA_BUILTIN_FUNCTIONS
@@ -176,6 +177,27 @@ our %TORA_BUILTIN_FUNCTIONS = (
             }
             return \@ret;
         }
+    },
+    import_perl => sub {
+        my ($pkg, @args) = @_;
+        state $pkgid = 0;
+        $pkgid++;
+        eval join('',
+            "package Nana::Translator::Perl::Builtin::ImportPerl::Sandbox$pkgid;\n",
+            "require $pkg;\n",
+            $pkg . "->import(\@args);\n",
+        );
+        _runtime_error $@ if $@;
+        no strict 'refs';
+        # copy imported functions
+        while (my ($key, $val) = each %{"Nana::Translator::Perl::Builtin::ImportPerl::Sandbox${pkgid}::"}) {
+            next if $key ~~ [qw/BEGIN END CHECK/];
+            self()->{$key} = sub {
+                Nana::Translator::Perl::PerlPackage::__wrap($val->(@_));
+            };
+        }
+        self()->{$pkg} = Nana::Translator::Perl::PerlPackage->new($pkg);
+        return undef;
     },
 );
 
@@ -548,6 +570,10 @@ sub typeof {
         return 'Regexp';
     } elsif (ref $stuff eq 'Nana::Translator::Perl::RegexpMatched') {
         return 'Regexp::Matched';
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::PerlPackage') {
+        return 'PerlPackage';
+    } elsif (ref $stuff eq 'Nana::Translator::Perl::PerlObject') {
+        return 'PerlObject';
     } elsif (ref $stuff) {
         ...
     } else {
