@@ -1,5 +1,6 @@
 TODO list
 =========
 
-    Str#scan t/tra/object/string.tra
+    * Str#scan t/tra/object/string.tra
+    * implement typeof method in xs
 

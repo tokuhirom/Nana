@@ -11,7 +11,7 @@ use Sub::Name;
 use XSLoader;
 use Nana::Token;
 
-our $VERSION='0.04';
+our $VERSION='0.05';
 
 XSLoader::load('Nana::Parser', $VERSION);
 
@@ -324,56 +324,56 @@ rule('statement', [
             return ($c, _node2('DO', $START, $block));
         } elsif ($token_id == TOKEN_LBRACE) {
             return block($c);
+        } elsif ($token_id == TOKEN_FOR) {
+            any(
+                substr($c, $used),
+                sub { # foreach
+                    my $c = shift;
+                    ($c, my $expression) = expression($c)
+                        or return;
+                    (my $c2) = match($c, '->')
+                        or _err "'->' missing after for keyword '" . substr($c, 0, 15) . "..'";
+                    $c = $c2;
+                    my @vars;
+                    while (my ($c2, $var) = variable($c)) {
+                        push @vars, $var;
+                        $c = $c2;
+                        (my $c3) = match($c, ',')
+                            or last;
+                        $c = $c3;
+                    }
+                    ($c, my $block) = block($c)
+                        or die "block is required after 'for' keyword.";
+                    return ($c, _node2('FOREACH', $START, $expression, \@vars, $block));
+                },
+                sub { # C style for
+                    my $c = shift;
+                    ($c) = match($c, '(')
+                        or return;
+                    my ($e1, $e2, $e3);
+                    if ((my $c2, $e1) = expression($c)) { # optional
+                        $c = $c2;
+                    }
+                    ($c) = match($c, ';')
+                        or return;
+                    if ((my $c2, $e2) = expression($c)) {
+                        $c = $c2;
+                    }
+                    ($c) = match($c, ';')
+                        or return;
+                    if ((my $c2, $e3) = expression($c)) {
+                        $c = $c2;
+                    }
+                    ($c) = match($c, ')')
+                        or die "closing paren is required after 'for' keyword.";;
+                    ($c, my $block) = block($c)
+                        or die "block is required after 'for' keyword.";
+                    return ($c, _node2('FOR', $START, $e1, $e2, $e3, $block));
+                }
+            );
         } else {
             return;
         }
-    },
-    sub { # foreach
-        my $c = shift;
-        ($c) = match($c, 'for')
-            or return;
-        ($c, my $expression) = expression($c)
-            or return;
-        (my $c2) = match($c, '->')
-            or _err "'->' missing after for keyword '" . substr($c, 0, 15) . "..'";
-        $c = $c2;
-        my @vars;
-        while (my ($c2, $var) = variable($c)) {
-            push @vars, $var;
-            $c = $c2;
-            (my $c3) = match($c, ',')
-                or last;
-            $c = $c3;
-        }
-        ($c, my $block) = block($c)
-            or die "block is required after 'for' keyword.";
-        return ($c, _node2('FOREACH', $START, $expression, \@vars, $block));
-    },
-    sub { # c-style for
-        my $c = shift;
-        ($c) = match($c, 'for')
-            or return;
-        ($c) = match($c, '(')
-            or return;
-        my ($e1, $e2, $e3);
-        if ((my $c2, $e1) = expression($c)) { # optional
-            $c = $c2;
-        }
-        ($c) = match($c, ';')
-            or return;
-        if ((my $c2, $e2) = expression($c)) {
-            $c = $c2;
-        }
-        ($c) = match($c, ';')
-            or return;
-        if ((my $c2, $e3) = expression($c)) {
-            $c = $c2;
-        }
-        ($c) = match($c, ')')
-            or die "closing paren is required after 'for' keyword.";;
-        ($c, my $block) = block($c)
-            or die "block is required after 'for' keyword.";
-        return ($c, _node2('FOR', $START, $e1, $e2, $e3, $block));
     },
     sub {
         my $c = shift;
