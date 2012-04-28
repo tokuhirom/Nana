@@ -48,6 +48,25 @@ sub _compile {
     confess "Bad AST" unless @$node > 0;
 
     for (qw(
+        *= += /= %= x= -= <<= >>= **= &= |= ^= ||=
+    )) {
+        if ($node->[0] eq $_) {
+            (my $op = $_) =~ s/=$//;
+            return _compile([
+                '=',
+                $node->[1],
+                $node->[2],
+                [
+                    $op,
+                    $node->[1],
+                    $node->[2],
+                    $node->[3],
+                ]
+            ]);
+        }
+    }
+
+    for (qw(
         %
         -
         >> <<
@@ -57,7 +76,6 @@ sub _compile {
         &&
         || //
         ...
-        *= += /= %= x= -= <<= >>= **= &= |= ^= ||=
         and
         or xor
     ), ',') {
