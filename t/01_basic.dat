@@ -197,7 +197,7 @@ tora_op_div(tora_op_div(1,2),3)
 1**2**3
 
 --- expected
-(1**(2**3))
+tora_op_pow(1,tora_op_pow(2,3))
 
 ===
 --- input
@@ -253,7 +253,7 @@ tora_op_lt(1,2)
 1==2
 
 --- expected
-tora_op_equal(1,2)
+tora_op_eq(1,2)
 
 ===
 --- input
@@ -335,7 +335,7 @@ $i--
 $i**$j
 
 --- expected
-($i**$j)
+tora_op_pow($i,$j)
 
 ===
 --- input
