@@ -39,7 +39,7 @@ sub add_libpath {
 }
 
 our @EXPORT = qw(tora_call_func
-    tora_op_equal tora_op_ne
+    tora_op_eq tora_op_ne
     tora_op_lt tora_op_gt
     tora_op_le tora_op_ge
     tora_make_range
@@ -191,7 +191,7 @@ sub __tora_get_method_fallback {
     croak "Unknown method named $methname in $klass_name";
 }
 
-sub tora_op_equal {
+sub tora_op_eq {
     my ($lhs, $rhs) = @_;
 
     # check undef

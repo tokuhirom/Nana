@@ -92,7 +92,7 @@ sub _compile {
         '>'  => 'tora_op_gt',
         '<=' => 'tora_op_le',
         '>=' => 'tora_op_ge',
-        '==' => 'tora_op_equal',
+        '==' => 'tora_op_eq',
         '!=' => 'tora_op_ne',
         '..' => 'tora_make_range',
         '+'  => 'tora_op_add',
