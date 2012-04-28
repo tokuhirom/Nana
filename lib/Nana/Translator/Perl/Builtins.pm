@@ -110,9 +110,7 @@ our %TORA_BUILTIN_FUNCTIONS = (
     getppid => sub {
         return getppid()
     },
-    getpid => sub {
-        return $?
-    },
+    getpid => sub { return $$ },
     'sprintf' => sub {
         my $format = shift;
         return CORE::sprintf($format, @_);
@@ -541,54 +539,6 @@ while (my ($class_name, $methods) = each %built_class_src) {
         }
         $class;
     };
-}
-
-sub typeof {
-    my $stuff = shift;
-
-    if (ref $stuff eq 'ARRAY') {
-        return 'Array';
-    } elsif (ref $stuff eq 'HASH') {
-        return 'Hash';
-    } elsif (!defined $stuff) {
-        return 'Undef';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::Range') {
-        return 'Range';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::Object') {
-        return $stuff->class->name;
-    } elsif (ref $stuff eq 'JSON::XS::Boolean') {
-        return 'Bool';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::Exception') {
-        return 'Exception';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::FilePackage') {
-        return 'FilePackage';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::Class') {
-        return 'Class';
-    } elsif (ref $stuff eq 'CODE') {
-        return 'Code';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::Regexp') {
-        return 'Regexp';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::RegexpMatched') {
-        return 'Regexp::Matched';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::PerlPackage') {
-        return 'PerlPackage';
-    } elsif (ref $stuff eq 'Nana::Translator::Perl::PerlObject') {
-        return 'PerlObject';
-    } elsif (ref $stuff) {
-        ...
-    } else {
-        my $flags = B::svref_2object(\$stuff)->FLAGS;
-        # TODO: support NV class.
-        if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-            if ($flags & B::SVp_IOK) {
-                return "Int";
-            } else {
-                return "Double";
-            }
-        } else {
-            return "Str";
-        }
-    }
 }
 
 sub to_tora {

@@ -51,7 +51,7 @@ my $build = $class->new(
         'Getopt::Long::Descriptive' => 0,
         'File::ShareDir' => '1.03',
         'Devel::GlobalDestruction' => '0.04',
-        'JSON' => 2,
+        'JSON::XS' => 2,
     },
     no_index    => { 'directory' => [ 'inc', 't', 'xt' ] },
     name        => 'nana',

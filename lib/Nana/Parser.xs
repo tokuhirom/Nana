@@ -99,3 +99,60 @@ _token_op(SV *src_sv)
         mXPUSHi(token_id);
         XPUSHs(yylval);
 
+MODULE = Nana::Parser      PACKAGE = Nana::Translator::Perl::Builtins
+
+void
+typeof(SV *v)
+    PPCODE:
+        dTARG;
+#define RETURN_P(x) do { mXPUSHs(newSVpv(x, strlen(x))); return; } while(0)
+        if (!SvOK(v)) {
+            RETURN_P("Undef");
+        } else if (sv_isobject(v)) {
+            if (sv_isa(v, "Nana::Translator::Perl::Object")) {
+                SV * body = SvRV(v);
+                SV ** klass = hv_fetch((HV*)SvRV(v), "klass", strlen("klass"), 0);
+                if (!klass || !SvROK(*klass)) { croak("[BUG] Cannot take a class body from Object."); }
+                SV ** name = hv_fetch((HV*)SvRV(*klass), "name", strlen("name"), 0);
+                if (!name) { croak("[BUG] Cannot take a name from Class."); }
+                XPUSHs(*name);
+                return;
+            }
+#define FOO(x, y) do { if (sv_isa(v, x)) { mXPUSHs(newSVpv(y, strlen(y))); return; } } while (0)
+            FOO("Nana::Translator::Perl::Range", "Range");
+            FOO("Nana::Translator::Perl::Object", "Object");
+            FOO("Nana::Translator::Perl::Class", "Class");
+            FOO("Nana::Translator::Perl::Regexp", "Regexp");
+            FOO("Nana::Translator::Perl::RegexpMatched", "RegexpMatched");
+            FOO("Nana::Translator::Perl::Exception", "Exception");
+            FOO("Nana::Translator::Perl::FilePackage", "FilePackage");
+            FOO("Nana::Translator::Perl::PerlPackage", "PerlPackage");
+            FOO("Nana::Translator::Perl::PerlObject", "PerlObject");
+            FOO("JSON::XS::Boolean", "Bool");
+#undef FOO
+        } else if (SvROK(v)) {
+            SV *body = SvRV(v);
+            switch (SvTYPE(body)) {
+            case SVt_PVAV:
+                mXPUSHs(newSVpv("Array", 0));
+                return;
+            case SVt_PVHV:
+                mXPUSHs(newSVpv("Hash", 0));
+                return;
+            case SVt_PVCV:
+                mXPUSHs(newSVpv("Code", 0));
+                return;
+            }
+        } else {
+            if (SvIOK(v) && !SvPOK(v)) {
+                RETURN_P("Int");
+            }
+            if (SvNOK(v) && !SvPOK(v)) {
+                RETURN_P("Double");
+            }
+            RETURN_P("Str");
+        }
+#undef RETURN_P
+        sv_dump(v);
+        croak("[BUG] Unknown type");
+

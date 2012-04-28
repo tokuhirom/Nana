@@ -5,7 +5,11 @@ use utf8;
 
 sub new {
     my ($class, $name, $superclass) = @_;
-    CORE::bless {__tora_name => $name, superclass => $superclass}, $class;
+    CORE::bless {
+        name => $name,
+        superclass => $superclass,
+        methods => +{},
+    }, $class;
 }
 
 sub superclass {
@@ -15,7 +19,7 @@ sub superclass {
 
 sub name {
     my $self = shift;
-    return $self->{__tora_name};
+    return $self->{name};
 }
 
 sub get_method_list {
