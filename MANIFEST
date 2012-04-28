@@ -18,6 +18,7 @@ lib/Nana/Translator/Perl/Class.pm
 lib/Nana/Translator/Perl/Exception.pm
 lib/Nana/Translator/Perl/FilePackage.pm
 lib/Nana/Translator/Perl/Object.pm
+lib/Nana/Translator/Perl/PerlPackage.pm
 lib/Nana/Translator/Perl/Range.pm
 lib/Nana/Translator/Perl/Regexp.pm
 lib/Nana/Translator/Perl/RegexpMatched.pm
@@ -149,6 +150,7 @@ t/tra/oop/inheritance.tra
 t/tra/oop/self-bug.tra
 t/tra/operator.tra
 t/tra/optargs.tra
+t/tra/perl.tra
 t/tra/postfix-for.tra
 t/tra/rand.tra
 t/tra/range.tra
