@@ -1,0 +1,10 @@
+my $i=3;
+my $x="4";
+say($i>$x);
+say(typeof($i));
+say(typeof($x));
+
+__END__
+false
+Int
+Str
