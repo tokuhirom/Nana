@@ -264,20 +264,6 @@ sub tora_op_lt {
     }
 }
 
-sub tora_op_gt {
-    my ($lhs, $rhs) = @_;
-
-    my $flags = B::svref_2object(\$lhs)->FLAGS;
-    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-        # IV or NV
-        return $lhs > $rhs ? true() : false();
-    } elsif ($flags & B::SVp_POK) {
-        return $lhs gt $rhs ? true() : false();
-    } else {
-        die "OOPS";
-    }
-}
-
 sub tora_op_le {
     my ($lhs, $rhs) = @_;
     my $flags = B::svref_2object(\$lhs)->FLAGS;

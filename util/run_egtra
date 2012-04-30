@@ -22,9 +22,9 @@ GetOptions(
     'c' => \my $compile,
 );
 
-my $fname = shift or die "Usage: $0 fname.egtra";
+my $fname = shift @ARGV or die "Usage: $0 fname.egtra";
 open my $fh, '<', $fname
-    or die "Usage: $0";
+    or die "Cannot open file $fname: $!";
 my $src = do { local $/; <$fh> };
 
 my $ast = $parser->parse($src);
