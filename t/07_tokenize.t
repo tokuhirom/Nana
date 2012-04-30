@@ -87,7 +87,7 @@ TOKEN_RSHIFT_ASSIGN
 --- used
 1
 --- token
-TOKEN_LT
+TOKEN_GT
 
 ===
 --- src
@@ -271,7 +271,7 @@ TOKEN_CMP
 --- used
 1
 --- token
-TOKEN_GT
+TOKEN_LT
 
 ===
 --- src
@@ -279,7 +279,7 @@ TOKEN_GT
 --- used
 1
 --- token
-TOKEN_LT
+TOKEN_GT
 
 ===
 --- src
@@ -287,7 +287,7 @@ TOKEN_LT
 --- used
 2
 --- token
-TOKEN_GE
+TOKEN_LE
 
 ===
 --- src
@@ -295,7 +295,7 @@ TOKEN_GE
 --- used
 2
 --- token
-TOKEN_LE
+TOKEN_GE
 
 ===
 --- src: -=

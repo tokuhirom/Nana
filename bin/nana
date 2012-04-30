@@ -35,7 +35,7 @@ my $parser = Nana::Parser->new;
 my $compiler = Nana::Translator::Perl->new();
 if (defined $opt->eval) {
     my $ast = $parser->parse($opt->eval);
-    say(Dumper($ast)) if $opt->dtree;
+    say(dump_ast($ast)) if $opt->dtree;
     my $perl = $compiler->compile($ast, '<eval>');
     if ($opt->compile_only) {
         say($perl);
@@ -81,6 +81,57 @@ if (defined $opt->eval) {
         eval $perl;
         die $@ if $@;
     }
+}
+
+sub dump_ast {
+    my $ast = shift;
+    require Nana::Node;
+    Nana::Node->import();
+    say _dump_ast($ast);
+}
+
+sub _dump_ast {
+    my $node = shift;
+    my $ret = '[';
+    $ret .= node_name($node->[0]);
+    if ($node->[0] == NODE_STMTS()) {
+        for my $n (@{$node->[2]}) {
+            $ret .= ',' . _dump_ast($n);
+        }
+    } elsif ($node->[0] == NODE_MY()) {
+        $ret .= '[';
+        for my $n (@{$node->[2]}) {
+            if (ref $n eq 'ARRAY') {
+                $ret .= ',' . _dump_ast($n);
+            } else {
+                $ret .= ',' . $n;
+            }
+        }
+        $ret .= ']';
+    } elsif ($node->[0] == NODE_CALL()) {
+        $ret .= ',' . _dump_ast($node->[2]);
+        $ret .= '[';
+        for my $n (@{$node->[3]}) {
+            if (ref $n eq 'ARRAY') {
+                $ret .= ',' . _dump_ast($n);
+            } else {
+                $ret .= ',' . $n;
+            }
+        }
+        $ret .= ']';
+    } else {
+        my @node = @$node;
+        shift @node;
+        shift @node;
+        for my $n (@node) {
+            if (ref $n eq 'ARRAY') {
+                $ret .= ',' . _dump_ast($n);
+            } else {
+                $ret .= ',' . $n;
+            }
+        }
+    }
+    return $ret . ']';
 }
 
 __END__

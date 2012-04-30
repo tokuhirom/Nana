@@ -40,6 +40,7 @@ my $build = $class->new(
         'Test::Base' => 0,
         'Test::Differences' => 0,
         'ExtUtils::CBuilder' => 0,
+        'Text::MicroTemplate' => 0,
     },
     configure_requires   => { 'Module::Build' => '0.38' },
     requires             => {
@@ -64,6 +65,7 @@ my $build = $class->new(
     PL_files => {
         'Config.tra.PL' => 'share/lib/Config.tra',
         'lib/Nana/Token.pm.PL' => ['lib/Nana/Token.pm', 'lib/Nana/token.h'],
+        'lib/Nana/Node.pm.PL' => ['lib/Nana/Node.pm'],
     },
     xs_files => +{
         'lib/Nana/Parser.xs' => 'lib/Nana/Parser.xs',

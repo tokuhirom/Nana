@@ -23,7 +23,7 @@ if (tora_call_func($TORA_PACKAGE, q{bar}, ())){tora_call_func($TORA_PACKAGE, q{f
 foo() unless bar()
 
 --- expected
-unless (tora_call_func($TORA_PACKAGE, q{bar}, ())){tora_call_func($TORA_PACKAGE, q{foo}, ())}
+if (tora_op_not(tora_call_func($TORA_PACKAGE, q{bar}, ()))){tora_call_func($TORA_PACKAGE, q{foo}, ())}
 
 ===
 --- input
@@ -176,7 +176,7 @@ return (3);
 (1+2)*3
 
 --- expected
-tora_op_mul((tora_op_add(1,2)),3)
+tora_op_mul(tora_op_add(1,2),3)
 
 ===
 --- input
@@ -342,7 +342,7 @@ tora_op_pow($i,$j)
 unless undef { 3 }
 
 --- expected
-unless (undef){3;
+if (tora_op_not(undef)){3;
 }
 
 ===
@@ -350,7 +350,7 @@ unless (undef){3;
 (my $x, my $y)
 
 --- expected
-((my ($x),my ($y)))
+(my ($x),my ($y))
 
 ===
 --- input
@@ -409,14 +409,14 @@ do {
 1 && 2
 
 --- expected
-(1&&2)
+(1 and 2)
 
 ===
 --- input
 1 || 2
 
 --- expected
-(1||2)
+(1 or 2)
 
 ===
 --- input

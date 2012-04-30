@@ -4,6 +4,7 @@ use warnings;
 use utf8;
 use Data::Dumper;
 use Carp;
+use Nana::Node;
 
 sub new {
     my $self = shift;
@@ -41,44 +42,104 @@ sub compile {
     return $res;
 }
 
-sub _compile {
-    my ($node) = @_;
-
-    confess "Bad AST" unless $node;
-    confess "Bad AST" unless @$node > 0;
-
-    for (qw(
-        *= += /= %= x= -= <<= >>= **= &= |= ^= ||=
-    )) {
-        if ($node->[0] eq $_) {
-            (my $op = $_) =~ s/=$//;
+my @DISPATCHER;
+$DISPATCHER[NODE_STMTS()] = sub {
+    my $node = shift;
+    my $ret = '';
+    for (@{$node->[2]}) {
+        $ret .= sprintf(qq{#line %d "$FILENAME"\n}, $_->[1]);
+        $ret .= _compile($_) . ";\n";
+    }
+    return $ret;
+};
+$DISPATCHER[NODE_COMMA()] = sub {
+    my $node = shift;
+    return '('. _compile($node->[2]) . ',' . _compile($node->[3]).')';
+};
+$DISPATCHER[NODE_MINUS()] = sub {
+    my $node = shift;
+    return '('. _compile($node->[2]) . '-' . _compile($node->[3]).')';
+};
+$DISPATCHER[NODE_MOD()] = sub {
+    my $node = shift;
+    return '('. _compile($node->[2]) . '%' . _compile($node->[3]).')';
+};
+$DISPATCHER[NODE_RSHIFT()] = sub {
+    my $node = shift;
+    return '('. _compile($node->[2]) . '>>' . _compile($node->[3]).')';
+};
+$DISPATCHER[NODE_LSHIFT()] = sub {
+    my $node = shift;
+    return '('. _compile($node->[2]) . '<<' . _compile($node->[3]).')';
+};
+{
+    my @foo = (
+        NODE_DIV_ASSIGN, NODE_DIV,
+        NODE_MUL_ASSIGN, NODE_MUL,
+        NODE_PLUS_ASSIGN, NODE_PLUS,
+        NODE_MOD_ASSIGN, NODE_MOD,
+        NODE_MINUS_ASSIGN, NODE_MINUS,
+        NODE_LSHIFT_ASSIGN, NODE_LSHIFT,
+        NODE_RSHIFT_ASSIGN, NODE_RSHIFT,
+        NODE_POW_ASSIGN, NODE_POW,
+        NODE_AND_ASSIGN, NODE_BITAND,
+        NODE_OR_ASSIGN, NODE_BITOR,
+        NODE_XOR_ASSIGN, NODE_BITXOR,
+        NODE_OROR_ASSIGN, NODE_LOGICAL_OR,
+    );
+    while (my ($x, $y) = splice @foo, 0, 2) {
+        $DISPATCHER[$x] = sub {
+            my $node = shift;
             return _compile([
-                '=',
+                NODE_ASSIGN(),
                 $node->[1],
                 $node->[2],
                 [
-                    $op,
+                    $y,
                     $node->[1],
                     $node->[2],
                     $node->[3],
                 ]
             ]);
-        }
+        };
     }
+}
+$DISPATCHER[NODE_CMP()] = sub {
+    my $node = shift;
+    return '('. _compile($node->[2]) . '<=>' . _compile($node->[3]).')';
+};
+{
+    my @foo = (
+        '|' => NODE_BITOR,
+        '&' => NODE_BITAND,
+        '^' => NODE_BITXOR,
+        ' and ' => NODE_LOGICAL_AND,
+        ' or ' => NODE_LOGICAL_OR,
+        ' xor ' => NODE_LOGICAL_XOR,
+    );
+    while (my ($x, $y) = splice @foo, 0, 2) {
+        $DISPATCHER[$y] = sub {
+            my $node = shift;
+            return '('. _compile($node->[2]) . $x . _compile($node->[3]).')';
+        };
+    }
+}
+
+sub _compile {
+    my ($node) = @_;
+
+    confess "Bad AST" unless $node;
+    confess "Bad AST" unless ref $node eq 'ARRAY';
+    confess "Bad AST" unless @$node > 0;
+
+    my $code = $DISPATCHER[$node->[0]];
+    return $code->($node) if $code;
 
     for (qw(
-        %
-        -
-        >> <<
-        <=> ~~
-        &
-        | ^
-        &&
-        || //
         ...
         and
         or xor
-    ), ',') {
+    )) {
         my $op = $_;
         if ($node->[0] eq $op) {
             if ($op =~ /[a-z]/) {
@@ -89,39 +150,36 @@ sub _compile {
         }
     }
 
-    for my $op (qw(=)) {
-        if ($node->[0] eq $op) {
-            return _compile($node->[2]) . $op . _compile($node->[3]);
-        }
+    if ($node->[0] eq NODE_ASSIGN) {
+        return _compile($node->[2]) . '=' . _compile($node->[3]);
     }
 
-    for my $op(qw(-f -d -x -e)) {
-        if ($node->[0] eq "UNARY$op") {
-            return "(($op(" . _compile($node->[2]).'))?JSON::true():JSON::false())';
+    if ($node->[0] eq NODE_FILE_TEST) {
+        if ($node->[2] eq '-s') {
+            return "(-s(" . _compile($node->[3]).'))';
+        } else {
+            return "(($node->[2](" . _compile($node->[3]).'))?JSON::true():JSON::false())';
         }
-    }
-    if ($node->[0] eq 'UNARY-s') {
-        return "(-s(" . _compile($node->[2]).'))';
     }
 
     my %binops = (
-        '<'  => 'tora_op_lt',
-        '>'  => 'tora_op_gt',
-        '<=' => 'tora_op_le',
-        '>=' => 'tora_op_ge',
-        '==' => 'tora_op_eq',
-        '!=' => 'tora_op_ne',
-        '..' => 'tora_make_range',
-        '+'  => 'tora_op_add',
-        '/'  => 'tora_op_div',
-        '*'  => 'tora_op_mul',
-        '**'  => 'tora_op_pow',
+        NODE_LT()  => 'tora_op_lt',
+        NODE_GT()  => 'tora_op_gt',
+        NODE_LE() => 'tora_op_le',
+        NODE_GE() => 'tora_op_ge',
+        NODE_EQ() => 'tora_op_eq',
+        NODE_NE() => 'tora_op_ne',
+        NODE_DOTDOT() => 'tora_make_range',
+        NODE_PLUS()  => 'tora_op_add',
+        NODE_DIV()  => 'tora_op_div',
+        NODE_MUL()  => 'tora_op_mul',
+        NODE_POW()  => 'tora_op_pow',
     );
     if (my $func = $binops{$node->[0]}) {
         return "$func(". _compile($node->[2]) . ',' . _compile($node->[3]).')';
     }
 
-    if ($node->[0] eq '?:') {
+    if ($node->[0] eq NODE_THREE) {
         return join(
             '',
 
@@ -135,49 +193,49 @@ sub _compile {
         );
     } elsif ($node->[0] eq '()') {
         return '('. _compile($node->[2]) .')';
-    } elsif ($node->[0] eq 'PREINC') {
+    } elsif ($node->[0] eq NODE_PRE_INC) {
         return '++(' . _compile($node->[2]) . ')';
-    } elsif ($node->[0] eq 'PREDEC') {
+    } elsif ($node->[0] eq NODE_PRE_DEC) {
         return '--(' . _compile($node->[2]) . ')';
-    } elsif ($node->[0] eq 'POSTINC') {
+    } elsif ($node->[0] eq NODE_POST_INC) {
         return '(' . _compile($node->[2]) . ')++';
-    } elsif ($node->[0] eq 'POSTDEC') {
+    } elsif ($node->[0] eq NODE_POST_DEC) {
         return '(' . _compile($node->[2]) . ')--';
-    } elsif ($node->[0] eq 'MY') {
+    } elsif ($node->[0] eq NODE_MY) {
         if (ref $node->[2] eq 'ARRAY') {
             return 'my (' . join(', ', map { _compile($_) } @{$node->[2]}) . ')';
         } else {
             return 'my ' . _compile($node->[2]);
         }
-    } elsif ($node->[0] eq 'QW') {
+    } elsif ($node->[0] eq NODE_QW) {
         my $make_string = sub {
             local $_ = shift;
             s/'/\\'/g;
             q{'} . $_ . q{'};
         };
         return '[' . join(', ', map { $make_string->($_) } @{$node->[2]}) .']';
-    } elsif ($node->[0] eq 'DIE') {
+    } elsif ($node->[0] eq NODE_DIE) {
         return "die Nana::Translator::Perl::Exception->new(" . _compile($node->[2]) . ')';
-    } elsif ($node->[0] eq 'TRY') {
+    } elsif ($node->[0] eq NODE_TRY) {
         my $ret = "sub {my \@ret = eval {\n";
         $ret .= _compile($node->[2]);
         $ret .= '}; my @ret2=($@ ? $@->val : undef, @ret); wantarray ? @ret2 : $ret2[0]; }->();';
         return $ret;
-    } elsif ($node->[0] eq 'GETITEM') {
+    } elsif ($node->[0] eq NODE_GETITEM) {
         return 'tora_get_item(' . _compile($node->[2]) . ',' . _compile($node->[3]) .')';
-    } elsif ($node->[0] eq 'USE') {
+    } elsif ($node->[0] eq NODE_USE) {
         return 'tora_use($TORA_PACKAGE,' . _compile($node->[2]) . ',' . ($node->[3] && $node->[3] eq '*' ? 'q{*}' : _compile($node->[3])) . ')';
-    } elsif ($node->[0] eq 'DO') {
+    } elsif ($node->[0] eq NODE_DO) {
         my $ret = "do {\n";
         $ret .= _compile($node->[2]) . '}';
         return $ret;
-    } elsif ($node->[0] eq 'LAMBDA') {
+    } elsif ($node->[0] eq NODE_LAMBDA) {
         my $ret = sprintf(qq{\n#line %d "$FILENAME"\n}, $node->[1]);
         $ret .= "(sub {;\n";
         if (@{$node->[2]}) { # have args
             for (my $i=0; $i<@{$node->[2]}; $i++) {
                 my $p = $node->[2]->[$i];
-                if ($p->[0] eq 'PARAMS_DEFAULT') {
+                if ($p->[0] eq NODE_PARAMS_DEFAULT) {
                     $ret .= "my ";
                     $ret .= _compile($p->[2]);
                     $ret .= "=\@_>0?shift \@_:" ._compile($p->[3]) .";";
@@ -203,7 +261,7 @@ sub _compile {
         }
         $ret .= $block . '; })';
         return $ret;
-    } elsif ($node->[0] eq 'SUB') {
+    } elsif ($node->[0] eq NODE_SUB) {
         my $ret = sprintf(qq{\n#line %d "$FILENAME"\n}, $node->[1]);
         my $end = '';
         if ($node->[2]) {
@@ -216,7 +274,7 @@ sub _compile {
         if ($node->[3]) {
             for (my $i=0; $i<@{$node->[3]}; $i++) {
                 my $p = $node->[3]->[$i];
-                if ($p->[0] eq 'PARAMS_DEFAULT') {
+                if ($p->[0] eq NODE_PARAMS_DEFAULT) {
                     $ret .= "my ";
                     $ret .= _compile($p->[2]);
                     $ret .= "=\@_>0?shift \@_:" ._compile($p->[3]) .";";
@@ -239,13 +297,13 @@ sub _compile {
         }
         $ret .= $block . '; })';
         return $ret;
-    } elsif ($node->[0] eq 'CALL') {
-        if ($node->[2]->[0] eq 'IDENT' || $node->[2]->[0] eq 'PRIMARY_IDENT') {
+    } elsif ($node->[0] eq NODE_CALL) {
+        if ($node->[2]->[0] eq NODE_IDENT || $node->[2]->[0] eq NODE_PRIMARY_IDENT) {
             my $ret = 'tora_call_func($TORA_PACKAGE, q{' . $node->[2]->[2] . '}, (';
             $ret .= join(',', map { sprintf('%s(%s)', $_->[0] eq 'CALL' ? 'scalar' : '', _compile($_)) } @{$node->[3]});
             $ret .= '))';
             return $ret;
-        } elsif ($node->[2]->[0] eq 'VARIABLE') {
+        } elsif ($node->[2]->[0] eq NODE_VARIABLE) {
             my $ret = 'tora_call_func($TORA_PACKAGE, (' . _compile($node->[2]) . '), (';
             $ret .= join(',', map { sprintf('%s(%s)', $_->[0] eq 'CALL' ? 'scalar' : '', _compile($_)) } @{$node->[3]});
             $ret .= '))';
@@ -253,15 +311,15 @@ sub _compile {
         } else {
             die "Compilation failed in subroutine call.";
         }
-    } elsif ($node->[0] eq 'PRIMARY_IDENT') {
+    } elsif ($node->[0] eq NODE_PRIMARY_IDENT) {
         return '($TORA_PACKAGE->{q!' . $node->[2] . '!} || $TORA_BUILTIN_CLASSES{q!' . $node->[2] . '!} || die qq{Unknown stuff named ' . $node->[2] . '})';
-    } elsif ($node->[0] eq 'IDENT') {
+    } elsif ($node->[0] eq NODE_IDENT) {
         return 'q{' . $node->[2] . '}';
-    } elsif ($node->[0] eq 'DEREF') {
+    } elsif ($node->[0] eq NODE_DEREF) {
         return 'tora_deref(' . _compile($node->[2]) . ')';
-    } elsif ($node->[0] eq 'NOP') {
+    } elsif ($node->[0] eq NODE_NOP) {
         return '';
-    } elsif ($node->[0] eq 'REGEXP') {
+    } elsif ($node->[0] eq NODE_REGEXP) {
         my $re = $node->[2];
         $re =~ s!/!\\/!g;
         my $mode = $node->[3];
@@ -277,54 +335,52 @@ sub _compile {
                 ');',
             '}',
         );
-    } elsif ($node->[0] eq 'NEXT') {
+    } elsif ($node->[0] eq NODE_NEXT) {
         return 'next;'
-    } elsif ($node->[0] eq 'LAST') {
+    } elsif ($node->[0] eq NODE_LAST) {
         return 'last;'
-    } elsif ($node->[0] eq 'STRCONCAT') {
+    } elsif ($node->[0] eq NODE_STRCONCAT) {
         return '('. _compile($node->[2]) .'.'. $node->[3].'.'._compile($node->[4]).')';
-    } elsif ($node->[0] eq 'STR2') {
+    } elsif ($node->[0] eq NODE_STR2) {
         my $str = ${$node->[2]};
         # TODO: more escape?
         $str =~ s/!/\\!/g; # escape
         return 'q!' . $str . '!';
-    } elsif ($node->[0] eq 'STR') {
+    } elsif ($node->[0] eq NODE_STR) {
         my $str = $node->[2];
         # TODO: more escape?
         $str =~ s/!/\\!/g; # escape
         return 'q!' . $str . '!';
-    } elsif ($node->[0] eq 'BYTES') {
+    } elsif ($node->[0] eq NODE_BYTES) {
         my $str = $node->[2];
         $str =~ s/!/\\!/g; # escape
         # TODO: more escape?
         return 'do { no utf8; tora_bytes(qq!' . $str . '!) }';
-    } elsif ($node->[0] eq 'HEREDOC') {
+    } elsif ($node->[0] eq NODE_HEREDOC) {
         my $buf = ${$node->[2]};
         $buf =~ s/'/\\'/;
         return qq{'$buf'};
-    } elsif ($node->[0] eq 'INT') {
+    } elsif ($node->[0] eq NODE_INT) {
         return $node->[2];
-    } elsif ($node->[0] eq 'RETURN') {
+    } elsif ($node->[0] eq NODE_RETURN) {
         return 'return (' . _compile($node->[2]) . ');';
-    } elsif ($node->[0] eq 'UNLESS') {
-        return 'unless (' . _compile($node->[2]) . ')' . _compile($node->[3]);
-    } elsif ($node->[0] eq 'IF') {
+    } elsif ($node->[0] eq NODE_IF) {
         my $ret = 'if (' . _compile($node->[2]) . ')' . _compile($node->[3]);
         if ($node->[4]) {
             $ret .= _compile($node->[4]);
         }
         return $ret;
-    } elsif ($node->[0] eq 'WHILE') {
+    } elsif ($node->[0] eq NODE_WHILE) {
         return 'while (' . _compile($node->[2]) . ')' . _compile($node->[3]);
-    } elsif ($node->[0] eq 'ELSIF') {
+    } elsif ($node->[0] eq NODE_ELSIF) {
         my $ret = ' elsif ('. _compile($node->[2]) . ')' . _compile($node->[3]);
         if ($node->[4]) {
             $ret .= _compile($node->[4]);
         }
         return $ret;
-    } elsif ($node->[0] eq 'ELSE') {
+    } elsif ($node->[0] eq NODE_ELSE) {
         return ' else {' . _compile($node->[2]) . '}';
-    } elsif ($node->[0] eq 'CLASS') {
+    } elsif ($node->[0] eq NODE_CLASS) {
         my $ret = '{my $TORA_CLASS=$Nana::Translator::Perl::Runtime::TORA_SELF=($TORA_PACKAGE->{' . _compile($node->[2]) . '} = Nana::Translator::Perl::Class->new(' . _compile($node->[2]) . ',' . ($node->[3] ? _compile($node->[3]) : 'undef') .'));';
         $ret .= "\n";
         $ret .= do {
@@ -333,7 +389,7 @@ sub _compile {
         };
         $ret .= ";}";
         return $ret;
-    } elsif ($node->[0] eq 'GET_METHOD') {
+    } elsif ($node->[0] eq NODE_GET_METHOD) {
         return join('',
             'do {',
                 '[tora_get_method($TORA_PACKAGE,',
@@ -342,7 +398,7 @@ sub _compile {
                 ')]->[0]',
             '}'
         );
-    } elsif ($node->[0] eq 'METHOD_CALL') {
+    } elsif ($node->[0] eq NODE_METHOD_CALL) {
         return join('',
             'do {local $Nana::Translator::Perl::Runtime::TORA_SELF='._compile($node->[2]).';',
                 'tora_call_method(',
@@ -354,14 +410,7 @@ sub _compile {
                 ')',
             '}'
         );
-    } elsif ($node->[0] eq 'STMTS') {
-        my $ret = '';
-        for (@{$node->[2]}) {
-            $ret .= sprintf(qq{#line %d "$FILENAME"\n}, $_->[1]);
-            $ret .= _compile($_) . ";\n";
-        }
-        return $ret;
-    } elsif ($node->[0] eq 'FOREACH') {
+    } elsif ($node->[0] eq NODE_FOREACH) {
     # use Data::Dumper; warn Dumper($node);
         my $ret = '{my $__tora_iteratee = (' . _compile($node->[2]) .");\n";
         if (@{$node->[3]} > 2) {
@@ -383,15 +432,15 @@ sub _compile {
         } else { # 1 args
             $ret .= 'if (ref $__tora_iteratee eq "Nana::Translator::Perl::Object" && $__tora_iteratee->has_method("__iter__")) {' . "\n";
             $ret .= '  my $__tora_iterator = ' . _compile(
-                ['METHOD_CALL', $node->[1],
-                    ['VARIABLE', $node->[1], '$__tora_iteratee'],
-                    ['IDENT',    $node->[1], '__iter__'],
+                [NODE_METHOD_CALL, $node->[1],
+                    [NODE_VARIABLE, $node->[1], '$__tora_iteratee'],
+                    [NODE_IDENT,    $node->[1], '__iter__'],
                     []]
             ) . ';';
             $ret .= sprintf('  while (%s = %s)', (@{$node->[3]} ? ('my ' . _compile($node->[3]->[0])) : 'local $_'), _compile(
-                ['METHOD_CALL', $node->[1],
-                    ['VARIABLE', $node->[1], '$__tora_iterator'],
-                    ['IDENT',    $node->[1], '__next__'],
+                [NODE_METHOD_CALL, $node->[1],
+                    [NODE_VARIABLE, $node->[1], '$__tora_iterator'],
+                    [NODE_IDENT,    $node->[1], '__next__'],
                     []]
             ));
             $ret .= _compile($node->[4]);
@@ -415,7 +464,7 @@ sub _compile {
             $ret .= '}';
         }
         return $ret;
-    } elsif ($node->[0] eq 'FOR') {
+    } elsif ($node->[0] eq NODE_FOR) {
         join('',
             'for (',
                 _compile($node->[2]),
@@ -426,48 +475,45 @@ sub _compile {
             ')',
                 _compile($node->[5]), # block
         );
-    } elsif ($node->[0] eq 'UNDEF') {
+    } elsif ($node->[0] eq NODE_UNDEF) {
         return 'undef';
-    } elsif ($node->[0] eq 'FALSE') {
+    } elsif ($node->[0] eq NODE_FALSE) {
         return 'JSON::false()';
-    } elsif ($node->[0] eq 'SELF') {
+    } elsif ($node->[0] eq NODE_SELF) {
         return '($Nana::Translator::Perl::Runtime::TORA_SELF || die "Do not call self out of class.")';
-    } elsif ($node->[0] eq '__FILE__') {
+    } elsif ($node->[0] eq NODE___FILE__) {
         return '__FILE__';
-    } elsif ($node->[0] eq '__LINE__') {
-        return '__LINE__';
-    } elsif ($node->[0] eq 'TRUE') {
+    } elsif ($node->[0] eq NODE_TRUE) {
         return 'JSON::true()';
-    } elsif ($node->[0] eq 'DOUBLE') {
+    } elsif ($node->[0] eq NODE_DOUBLE) {
         my $ret = "$node->[2]";
         $ret .= ".0" unless $ret =~ /\./;
         return $ret;
-    } elsif ($node->[0] eq 'BLOCK') {
+    } elsif ($node->[0] eq NODE_BLOCK) {
         return '{' . _compile($node->[2]) . '}';
-    } elsif ($node->[0] eq 'EXPRESSIONS') {
-        die;
-    } elsif ($node->[0] eq '{}') {
+    } elsif ($node->[0] eq NODE_MAKE_HASH) {
         return '{' . join(',', map { _compile($_) } @{$node->[2]}) . '}';
-    } elsif ($node->[0] eq 'ARRAY') {
+    } elsif ($node->[0] eq NODE_MAKE_ARRAY) {
         return '[' . join(',', map { _compile($_) } @{$node->[2]}) . ']';
-    } elsif ($node->[0] eq 'VARIABLE') {
+    } elsif ($node->[0] eq NODE_VARIABLE) {
         return $node->[2];
-    } elsif ($node->[0] eq 'UNARY+') {
-        return '+' . _compile($node->[2]);
-    } elsif ($node->[0] eq 'UNARY-') {
-        return '-' . _compile($node->[2]);
-    } elsif ($node->[0] eq 'UNARY!') {
+    } elsif ($node->[0] eq NODE_UNARY_PLUS) {
+        return '(+' . _compile($node->[2]) . ')';
+    } elsif ($node->[0] eq NODE_UNARY_MINUS) {
+        return '(-' . _compile($node->[2]) . ')';
+    } elsif ($node->[0] eq NODE_UNARY_NOT) {
         return 'tora_op_not('._compile($node->[2]).')';
-    } elsif ($node->[0] eq 'UNARY~') {
+    } elsif ($node->[0] eq NODE_UNARY_TILDE) {
         return '~' . _compile($node->[2]);
-    } elsif ($node->[0] eq 'UNARY*') {
+    } elsif ($node->[0] eq NODE_UNARY_MUL) {
         return '@{' . _compile($node->[2]) . '}';
-    } elsif ($node->[0] eq 'UNARY\\') {
+    } elsif ($node->[0] eq NODE_UNARY_REF) {
         return '\\' . _compile($node->[2]);
-    } elsif ($node->[0] eq '=~') {
+    } elsif ($node->[0] eq NODE_REGEXP_MATCH) {
         return '('. _compile($node->[2]) . '=~' . _compile($node->[3]) .')';
     } else {
-        die "Unknown node type " . Dumper($node);
+        die "Unknown node type " . node_name($node->[0]);
+        # die "Unknown node type " . Dumper($node);
     }
 }
 

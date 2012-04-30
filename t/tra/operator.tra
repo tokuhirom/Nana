@@ -8,7 +8,7 @@ is(''+$y.tora(), "3.14");
 is(''+(-$y).tora(), "-3.14");
 is(''+(-(-$y)).tora(), "3.14");
 
-# &&
+note('&&');
 is(false && false, false);
 is(false &&  true, false);
 is(true  && false, false);

@@ -31,3 +31,4 @@ lib/Nana/toke.c
 nytprof/
 nytprof.out
 *.o
+lib/Nana/Node.pm

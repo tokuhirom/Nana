@@ -143,12 +143,12 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc, 
         "<<'" { OP(TOKEN_HEREDOC_SQ_START); }
         "<<" { OP(TOKEN_LSHIFT); }
         "<=>" { OP(TOKEN_CMP); }
-        "<=" { OP(TOKEN_GE); }
-        "<" { OP(TOKEN_GT); }
+        "<=" { OP(TOKEN_LE); }
+        "<" { OP(TOKEN_LT); }
         ">>=" { OP(TOKEN_RSHIFT_ASSIGN); }
         ">>" { OP(TOKEN_RSHIFT); }
-        ">=" { OP(TOKEN_LE); }
-        ">" { OP(TOKEN_LT); }
+        ">=" { OP(TOKEN_GE); }
+        ">" { OP(TOKEN_GT); }
         "\\" { OP(TOKEN_REF); }
         "~" { OP(TOKEN_TILDE); }
         "${" { OP(TOKEN_DEREF); }
