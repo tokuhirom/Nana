@@ -250,46 +250,6 @@ sub tora_op_ne {
     }
 }
 
-sub tora_op_lt {
-    my ($lhs, $rhs) = @_;
-
-    my $flags = B::svref_2object(\$lhs)->FLAGS;
-    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-        # IV or NV
-        return $lhs < $rhs ? true() : false();
-    } elsif ($flags & B::SVp_POK) {
-        return $lhs lt $rhs ? true() : false();
-    } else {
-        die "OOPS";
-    }
-}
-
-sub tora_op_le {
-    my ($lhs, $rhs) = @_;
-    my $flags = B::svref_2object(\$lhs)->FLAGS;
-    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-        # IV or NV
-        return $lhs <= $rhs ? true() : false();
-    } elsif ($flags & B::SVp_POK) {
-        return $lhs le $rhs ? true() : false();
-    } else {
-        die "OOPS";
-    }
-}
-
-sub tora_op_ge {
-    my ($lhs, $rhs) = @_;
-    my $flags = B::svref_2object(\$lhs)->FLAGS;
-    if ($flags & (B::SVp_IOK | B::SVp_NOK) and !( $flags & B::SVp_POK )) {
-        # IV or NV
-        return $lhs >= $rhs ? true() : false();
-    } elsif ($flags & B::SVp_POK) {
-        return $lhs ge $rhs ? true() : false();
-    } else {
-        die "OOPS";
-    }
-}
-
 sub tora_op_add {
     my ($lhs, $rhs) = @_;
     my $flags = B::svref_2object(\$lhs)->FLAGS;

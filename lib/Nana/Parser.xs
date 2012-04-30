@@ -163,27 +163,7 @@ const char *tora_stringify_type(value_type_t t) {
     abort();
 }
 
-bool tora_op_gt(SV* lhs, SV*rhs) {
-    value_type_t lhs_t = tora_detect_value_type(lhs);
-    value_type_t rhs_t = tora_detect_value_type(rhs);
-
-    if (lhs_t == VALUE_TYPE_UNDEF) {
-        croak("You cannot use undefined value as left side value in greater than operator.");
-    }
-    if (rhs_t == VALUE_TYPE_UNDEF) {
-        croak("You cannot use undefined value as right side value in greater than operator.");
-    }
-    if (lhs_t == VALUE_TYPE_INT || lhs_t == VALUE_TYPE_DOUBLE) {
-        return SvNV(lhs) > SvNV(rhs) ? TRUE : FALSE;
-    } else if (lhs_t == VALUE_TYPE_STR) {
-        char * lhs_c = SvPV_nolen(lhs);
-        char * rhs_c = SvPV_nolen(rhs);
-        return strGT(lhs_c, rhs_c);
-    } else {
-        croak("greater than operator does not support this type: %s", tora_stringify_type(lhs_t));
-    }
-    abort();
-}
+#include "../../xs/operator.c"
 
 MODULE = Nana::Parser       PACKAGE = Nana::Parser
 
@@ -284,3 +264,19 @@ void
 tora_op_gt(SV *lhs, SV*rhs)
     PPCODE:
         XPUSHs(tora_op_gt(lhs, rhs) ? json_true : json_false);
+
+void
+tora_op_lt(SV *lhs, SV*rhs)
+    PPCODE:
+        XPUSHs(tora_op_lt(lhs, rhs) ? json_true : json_false);
+
+void
+tora_op_le(SV *lhs, SV*rhs)
+    PPCODE:
+        XPUSHs(tora_op_le(lhs, rhs) ? json_true : json_false);
+
+void
+tora_op_ge(SV *lhs, SV*rhs)
+    PPCODE:
+        XPUSHs(tora_op_ge(lhs, rhs) ? json_true : json_false);
+

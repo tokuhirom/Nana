@@ -24,6 +24,12 @@ my $class = Module::Build->subclass(
                 unlink 'lib/Nana/Parser.c';
                 unlink 'lib/Nana/Parser.o';
             }
+            unless ($self->up_to_date('xs/operator.c.PL' => 'xs/operator.c')) {
+                $self->run_perl_script('xs/operator.c.PL', [], ['xs/operator.c']) or die "xs/operator.c.PL failed";
+                $self->add_to_cleanup('xs/operator.c');
+                unlink 'lib/Nana/Parser.c';
+                unlink 'lib/Nana/Parser.o';
+            }
             $self->SUPER::ACTION_code(@_);
         }
 ...

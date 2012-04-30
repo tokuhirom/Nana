@@ -32,3 +32,4 @@ nytprof/
 nytprof.out
 *.o
 lib/Nana/Node.pm
+xs/operator.c
