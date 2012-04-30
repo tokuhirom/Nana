@@ -189,3 +189,9 @@ tora_boolean(SV *v)
         dTARG;
         XPUSHs(tora_boolean(v) ? json_true : json_false);
 
+void
+tora_op_not(SV *v)
+    PPCODE:
+        dTARG;
+        XPUSHs(tora_boolean(v) ? json_false : json_true);
+

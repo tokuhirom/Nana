@@ -230,10 +230,6 @@ sub tora_op_eq {
     }
 }
 
-sub tora_op_not {
-    return tora_boolean($_[0]) ? JSON::false() : JSON::true();
-}
-
 sub tora_op_ne {
     my ($lhs, $rhs) = @_;
     my $flags = B::svref_2object(\$lhs)->FLAGS;
