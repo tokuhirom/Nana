@@ -57,7 +57,32 @@ int is_opening(char c) {
 
 #include "toke.c"
 
+static SV *json_true, *json_false;
+
+SV *get_bool(const char *name) {
+    SV *sv = get_sv(name, 1);
+    SvREADONLY_on(sv);
+    SvREADONLY_on(SvRV(sv));
+    return sv;
+}
+
+int tora_boolean(SV *v) {
+    if (sv_isa(v, "JSON::XS::Boolean")) {
+        return SvIV(SvRV(v)) ? 1 : 0;
+    } else if (!SvOK(v)) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
 MODULE = Nana::Parser       PACKAGE = Nana::Parser
+
+BOOT:
+{
+    json_true  = get_bool("JSON::XS::true");
+    json_false = get_bool("JSON::XS::false");
+}
 
 void
 skip_ws(SV * src_sv)
@@ -155,4 +180,12 @@ typeof(SV *v)
 #undef RETURN_P
         sv_dump(v);
         croak("[BUG] Unknown type");
+
+MODULE = Nana::Parser      PACKAGE = Nana::Translator::Perl::Runtime
+
+void
+tora_boolean(SV *v)
+    PPCODE:
+        dTARG;
+        XPUSHs(tora_boolean(v) ? json_true : json_false);
 

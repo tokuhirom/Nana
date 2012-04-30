@@ -234,17 +234,6 @@ sub tora_op_not {
     return tora_boolean($_[0]) ? JSON::false() : JSON::true();
 }
 
-sub tora_boolean {
-    my $type = typeof($_[0]);
-    if ($type eq 'Bool') {
-        return $_[0];
-    } elsif (!defined $_[0]) {
-        return JSON::false();
-    } else {
-        return JSON::true();
-    }
-}
-
 sub tora_op_ne {
     my ($lhs, $rhs) = @_;
     my $flags = B::svref_2object(\$lhs)->FLAGS;

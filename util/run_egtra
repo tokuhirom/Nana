@@ -13,9 +13,14 @@ use Nana::Parser;
 use Nana::Translator::Perl;
 use Capture::Tiny qw(capture);
 use Test::More;
+use Getopt::Long;
 
 my $parser = Nana::Parser->new();
 my $compiler = Nana::Translator::Perl->new();
+
+GetOptions(
+    'c' => \my $compile,
+);
 
 my $fname = shift or die "Usage: $0 fname.egtra";
 open my $fh, '<', $fname
@@ -25,7 +30,8 @@ my $src = do { local $/; <$fh> };
 my $ast = $parser->parse($src);
 say(Dumper $ast) if $ENV{DUMP_AST};
 my $perl = $compiler->compile($ast);
-say($perl) if $ENV{DUMP_PERL};
+say($perl) if $compile || $ENV{DUMP_PERL};
+exit if $compile;
 my ($out, $err) = capture {
     eval $perl;
     print STDERR $@ if $@;

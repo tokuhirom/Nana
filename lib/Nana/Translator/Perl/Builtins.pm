@@ -5,6 +5,7 @@ use utf8;
 use parent qw(Exporter);
 use 5.10.0;
 use B;
+use JSON::XS;
 use Data::Dumper;
 use Devel::Peek;
 use Nana::Translator::Perl::RegexpMatched;

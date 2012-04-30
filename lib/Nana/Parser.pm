@@ -4,6 +4,7 @@ use warnings;
 use warnings FATAL => 'recursion';
 use utf8;
 use 5.10.0;
+use JSON;
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw(refaddr);
