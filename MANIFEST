@@ -6,6 +6,7 @@ Config.tra.PL
 eg/class.nn
 eg/fizzbuzz.nn
 eg/hoge.tra
+lib/Nana/Node.pm.PL
 lib/Nana/Parser.pm
 lib/Nana/Parser.xs
 lib/Nana/toke.c

@@ -39,3 +39,5 @@ perltidy.ERR$
 ^lib/Nana/Token.pm$
 ^lib/Nana/token.h$
 ^hoge\.
+^log$
+^lib/Nana/Node.pm$

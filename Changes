@@ -1,5 +1,9 @@
 Revision history for Perl extension nana
 
+0.08
+
+    - optimized translator
+
 0.07
 
     - tiny tweaks
