@@ -88,7 +88,6 @@ void
 skip_ws(SV * src_sv)
     PPCODE:
         /* skip white space, comments. */
-        dTARG;
         STRLEN len;
         char *src = SvPV(src_sv, len);
         int found_end=0, lineno_inc=0;
@@ -114,7 +113,6 @@ skip_ws(SV * src_sv)
 void
 _token_op(SV *src_sv)
     PPCODE:
-        dTARG;
         STRLEN len;
         char *src = SvPV(src_sv, len);
         int used=0, found_end=0, lineno_inc=0;
@@ -129,13 +127,11 @@ MODULE = Nana::Parser      PACKAGE = Nana::Translator::Perl::Builtins
 void
 typeof(SV *v)
     PPCODE:
-        dTARG;
 #define RETURN_P(x) do { mXPUSHs(newSVpv(x, strlen(x))); return; } while(0)
         if (!SvOK(v)) {
             RETURN_P("Undef");
         } else if (sv_isobject(v)) {
             if (sv_isa(v, "Nana::Translator::Perl::Object")) {
-                SV * body = SvRV(v);
                 SV ** klass = hv_fetch((HV*)SvRV(v), "klass", strlen("klass"), 0);
                 if (!klass || !SvROK(*klass)) { croak("[BUG] Cannot take a class body from Object."); }
                 SV ** name = hv_fetch((HV*)SvRV(*klass), "name", strlen("name"), 0);
@@ -167,6 +163,8 @@ typeof(SV *v)
             case SVt_PVCV:
                 mXPUSHs(newSVpv("Code", 0));
                 return;
+            default:
+                abort();
             }
         } else {
             if (SvIOK(v) && !SvPOK(v)) {
@@ -186,12 +184,10 @@ MODULE = Nana::Parser      PACKAGE = Nana::Translator::Perl::Runtime
 void
 tora_boolean(SV *v)
     PPCODE:
-        dTARG;
         XPUSHs(tora_boolean(v) ? json_true : json_false);
 
 void
 tora_op_not(SV *v)
     PPCODE:
-        dTARG;
         XPUSHs(tora_boolean(v) ? json_false : json_true);
 

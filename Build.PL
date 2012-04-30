@@ -80,6 +80,7 @@ my $build = $class->new(
         },
     },
     script_files => 'bin/nana',
+    extra_compiler_flags => (($^O eq 'linux' && -d '.git') ? ['-std=c90', '-Wall'] : []),
 
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? 't/ xt/' : 't/',
 
