@@ -111,7 +111,7 @@ our %TORA_BUILTIN_FUNCTIONS = (
     getppid => sub {
         return getppid()
     },
-    getpid => sub { return $$ },
+    getpid => sub { return int $$ },
     'sprintf' => sub {
         my $format = shift;
         return CORE::sprintf($format, @_);

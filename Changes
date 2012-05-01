@@ -1,5 +1,9 @@
 Revision history for Perl extension nana
 
+0.10
+
+    - MIN() is private function in perl5
+
 0.09
 
     - support only perl 5.12+
