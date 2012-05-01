@@ -23,8 +23,8 @@ sub get_method {
 sub has_method {
     my ($self, $name) = @_;
     return $self->{klass}->get_method($name)
-        ? JSON::true()
-        : JSON::false();
+        ? JSON::XS::true()
+        : JSON::XS::false();
 }
 
 sub class {

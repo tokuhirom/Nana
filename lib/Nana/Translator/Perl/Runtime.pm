@@ -16,7 +16,21 @@ use Nana::Translator::Perl::FilePackage;
 use Nana::Translator::Perl::Regexp;
 use Carp qw(croak);
 use B;
-use JSON ();
+use JSON::XS ();
+
+{
+    # ad-hoc patch :P
+    eval q!
+    package JSON::XS::Boolean;
+    use overload (
+        '""' => sub { ${$_[0]} == 1 ? 'true' : 'false' },
+        fallback => 1,
+    );
+    !;
+    die $@ if $@;
+    $JSON::XS::Boolean::true  = do { bless \(my $dummy = 1), "JSON::XS::Boolean" };
+    $JSON::XS::Boolean::false = do { bless \(my $dummy = 0), "JSON::XS::Boolean" };
+}
 
 use File::ShareDir ();
 use File::Spec;
@@ -53,8 +67,8 @@ our @EXPORT = qw(tora_call_func
     tora_op_not
 );
 
-*true = *JSON::true;
-*false = *JSON::false;
+*true = *JSON::XS::true;
+*false = *JSON::XS::false;
 
 sub _runtime_error {
     croak @_;

@@ -28,7 +28,7 @@ sub compile {
             'use utf8;',
             'use Nana::Translator::Perl::Runtime;',
             'use Nana::Translator::Perl::Builtins qw(%TORA_BUILTIN_CLASSES);',
-            'use JSON;',
+            'use JSON::XS;',
             'use Sub::Name;',
             'my $LIBPATH=$Nana::Translator::Perl::Runtime::LIBPATH;',
             'my $STDOUT=$Nana::Translator::Perl::Runtime::STDOUT;',
@@ -197,7 +197,7 @@ sub _compile {
         if ($node->[2] eq '-s') {
             return "(-s(" . _compile($node->[3]).'))';
         } else {
-            return "(($node->[2](" . _compile($node->[3]).'))?JSON::true():JSON::false())';
+            return "(($node->[2](" . _compile($node->[3]).'))?JSON::XS::true():JSON::XS::false())';
         }
     }
 
@@ -500,13 +500,13 @@ sub _compile {
     } elsif ($node->[0] eq NODE_UNDEF) {
         return 'undef';
     } elsif ($node->[0] eq NODE_FALSE) {
-        return 'JSON::false()';
+        return 'JSON::XS::false()';
     } elsif ($node->[0] eq NODE_SELF) {
         return '($Nana::Translator::Perl::Runtime::TORA_SELF || die "Do not call self out of class.")';
     } elsif ($node->[0] eq NODE___FILE__) {
         return '__FILE__';
     } elsif ($node->[0] eq NODE_TRUE) {
-        return 'JSON::true()';
+        return 'JSON::XS::true()';
     } elsif ($node->[0] eq NODE_DOUBLE) {
         my $ret = "$node->[2]";
         $ret .= ".0" unless $ret =~ /\./;

@@ -24,7 +24,7 @@ is(typeof(Nana::Translator::Perl::Regexp->new(1)), 'Regexp');
 is(typeof(Nana::Translator::Perl::RegexpMatched->new(1)), 'RegexpMatched');
 is(typeof(Nana::Translator::Perl::PerlPackage->new(1)), 'PerlPackage');
 is(typeof(Nana::Translator::Perl::PerlObject->new(1)), 'PerlObject');
-is(typeof(JSON::true()), 'Bool');
+is(typeof(JSON::XS::true()), 'Bool');
 is(typeof(1), 'Int');
 is(typeof("HOGE"), 'Str');
 is(typeof(3.14), 'Double');
