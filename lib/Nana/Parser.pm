@@ -283,8 +283,14 @@ rule('statement', [
             return ($c, _node2(NODE_RETURN, $START, $expression));
         } elsif ($token_id == TOKEN_USE) {
             $c = substr($c, $used);
-            ($c, my $klass) = class_name($c)
-                or _err "class name is required after 'use' keyword";
+            my ($used, $token_id, $klass) = _token_op($c);
+            my $op = +{
+                TOKEN_CLASS_NAME() => NODE_IDENT,
+                TOKEN_IDENT()      => NODE_IDENT,
+            }->{$token_id};
+            _err "class name is required after 'use' keyword"
+                unless $op;
+            $c = substr($c, $used);
             my $type;
             if ((my $c2) = match($c, '*')) {
                 $c = $c2;
@@ -295,7 +301,7 @@ rule('statement', [
             } else {
                 $type = _node(NODE_UNDEF);
             }
-            return ($c, _node2(NODE_USE, $START, $klass, $type));
+            return ($c, _node2(NODE_USE, $START, _node($op, $klass), $type));
         } elsif ($token_id == TOKEN_UNLESS) {
             $c = substr($c, $used);
             ($c, my $expression) = expression($c)
