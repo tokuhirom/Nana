@@ -6,6 +6,9 @@
 
 #include "token.h"
 
+#undef MIN
+#define MIN(x,y) ((x)<(y)?(x):(y))
+
 typedef enum {
     VALUE_TYPE_UNDEF,
     VALUE_TYPE_INT,
