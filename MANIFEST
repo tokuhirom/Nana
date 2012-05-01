@@ -46,6 +46,7 @@ t/05_func.t
 t/06_class.t
 t/07_tokenize.t
 t/09_typeof.t
+t/10_tora_boolean.t
 t/dat/dir/x
 t/dat/dir/y
 t/dat/dir/z
@@ -90,6 +91,7 @@ t/specs/eg_t/if.egtra
 t/specs/eg_t/increment.egtra
 t/specs/eg_t/more.egtra
 t/specs/eg_t/multiple_return.egtra
+t/specs/eg_t/operator-gt.egtra
 t/specs/eg_t/operator.egtra
 t/specs/eg_t/optional_params.egtra
 t/specs/eg_t/regexp.egtra
@@ -182,6 +184,8 @@ util/TAP/Parser/SourceHandler/EGTRA.pm
 util/TAP/Parser/SourceHandler/T.pm
 util/TAP/Parser/SourceHandler/TCC.pm
 util/TAP/Parser/SourceHandler/TRA.pm
+xs/operator.c
+xs/operator.c.PL
 xt/01_podspell.t
 xt/02_perlcritic.t
 xt/03_pod.t

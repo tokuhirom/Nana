@@ -1,5 +1,10 @@
 Revision history for Perl extension nana
 
+0.09
+
+    - support only perl 5.12+
+    - no JSON.pm
+
 0.08
 
     - optimized translator
