@@ -21,7 +21,8 @@ use JSON::XS ();
 {
     # ad-hoc patch :P
     eval q!
-    package JSON::XS::Boolean;
+    package # hide from pause
+        JSON::XS::Boolean;
     use overload (
         '""' => sub { ${$_[0]} == 1 ? 'true' : 'false' },
         fallback => 1,
