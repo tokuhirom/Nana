@@ -355,7 +355,7 @@ sub tora_deref:lvalue {
     if (ref $v eq 'Nana::Translator::Perl::Object') {
         $v->{data};
     } else {
-        die "You cannot dereference " . typeof($v);
+        _runtime_error "You cannot dereference " . typeof($v);
         $v; # dummy for :lvalue
     }
 }
