@@ -1,2 +1,4 @@
-#!/bin/sh
-./Build && perl -Mblib bin/nana $*
+#!/usr/bin/env perl
+system("./Build") == 0
+    or exit;
+system(qw(perl -Mblib -- bin/nana), @ARGV);
