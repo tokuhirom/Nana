@@ -422,14 +422,15 @@ sub _compile {
         );
     } elsif ($node->[0] eq NODE_METHOD_CALL) {
         return join('',
-            'do {local $Nana::Translator::Perl::Runtime::TORA_SELF='._compile($node->[2]).';',
-                'tora_call_method(',
-                    'tora_get_method($TORA_PACKAGE,',
-                        '$Nana::Translator::Perl::Runtime::TORA_SELF,',
-                        _compile($node->[3]) . ',',
-                        '(' . join(',', map { _compile($_) } @{$node->[4]}) . ')',
-                    '),',
-                ')',
+            'do {',
+                'my $self='._compile($node->[2]).';',
+                'my @args = tora_get_method($TORA_PACKAGE,',
+                    '$self,',
+                    _compile($node->[3]) . ',',
+                    '(' . join(',', map { _compile($_) } @{$node->[4]}) . ')',
+                ');',
+                'local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;',
+                'tora_call_method(@args);',
             '}'
         );
     } elsif ($node->[0] eq NODE_FOREACH) {

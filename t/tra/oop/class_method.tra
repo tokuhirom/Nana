@@ -1,0 +1,23 @@
+use Test::More *;
+
+class Foo {
+    sub new() {
+        self.bless(4649);
+    }
+    sub yo {
+        Bar.baz(${self});
+    }
+}
+
+my $ret = 5963;
+
+class Bar {
+    sub baz($n) {
+        $ret = $n;
+    }
+}
+
+Foo.new().yo();
+is($ret, 4649);
+
+done_testing();
