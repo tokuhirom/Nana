@@ -276,11 +276,6 @@ rule('statement', [
             ($c, my $block) = block($c)
                 or _err "Expected block after 'class' but not matched";
             return ($c, _node2(NODE_CLASS, $START, $name, $base, $block));
-        } elsif ($token_id == TOKEN_RETURN) {
-            $c = substr($c, $used);
-            ($c, my $expression) = expression($c)
-                or die "expression expected after 'return' keyword";
-            return ($c, _node2(NODE_RETURN, $START, $expression));
         } elsif ($token_id == TOKEN_USE) {
             $c = substr($c, $used);
             my ($used, $token_id, $klass) = _token_op($c);
@@ -387,7 +382,7 @@ rule('statement', [
     },
     sub {
         my $c = shift;
-        ($c, my $block) = expression($c)
+        ($c, my $block) = jump_statement($c)
             or return;
         my ($used, $token_id) = _token_op($c);
         if ($token_id == TOKEN_IF) {
@@ -416,6 +411,21 @@ rule('statement', [
             return ($c, _node2(NODE_WHILE, $START, $expression, _node(NODE_BLOCK, $block)));
         } else {
             return ($c, $block);
+        }
+    },
+]);
+
+rule('jump_statement', [
+    sub {
+        my $c = shift;
+        my ($used, $token_id) = _token_op($c);
+        if ($token_id == TOKEN_RETURN) {
+            $c = substr($c, $used);
+            ($c, my $expression) = expression($c)
+                or _err "expression expected after 'return' keyword";
+            return ($c, _node2(NODE_RETURN, $START, $expression));
+        } else {
+            return expression($c);
         }
     },
 ]);
@@ -963,6 +973,7 @@ rule('primary', [
                 or return;
             return ($c, $body);
         } elsif ($token_id == TOKEN_LBRACE) { # {
+            # hash creation
             $c = substr($c, $used);
             my @content;
             while (my ($c2, $lhs) = assign_expression($c)) {
@@ -973,7 +984,8 @@ rule('primary', [
                     or return;
                     # or die "Missing => in hash creation '@{[ substr($c, 10) ]}...' line $LINENO\n";
                 $c = $c2;
-                ($c, my $rhs) = assign_expression($c);
+                ($c, my $rhs) = assign_expression($c)
+                    or _err "Missing expression after =>";
                 push @content, $rhs;
 
                 my ($c3) = match($c, ',');
