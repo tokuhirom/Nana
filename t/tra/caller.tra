@@ -18,13 +18,18 @@ sub baz () {
     is(caller(1).code().name(), "foo");
     is(caller(0).code().name(), "bar");
 
-    is(caller(2), undef);
+    is(typeof(caller(2)), 'Caller');
+    is(caller(2).code(), undef);
     is(caller(3), undef);
 
+    note('Array Style');
     is(typeof(caller()), 'Array');
-    is(caller().size(), 2);
-    is((caller())[1].code().name(), 'foo');
+    is(caller().size(), 3);
     is((caller())[0].code().name(), 'bar');
+    is((caller())[1].code().name(), 'foo');
+    is((caller())[2].code(), undef);
+    is((caller())[2].file(), __FILE__);
+    is((caller())[3], undef);
 }
 
 foo();

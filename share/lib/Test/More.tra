@@ -40,6 +40,17 @@ class Test::Builder {
             print(" - " + $msg);
         }
         print("\n");
+        my $i = 0;
+        my $caller;
+        while ($caller = caller($i++)) {
+            unless ($caller.file().match(/Test\/More\.tra$/)) {
+                last;
+            }
+        }
+        if (!$caller) {
+            die("Invalid caller");
+        }
+        $STDERR.printf("#   Failed test at %s line %d.\n", $caller.file(), $caller.line());
         self.incr_failed();
         return false;
     }
@@ -89,7 +100,7 @@ class Test::Builder {
             say('# No tests run!');
         }
         if (self.failed() > 0) {
-            # printf("# Looks like you failed %d test of %d.", self.failed, $counter);
+            $STDERR.printf("# Looks like you failed %d test of %d.\n", self.failed(), self.counter());
         }
     }
 }

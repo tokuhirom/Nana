@@ -39,8 +39,8 @@ sub test_nana {
         warn $@ if $@;
     };
     subtest $src => sub {
-        is($stdout, $expected_stdout);
-        is($stderr, $expected_stderr || '');
+        is($stdout, $expected_stdout,       'stdout');
+        is($stderr, $expected_stderr || '', 'stderr');
     };
 }
 *run_tora_is = *test_nana;

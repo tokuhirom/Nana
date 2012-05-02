@@ -76,13 +76,23 @@ sub _runtime_error {
 }
 
 our @CALLER_STACK;
+our @CALLEE_STACK;
 
 sub __call {
     my ($func, $args) = @_;
 
+    my $i=1;
+    my @caller;
+    while (@caller = caller($i++)) {
+        last if $caller[0] ne __PACKAGE__;
+    }
+
+    local @CALLEE_STACK = @CALLEE_STACK;
+    push @CALLEE_STACK, $func;
     local @CALLER_STACK = @CALLER_STACK;
     push @CALLER_STACK, [
-        $func
+        @caller,
+        @CALLEE_STACK > 1 ? $CALLEE_STACK[@CALLEE_STACK-2] : undef
     ];
 
     my @ret = $func->(@$args);

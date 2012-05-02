@@ -150,15 +150,14 @@ our %TORA_BUILTIN_FUNCTIONS = (
         return $TORA_BUILTIN_CLASSES{Dir}->create_instance($dh);
     },
     'callee' => sub {
-        my @stack = @Nana::Translator::Perl::Runtime::CALLER_STACK;
+        my @stack = @Nana::Translator::Perl::Runtime::CALLEE_STACK;
         if (@stack == 0) {
             return undef;
         }
-        return $stack[@stack-1]->[0];
+        return $stack[@stack-1];
     },
     'caller' => sub {
         my @stack = @Nana::Translator::Perl::Runtime::CALLER_STACK;
-        pop @stack; # ignore current stack
         if (@_==1) {
             my $need = shift;
             my $n = 0;
@@ -427,6 +426,12 @@ my %built_class_src = (
         open => sub {
             tora_open(@_);
         },
+        print => sub {
+            self->data->print(@_);
+        },
+        printf => sub {
+            self->data->printf(@_);
+        },
         'SEEK_END' => scalar(Fcntl::SEEK_END()),
         'SEEK_CUR' => scalar(Fcntl::SEEK_CUR()),
         'SEEK_SET' => scalar(Fcntl::SEEK_SET()),
@@ -460,11 +465,14 @@ my %built_class_src = (
         },
     },
     Caller => {
-        package => sub {
-            $_[0]->[0];
+        file => sub {
+            return self->data->[1];
+        },
+        line=> sub {
+            return self->data->[2];
         },
         code => sub {
-            self->data->[0]
+            return self->data->[11];
         },
     },
     Bytes => {
