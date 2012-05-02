@@ -1,0 +1,24 @@
+import_perl("File::Path");
+
+sub dir($dir) {
+    return Path::Dir.new($dir);
+}
+
+class Path::Dir {
+    sub new($dir) {
+        self.bless($dir);
+    }
+    sub mkpath() {
+        File::Path.CALL('mkpath', ${self});
+    }
+    sub rmtree() {
+        File::Path.CALL('rmtree', ${self});
+    }
+}
+
+class Path::File {
+    sub new($path) {
+        self.bless($path);
+    }
+}
+
