@@ -13,6 +13,8 @@ my $class = Module::Build->subclass(
         }
         sub ACTION_code {
             my $self = shift;
+            require Devel::PPPort;
+            Devel::PPPort::WriteFile('ppport.h');
             $self->SUPER::process_PL_files();
             unless(
                    $self->up_to_date('lib/Nana/toke.re.PL' => 'lib/Nana/toke.c')
@@ -47,6 +49,7 @@ my $build = $class->new(
         'Test::Differences' => 0,
         'ExtUtils::CBuilder' => 0,
         'Text::MicroTemplate' => 0,
+        'Devel::PPPort'       => 0,
     },
     configure_requires   => { 'Module::Build' => '0.38' },
     requires             => {
