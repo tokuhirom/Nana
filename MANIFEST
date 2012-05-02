@@ -16,6 +16,7 @@ lib/Nana/Token.pm.PL
 lib/Nana/Translator/Perl.pm
 lib/Nana/Translator/Perl/Builtins.pm
 lib/Nana/Translator/Perl/Class.pm
+lib/Nana/Translator/Perl/Code.pm
 lib/Nana/Translator/Perl/Exception.pm
 lib/Nana/Translator/Perl/FilePackage.pm
 lib/Nana/Translator/Perl/Object.pm
@@ -35,6 +36,7 @@ notes/funcall.tra
 ppport.h
 README
 share/lib/Config.tra
+share/lib/Path.tra
 share/lib/Test/More.tra
 t/00_compile.t
 t/01_basic.dat
@@ -47,6 +49,7 @@ t/06_class.t
 t/07_tokenize.t
 t/09_typeof.t
 t/10_tora_boolean.t
+t/11_test-more.t
 t/dat/dir/x
 t/dat/dir/y
 t/dat/dir/z
@@ -171,6 +174,7 @@ t/tra/syntax/keywordish.tra
 t/tra/syntax/method.tra
 t/tra/syntax/oror_assign.tra
 t/tra/syntax/postfix-while.tra
+t/tra/syntax/return_if.tra
 t/tra/time.tra
 t/tra/value/bytes.tra
 t/tra/while-multi.tra
