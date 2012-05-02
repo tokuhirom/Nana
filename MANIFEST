@@ -149,6 +149,7 @@ t/tra/object/meta.tra
 t/tra/object/regexp.tra
 t/tra/object/string.tra
 t/tra/ok.tra
+t/tra/oop/class_method.tra
 t/tra/oop/destroy.tra
 t/tra/oop/inheritance.tra
 t/tra/oop/self-bug.tra

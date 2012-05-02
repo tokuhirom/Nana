@@ -1,5 +1,9 @@
 Revision history for Perl extension nana
 
+0.11
+
+    - fixed self handler
+
 0.10
 
     - MIN() is private function in perl5

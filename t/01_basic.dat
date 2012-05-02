@@ -32,7 +32,7 @@ foo() for bar()
 --- expected
 {my $__tora_iteratee = (tora_call_func($TORA_PACKAGE, q{bar}, ()));
 if (ref $__tora_iteratee eq "Nana::Translator::Perl::Object" && $__tora_iteratee->has_method("__iter__")) {
-  my $__tora_iterator = do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$__tora_iteratee;tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{__iter__},()),)};  while (local $_ = do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$__tora_iterator;tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{__next__},()),)}){tora_call_func($TORA_PACKAGE, q{foo}, ())}} else {
+  my $__tora_iterator = do {my $self=$__tora_iteratee;my @args = tora_get_method($TORA_PACKAGE,$self,q{__iter__},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);};  while (local $_ = do {my $self=$__tora_iterator;my @args = tora_get_method($TORA_PACKAGE,$self,q{__next__},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);}){tora_call_func($TORA_PACKAGE, q{foo}, ())}} else {
 for (ref($__tora_iteratee) eq "ARRAY"? @{$__tora_iteratee}: ref($__tora_iteratee) eq "Nana::Translator::Perl::Range"? $__tora_iteratee->list: $__tora_iteratee) 
 {tora_call_func($TORA_PACKAGE, q{foo}, ())}}}
 
@@ -288,7 +288,7 @@ tora_make_range(1,2)
 [1,2,3].push(4)
 
 --- expected
-do {local $Nana::Translator::Perl::Runtime::TORA_SELF=[1,2,3];tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{push},(4)),)}
+do {my $self=[1,2,3];my @args = tora_get_method($TORA_PACKAGE,$self,q{push},(4));local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);}
 
 ===
 --- input
@@ -439,7 +439,7 @@ for 1..10 -> { }
 --- expected
 {my $__tora_iteratee = (tora_make_range(1,10));
 if (ref $__tora_iteratee eq "Nana::Translator::Perl::Object" && $__tora_iteratee->has_method("__iter__")) {
-  my $__tora_iterator = do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$__tora_iteratee;tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{__iter__},()),)};  while (local $_ = do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$__tora_iterator;tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{__next__},()),)}){}} else {
+  my $__tora_iterator = do {my $self=$__tora_iteratee;my @args = tora_get_method($TORA_PACKAGE,$self,q{__iter__},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);};  while (local $_ = do {my $self=$__tora_iterator;my @args = tora_get_method($TORA_PACKAGE,$self,q{__next__},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);}){}} else {
 for (ref($__tora_iteratee) eq "ARRAY"? @{$__tora_iteratee}: ref($__tora_iteratee) eq "Nana::Translator::Perl::Range"? $__tora_iteratee->list: $__tora_iteratee) 
 {}}}
 
@@ -450,7 +450,7 @@ for 1..10 -> $i { }
 --- expected
 {my $__tora_iteratee = (tora_make_range(1,10));
 if (ref $__tora_iteratee eq "Nana::Translator::Perl::Object" && $__tora_iteratee->has_method("__iter__")) {
-  my $__tora_iterator = do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$__tora_iteratee;tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{__iter__},()),)};  while (my $i = do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$__tora_iterator;tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{__next__},()),)}){}} else {
+  my $__tora_iterator = do {my $self=$__tora_iteratee;my @args = tora_get_method($TORA_PACKAGE,$self,q{__iter__},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);};  while (my $i = do {my $self=$__tora_iterator;my @args = tora_get_method($TORA_PACKAGE,$self,q{__next__},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);}){}} else {
 for my $i(ref($__tora_iteratee) eq "ARRAY"? @{$__tora_iteratee}: ref($__tora_iteratee) eq "Nana::Translator::Perl::Range"? $__tora_iteratee->list: $__tora_iteratee) 
 {}}}
 
@@ -536,12 +536,12 @@ my ($i2)
 $foo.call();
 
 --- expected
-do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$foo;tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{call},()),)}
+do {my $self=$foo;my @args = tora_get_method($TORA_PACKAGE,$self,q{call},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);}
 
 ===
 --- input
 $foo.bar().baz();
 
 --- expected
-do {local $Nana::Translator::Perl::Runtime::TORA_SELF=do {local $Nana::Translator::Perl::Runtime::TORA_SELF=$foo;tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{bar},()),)};tora_call_method(tora_get_method($TORA_PACKAGE,$Nana::Translator::Perl::Runtime::TORA_SELF,q{baz},()),)}
+do {my $self=do {my $self=$foo;my @args = tora_get_method($TORA_PACKAGE,$self,q{bar},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);};my @args = tora_get_method($TORA_PACKAGE,$self,q{baz},());local $Nana::Translator::Perl::Runtime::TORA_SELF=$self;tora_call_method(@args);}
 
