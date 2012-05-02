@@ -1,0 +1,16 @@
+use Test::More *;
+
+sub m() {
+    return 4 if undef;
+    return 5;
+}
+is(m(), 5);
+
+sub n() {
+    return 4 if 1;
+    return 5;
+}
+is(n(), 4);
+
+done_testing();
+
