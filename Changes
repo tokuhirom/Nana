@@ -1,5 +1,9 @@
 Revision history for Perl extension nana
 
+0.14
+
+    - enhanced portability
+
 0.13
 
     - fixed lineno calcuration
