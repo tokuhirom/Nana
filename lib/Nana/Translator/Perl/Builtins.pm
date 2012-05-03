@@ -430,7 +430,8 @@ my %built_class_src = (
             self->data->print(@_);
         },
         printf => sub {
-            self->data->printf(@_);
+            my $fh = self->data;
+            CORE::printf $fh @_;
         },
         'SEEK_END' => scalar(Fcntl::SEEK_END()),
         'SEEK_CUR' => scalar(Fcntl::SEEK_CUR()),
