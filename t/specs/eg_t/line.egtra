@@ -1,0 +1,11 @@
+class Foo {
+    sub new() {
+        say(__LINE__)
+    }
+}
+
+Foo.new();
+say(__LINE__);
+__END__
+3
+8

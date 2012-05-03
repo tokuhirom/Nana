@@ -29,6 +29,7 @@ our $START;
 our $CACHE;
 our $MATCH;
 our $FILENAME;
+our $LINENOS;
 
 my @HEREDOC_BUFS;
 my @HEREDOC_MARKERS;
@@ -57,9 +58,9 @@ sub rule {
     my ($name, $patterns) = @_;
     no strict 'refs';
     *{"@{[ __PACKAGE__ ]}::$name"} = subname $name, sub {
-        local $START = $LINENO;
         my ($src, $got_end) = skip_ws(shift);
         return () if $got_end;
+        local $START = $LINENOS->[length $src];
         if (my $cache = $CACHE->{$name}->{length($src)}) {
             return @$cache;
         }
@@ -81,7 +82,7 @@ sub rule {
 
 sub any {
     my $src = shift;
-    local $START = $LINENO;
+    local $START = $LINENOS->[length $src];
     for (@_) {
         local $LINENO = $LINENO;
         my @a = $_->($src);
@@ -166,6 +167,9 @@ sub parse {
     local $CACHE  = {};
     local $MATCH = 0;
     local $FILENAME = $fname || '<eval>';
+    local $LINENOS = [1]; 
+
+    calc_linenos($src);
 
     my ($rest, $ret, $got_end) = program($src);
     if (!$got_end && $rest =~ /[^\n \t]/ && ![skip_ws($rest)]->[1]) {
@@ -178,6 +182,18 @@ sub parse {
     $ret;
 }
 
+sub calc_linenos {
+    my $c = shift;
+    my @c = split //, $c;
+    my $n = 1;
+    for (my $i=0; $i<@c; $i++) {
+        $LINENOS->[@c-$i] = $n;
+        if ($c[$i] eq "\n") {
+            $n++;
+        }
+    }
+}
+
 sub _err {
     die "@_ at $FILENAME line $LINENO\n";
 }
@@ -185,7 +201,7 @@ sub _err {
 sub _node {
     my ($type, @rest) = @_;
     confess "Obsolete type: $type" if $type =~ /\D/;
-    [$type, $LINENO, @rest];
+    [$type, $START, @rest];
 }
 
 sub _node2 {
@@ -203,7 +219,7 @@ rule('program', [
     },
     sub {
         my $c = shift;
-        return ($c, _node(NODE_NOP));
+        return ($c, _node2(NODE_NOP, 1));
     },
 ]);
 
@@ -1017,7 +1033,7 @@ rule('primary', [
             return ($c, _node(NODE___FILE__, $LINENO));
         } elsif ($token_id == TOKEN_LINE) {
             $c = substr($c, $used);
-            return ($c, _node(NODE_INT, $LINENO));
+            return ($c, _node(NODE_INT, $LINENOS->[length $c]));
         } elsif ($token_id == TOKEN_IDENT) {
             return (substr($c, $used), _node(NODE_PRIMARY_IDENT, $val));
         } elsif ($token_id == TOKEN_CLASS_NAME) {

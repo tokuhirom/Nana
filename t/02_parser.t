@@ -39,7 +39,8 @@ is_deeply($parser->parse('qw(1 2 3)'),
 );
 
 is_deeply($parser->parse(''),
-    [NODE_STMTS, 1, []]
+    [NODE_STMTS, 1, []],
+    'empty'
 );
 
 eq_or_diff($parser->parse(<<'...'),
@@ -54,8 +55,8 @@ class Foo {
             [ NODE_IDENT, 1, 'Foo' ],
             undef,
             [NODE_BLOCK() => 1, [
-                NODE_STMTS, 1, [
-                    [ NODE_SUB, 2, [ NODE_IDENT, 2, 'new' ], [ ], [NODE_BLOCK() => 2, [NODE_STMTS, 2, []]] ]
+                NODE_STMTS, 2, [
+                    [ NODE_SUB, 2, [ NODE_IDENT, 2, 'new' ], [ ], [NODE_BLOCK() => 2, [NODE_STMTS, 3, []]] ]
                 ]
             ]]
         ]
@@ -72,7 +73,7 @@ is_deeply($parser->parse('1+2;3+4'),
             [NODE_PLUS, 1, [NODE_INT, 1, 1], [NODE_INT, 1, 2]],
             [NODE_PLUS, 1, [NODE_INT, 1, 3], [NODE_INT, 1, 4]]
         ]
-    ]
+    ], '1+2;3+4'
 );
 
 eq_or_diff($parser->parse(<<'...'),
