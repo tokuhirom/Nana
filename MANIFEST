@@ -92,6 +92,7 @@ t/specs/eg_t/hash.egtra
 t/specs/eg_t/heredoc.egtra
 t/specs/eg_t/if.egtra
 t/specs/eg_t/increment.egtra
+t/specs/eg_t/line.egtra
 t/specs/eg_t/more.egtra
 t/specs/eg_t/multiple_return.egtra
 t/specs/eg_t/operator-gt.egtra

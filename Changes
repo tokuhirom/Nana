@@ -1,5 +1,9 @@
 Revision history for Perl extension nana
 
+0.13
+
+    - fixed lineno calcuration
+
 0.12
 
     - support 'return if 3' style
