@@ -58,8 +58,7 @@ sub rule {
     my ($name, $patterns) = @_;
     no strict 'refs';
     *{"@{[ __PACKAGE__ ]}::$name"} = subname $name, sub {
-        my ($src, $got_end) = skip_ws(shift);
-        return () if $got_end;
+        my $src = shift;
         local $START = $LINENOS->[length $src];
         if (my $cache = $CACHE->{$name}->{length($src)}) {
             return @$cache;
@@ -498,7 +497,7 @@ rule('expression', [
             }
 
             ($c, my $block) = block($c)
-                or _err "expected block after sub in $name->[2]";
+                or _err "expected block after sub" . ($name ? " in $name->[2]" : '');
             return ($c, _node2(NODE_SUB, $START, $name, $params, $block));
         } elsif ($token_id == TOKEN_TRY) {
             $c = substr($c, $used);
@@ -519,8 +518,11 @@ rule('expression', [
 rule('block', [
     sub {
         my $src = shift;
-        ($src) = match($src, '{')
-            or return;
+        my ($used, $token_id) = _token_op($src);
+        if ($token_id != TOKEN_LBRACE) {
+            return;
+        }
+        $src = substr($src, $used);
 
         ($src, my $body, my $got_end) = statement_list($src)
             or return;
@@ -768,8 +770,11 @@ rule('method_call', [
             my ($used, $token_id, $val) = _token_op($c);
             last unless $token_id == TOKEN_DOT;
             $c = substr($c, $used);
-            ($c, my $rhs) = identifier($c)
-                or _err "There is no identifier after '.' operator in method call";
+            (my $c2, my $rhs) = identifier($c)
+                or do {
+                    _err "There is no identifier after '.' operator in method call";
+                };
+            $c = $c2;
             if ((my $c3, my $param) = arguments($c)) {
                 $c = $c3;
                 $ret = _node2(NODE_METHOD_CALL, $START, $ret, $rhs, $param);
@@ -819,7 +824,7 @@ rule('parameters', [
         confess unless defined $src;
 
         ($src) = match($src, ")")
-            or die "Parse failed: missing ')' on subroutine parameters line $LINENO";
+            or _err "Parse failed: missing ')' on subroutine parameters";
 
         return ($src, $ret);
     }
@@ -878,22 +883,29 @@ rule('arguments', [
 
 rule('identifier', [
     sub {
-        local $_ = shift;
-        s/^([A-Za-z_][A-Za-z0-9_]*)//
-            or return;
-        my $name = $1;
-        return if $KEYWORDS{$name} && $name ne 'class' && $name ne 'is'; # keyword is not a identifier
-        return ($_, _node(NODE_IDENT, $name));
+        my $src = shift;
+        my ($used, $token_id, $val) = _token_op($src);
+        if ($token_id == TOKEN_IDENT) {
+            return (substr($src, $used), _node(NODE_IDENT, $val));
+        } elsif ($token_id == TOKEN_CLASS) {
+            return (substr($src, $used), _node(NODE_IDENT, 'class'));
+#       } elsif ($token_id == TOKEN_IS) {
+#           return (substr($src, $used), _node(NODE_IDENT, 'is'));
+        } else {
+            return;
+        }
     }
 ]);
 
 rule('class_name', [
     sub {
-        local $_ = shift;
-        s/^(([A-Za-z_][A-Za-z0-9_]*)(::[A-Za-z_][A-Za-z0-9_]*)*)//
-            or return;
-        return if $KEYWORDS{$1}; # keyword is not a identifier
-        return ($_, _node(NODE_IDENT, $1));
+        my $src = shift;
+        my ($used, $token_id, $val) = _token_op($src);
+        if ($token_id == TOKEN_CLASS_NAME || $token_id == TOKEN_IDENT) {
+            return (substr($src, $used), _node(NODE_IDENT, $val));
+        } else {
+            return;
+        }
     }
 ]);
 
@@ -901,9 +913,12 @@ rule('variable', [
     sub {
         my $src = shift;
         confess unless defined $src;
-        $src =~ s!^(\$[A-Za-z_][A-Z0-9a-z_]*)!!
-            or return;
-        return ($src, _node(NODE_VARIABLE, $1));
+        my ($used, $token_id, $val) = _token_op($src);
+        if ($token_id == TOKEN_VARIABLE) {
+            return (substr($src, $used), _node(NODE_VARIABLE, $val));
+        } else {
+            return;
+        }
     }
 ]);
 

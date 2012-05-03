@@ -55,8 +55,8 @@ class Foo {
             [ NODE_IDENT, 1, 'Foo' ],
             undef,
             [NODE_BLOCK() => 1, [
-                NODE_STMTS, 2, [
-                    [ NODE_SUB, 2, [ NODE_IDENT, 2, 'new' ], [ ], [NODE_BLOCK() => 2, [NODE_STMTS, 3, []]] ]
+                NODE_STMTS, 1, [
+                    [ NODE_SUB, 2, [ NODE_IDENT, 2, 'new' ], [ ], [NODE_BLOCK() => 2, [NODE_STMTS, 2, []]] ]
                 ]
             ]]
         ]
