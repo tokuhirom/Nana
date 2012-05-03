@@ -3,6 +3,7 @@ use warnings;
 use utf8;
 use Test::Base;
 use Nana::Parser;
+use Test::More;
 
 plan 'no_plan';
 
@@ -21,13 +22,15 @@ sub eeeol {
 run {
     my $block = shift;
     my ($used, $token_id, $val) = Nana::Parser::_token_op($block->src);
-    is($used, $block->used || length($block->src), eeeol($block->src));
-    my $code = Nana::Parser->can($block->token)
-        or die "Unknown token: " . $block->token;
-    is($token_id, $code->());
-    if (defined $block->lval) {
-        is($val, $block->lval);
-    }
+    subtest(eeeol($block->src()) => sub {
+        is($used, $block->used || length($block->src), 'used');
+        my $code = Nana::Parser->can($block->token)
+            or die "Unknown token: " . $block->token;
+        is($token_id, $code->());
+        if (defined $block->lval) {
+            is($val, $block->lval, 'val: ' . $block->lval);
+        }
+    });
 };
 
 
