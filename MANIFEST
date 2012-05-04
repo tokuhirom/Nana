@@ -6,6 +6,7 @@ Config.tra.PL
 eg/class.nn
 eg/fizzbuzz.nn
 eg/hoge.tra
+eg/ircbot.tra
 lib/Nana/Node.pm.PL
 lib/Nana/Parser.pm
 lib/Nana/Parser.xs
@@ -15,6 +16,7 @@ lib/Nana/toke.re.PL
 lib/Nana/Token.pm.PL
 lib/Nana/Translator/Perl.pm
 lib/Nana/Translator/Perl/Builtins.pm
+lib/Nana/Translator/Perl/Bytes.pm
 lib/Nana/Translator/Perl/Class.pm
 lib/Nana/Translator/Perl/Code.pm
 lib/Nana/Translator/Perl/Exception.pm
@@ -56,7 +58,11 @@ t/dat/dir/z
 t/dat/file/f1
 t/dat/filetest/foo
 t/lib/Basic.tra
+t/lib/Deep.pm
 t/lib/Foo.tra
+t/lib/Iyan.pm
+t/lib/Perl/ReturnDeep.pm
+t/lib/Perl/Str.pm
 t/specs/08_hash.t
 t/specs/basic/array.tcc
 t/specs/basic/basic.tcc
@@ -160,6 +166,10 @@ t/tra/oop/self-bug.tra
 t/tra/operator.tra
 t/tra/optargs.tra
 t/tra/perl.tra
+t/tra/perl/callback-deep.tra
+t/tra/perl/callback-object.tra
+t/tra/perl/return-deep.tra
+t/tra/perl/str.tra
 t/tra/postfix-for.tra
 t/tra/rand.tra
 t/tra/range.tra
