@@ -1,0 +1,29 @@
+use Test::More *;
+
+import_perl("Perl::Str");
+
+note('pass the bytes'); {
+    my $b1 = Perl::Str.CALL('b1', b'ほげ');
+    is($b1, b'ok');
+};
+
+note('pass the strings'); {
+    my $b1 = Perl::Str.CALL('b2', 'ほげ');
+    is($b1, b'ok');
+}
+
+note('get the strings'); {
+    my $b = Perl::Str.CALL('b3');
+    is(typeof($b), 'Str');
+    is($b, 'いいよ');
+    is($b.encode('utf-8'), b'いいよ');
+}
+
+note('get the bytes'); {
+    my $b = Perl::Str.CALL('b4');
+    is(typeof($b), 'Bytes');
+    is($b, b'いいよ');
+    is($b.decode('utf-8'), 'いいよ');
+}
+
+done_testing();

@@ -1,0 +1,12 @@
+use Test::More *;
+
+import_perl("Iyan");
+
+my $ret = 4649;
+my $obj = Iyan.new(-> {
+    $ret = $_.get();
+});
+is($obj.run(5963), 'WOWO!');
+is($ret, 5963);
+
+done_testing();

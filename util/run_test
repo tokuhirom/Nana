@@ -1,4 +1,4 @@
 #!/usr/bin/env perl
 system("./Build") == 0
     or exit;
-system(qw(perl -Mblib -- bin/nana), @ARGV);
+system(qw(perl -It/lib/ -Mblib -- bin/nana), @ARGV);

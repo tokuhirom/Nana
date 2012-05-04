@@ -26,6 +26,7 @@ typedef enum {
     VALUE_TYPE_PERL_PACKAGE,
     VALUE_TYPE_PERL_OBJECT,
     VALUE_TYPE_CLASS,
+    VALUE_TYPE_BYTES,
     VALUE_TYPE_OBJECT
 } value_type_t;
 
@@ -35,6 +36,7 @@ value_type_t tora_detect_value_type(SV *v) {
     } else if (sv_isobject(v)) {
 #define FOO(x, y) do { if (sv_isa(v, x)) { return y; } } while (0)
         FOO("Nana::Translator::Perl::Range", VALUE_TYPE_RANGE);
+        FOO("Nana::Translator::Perl::Bytes", VALUE_TYPE_BYTES);
         FOO("Nana::Translator::Perl::Object", VALUE_TYPE_OBJECT);
         FOO("Nana::Translator::Perl::Class", VALUE_TYPE_CLASS);
         FOO("Nana::Translator::Perl::Regexp", VALUE_TYPE_REGEXP);
@@ -161,6 +163,7 @@ const char *tora_stringify_type(value_type_t t) {
     case VALUE_TYPE_REGEXP: RETURN_P("Regexp");
     case VALUE_TYPE_REGEXP_MATCHED: RETURN_P("RegexpMatched");
     case VALUE_TYPE_STR: RETURN_P("Str");
+    case VALUE_TYPE_BYTES: RETURN_P("Bytes");
     }
 #undef RETURN_P
     abort();
@@ -246,6 +249,7 @@ typeof(SV *v)
         case VALUE_TYPE_REGEXP: RETURN_P("Regexp");
         case VALUE_TYPE_REGEXP_MATCHED: RETURN_P("RegexpMatched");
         case VALUE_TYPE_STR: RETURN_P("Str");
+        case VALUE_TYPE_BYTES: RETURN_P("Bytes");
         }
 #undef RETURN_P
         sv_dump(v);

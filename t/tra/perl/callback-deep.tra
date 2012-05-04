@@ -1,0 +1,12 @@
+use Test::More *;
+import_perl('Deep');
+
+my $ret = 3;
+Deep.new({
+    'callback' => -> {
+        $ret = $_.get()
+    }
+}).call()
+is($ret, 4649);
+done_testing();
+

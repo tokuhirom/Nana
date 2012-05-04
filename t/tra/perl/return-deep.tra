@@ -1,0 +1,12 @@
+use Test::More *;
+
+import_perl('Perl::ReturnDeep');
+
+my $r = Perl::ReturnDeep.CALL('get');
+is(typeof($r), 'Array');
+is(typeof($r[0]), 'Hash');
+is(typeof($r[1]), 'Bytes');
+is(typeof($r[2]), 'Str');
+is(typeof($r[3]), 'PerlObject');
+
+done_testing();

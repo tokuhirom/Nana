@@ -14,9 +14,11 @@ use Nana::Translator::Perl::Range;
 use Nana::Translator::Perl::Exception;
 use Nana::Translator::Perl::FilePackage;
 use Nana::Translator::Perl::Regexp;
+use Nana::Translator::Perl::Bytes;
 use Carp qw(croak);
 use B;
 use JSON::XS ();
+use Scalar::Util qw(refaddr);
 
 {
     # ad-hoc patch :P
@@ -128,12 +130,14 @@ sub tora_get_method {
     return tora_get_method2($pkg, $object, $object, $methname, @args);
 }
 
+*__tora2perl_wrap = *Nana::Translator::Perl::PerlPackage::__tora2perl_wrap;
+
 sub tora_get_method2 {
     my ($pkg, $object, $klass, $methname, @args) = @_;
 
     my $type = typeof($klass);
     # builtin methods
-    if ($type ~~ ['Regexp', 'Array', 'Code', 'Hash']) {
+    if ($type ~~ ['Regexp', 'Array', 'Code', 'Hash', 'Bytes']) {
         if (defined(my $methbody = $TORA_BUILTIN_CLASSES{$type}->get_method($methname))) {
             return ($methbody, $klass, @args);
         } else {
@@ -141,13 +145,13 @@ sub tora_get_method2 {
         }
     } elsif (ref $klass eq 'Nana::Translator::Perl::PerlObject') {
         if (defined(my $methbody = $klass->get($methname))) {
-            return ($methbody, @args);
+            return ($methbody, __tora2perl_wrap(@args));
         } else {
             __tora_get_method_fallback($pkg, $klass, 'PerlObject', $methname, @args);
         }
     } elsif (ref $klass eq 'Nana::Translator::Perl::PerlPackage') {
         if (defined(my $methbody = $klass->get($methname))) {
-            return ($methbody, @args);
+            return ($methbody, __tora2perl_wrap(@args));
         } else {
             __tora_get_method_fallback($pkg, $klass, 'PerlPackage', $methname, @args);
         }
@@ -250,6 +254,12 @@ sub tora_op_eq {
         }
     } elsif ($type eq 'Bool') {
         return $lhs == tora_boolean($rhs);
+    } elsif ($type eq 'Class') {
+        my $rtype = typeof($rhs);
+        if ($rtype ne $type) {
+            _runtime_error "You cannnot compare Class and $rtype";
+        }
+        return refaddr($lhs) eq refaddr($rhs);
     } else {
         die "OOPS. Cannot compare $type";
     }
@@ -416,7 +426,7 @@ sub tora_use {
 
 sub tora_bytes {
     my $str = shift;
-    $TORA_BUILTIN_CLASSES{Bytes}->create_instance($str);
+    Nana::Translator::Perl::Bytes->new($str);
 }
 
 1;

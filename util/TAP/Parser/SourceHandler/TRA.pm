@@ -53,7 +53,7 @@ sub make_iterator {
     push @command, @{ $source->test_args || [] };
  
     return $class->iterator_class->new(
-        {   command => [$^X, '-Mblib', 'bin/nana', @command],
+        {   command => [$^X, '-It/lib', '-Mblib', 'bin/nana', @command],
             merge   => $source->merge
         }
     );

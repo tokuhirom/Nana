@@ -47,7 +47,8 @@ if (defined $opt->eval) {
     }
 } elsif (@ARGV) {
     my $fname = shift @ARGV;
-    open my $fh, '<', $fname;
+    open my $fh, '<', $fname
+        or die "Cannot open $fname: $!\n";
     my $ast = $parser->parse(do { local $/; <$fh>; }, $fname);
     say(Dumper($ast)) if $opt->dtree;
     my $perl = $compiler->compile($ast, $fname);

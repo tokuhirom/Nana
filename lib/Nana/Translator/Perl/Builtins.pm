@@ -481,15 +481,15 @@ my %built_class_src = (
             return length(self->data);
         },
         decode => sub {
-            my ($charset) = @_;
+            my ($self, $charset) = @_;
             require Encode;
-            return Encode::decode($charset, self->data);
+            return Encode::decode($charset, $self->data);
         },
-        encode => sub {
-            my ($charset) = @_;
-            require Encode;
-            return Encode::encode($charset, self->data);
-        },
+#       encode => sub {
+#           my ($self, $charset) = @_;
+#           require Encode;
+#           return Encode::encode($charset, $self->data);
+#       },
     },
     Regexp => {
         flags => sub {

@@ -1,0 +1,25 @@
+import_perl('AnySan')
+import_perl('AnySan::Provider::IRC')
+
+my $irc = irc(
+    'localhost',
+    'port', 6667,
+    'nickname', 'beef',
+    'channels', {
+        '#mixi' => {},
+    }
+)
+AnySan.register_listener(
+    'zenra', {
+        'cb' => -> $c {
+            my $message = $c.message();
+            unless $message.class() == Bytes && $message.length() > 0 {
+                return undef;
+            }
+            $message = $message.decode('utf-8')
+            $c.send_reply($message + "です。")
+        }
+    }
+)
+
+AnySan.run()
