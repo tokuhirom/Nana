@@ -84,7 +84,7 @@ int token_op(char *src, size_t len, int *used, int *found_end, int *lineno_inc, 
             OP(TOKEN_INTEGER);
         }
         [1-9] [0-9]* {
-            *yylval = sv_2mortal(newSVuv(strtol(orig, &cursor, 10)));
+            *yylval = sv_2mortal(newSVuv(strtoul(orig, &cursor, 10)));
             OP(TOKEN_INTEGER);
         }
         "0x" [0-9a-fA-F]+ {
