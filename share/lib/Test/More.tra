@@ -40,6 +40,12 @@ class Test::Builder {
             print(" - " + $msg);
         }
         print("\n");
+        my $caller = self._get_caller();
+        $STDERR.printf("#   Failed test at %s line %d.\n", $caller.file(), $caller.line());
+        self.incr_failed();
+        return false;
+    }
+    sub _get_caller() {
         my $i = 0;
         my $caller;
         while ($caller = caller($i++)) {
@@ -50,9 +56,7 @@ class Test::Builder {
         if (!$caller) {
             die("Invalid caller");
         }
-        $STDERR.printf("#   Failed test at %s line %d.\n", $caller.file(), $caller.line());
-        self.incr_failed();
-        return false;
+        return $caller;
     }
     sub is($a, $b, $msg=undef) {
         if ($a==$b) {
@@ -65,8 +69,10 @@ class Test::Builder {
                 print(" - " + $msg);
             }
             print("\n");
-            say(" # got:      " + $a);
-            say(" # expected: " + $b);
+            my $caller = self._get_caller();
+            $STDERR.printf("#   Failed test at %s line %d.\n", $caller.file(), $caller.line());
+            $STDERR.print(" # got:      " + $a + "\n");
+            $STDERR.print(" # expected: " + $b + "\n");
             self.incr_failed();
             return false;
         }
