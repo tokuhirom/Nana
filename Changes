@@ -1,5 +1,9 @@
 Revision history for Perl extension nana
 
+0.15
+
+    - fixed portability
+
 0.14
 
     - enhanced portability
