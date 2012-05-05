@@ -55,6 +55,7 @@ t/07_tokenize.t
 t/09_typeof.t
 t/10_tora_boolean.t
 t/11_test-more.t
+t/14_atexit.t
 t/dat/dir/x
 t/dat/dir/y
 t/dat/dir/z
@@ -108,6 +109,7 @@ t/specs/eg_t/multiple_return.egtra
 t/specs/eg_t/operator-gt.egtra
 t/specs/eg_t/operator.egtra
 t/specs/eg_t/optional_params.egtra
+t/specs/eg_t/postfix.egtra
 t/specs/eg_t/regexp.egtra
 t/specs/eg_t/ret2.egtra
 t/specs/eg_t/ret3.egtra
