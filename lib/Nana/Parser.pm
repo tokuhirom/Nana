@@ -13,7 +13,7 @@ use XSLoader;
 use Nana::Token;
 use Nana::Node;
 
-our $VERSION='0.16';
+our $VERSION='0.17';
 
 XSLoader::load('Nana::Parser', $VERSION);
 

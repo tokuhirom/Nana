@@ -7,6 +7,7 @@ TODO list
     * overload
     * ENV
     * TSGI?
+    * split Tlack related things to another package
 
 BUGS
 ----

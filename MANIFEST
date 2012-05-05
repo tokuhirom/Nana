@@ -1,5 +1,6 @@
 .gitignore
 bin/nana
+bin/tlackup
 Build.PL
 Changes
 Config.tra.PL
@@ -7,6 +8,7 @@ eg/class.nn
 eg/fizzbuzz.nn
 eg/hoge.tra
 eg/ircbot.tra
+eg/tsgi/hello.tsgi
 lib/Nana/Node.pm.PL
 lib/Nana/Parser.pm
 lib/Nana/Parser.xs
@@ -27,6 +29,7 @@ lib/Nana/Translator/Perl/Range.pm
 lib/Nana/Translator/Perl/Regexp.pm
 lib/Nana/Translator/Perl/RegexpMatched.pm
 lib/Nana/Translator/Perl/Runtime.pm
+lib/Tlack/Runner.pm
 LICENSE
 MANIFEST			This list of files
 META.json
@@ -99,6 +102,7 @@ t/specs/eg_t/heredoc.egtra
 t/specs/eg_t/if.egtra
 t/specs/eg_t/increment.egtra
 t/specs/eg_t/line.egtra
+t/specs/eg_t/long-heredoc.egtra
 t/specs/eg_t/more.egtra
 t/specs/eg_t/multiple_return.egtra
 t/specs/eg_t/operator-gt.egtra

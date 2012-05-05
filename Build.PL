@@ -63,6 +63,7 @@ my $build = $class->new(
         'File::ShareDir' => '1.03',
         'Devel::GlobalDestruction' => '0.04',
         'JSON::XS' => 2,
+        'Plack' => 0,
     },
     no_index    => { 'directory' => [ 'inc', 't', 'xt' ] },
     name        => 'nana',
