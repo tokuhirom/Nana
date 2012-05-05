@@ -399,6 +399,12 @@ rule('statement', [
         my $c = shift;
         ($c, my $block) = jump_statement($c)
             or return;
+        if ($c =~ /^(\s*|[^\n]+#[^\n]+)\n/) {
+            # say()
+            # if 1 {
+            # }
+            return ($c, $block);
+        }
         my ($used, $token_id) = _token_op($c);
         if ($token_id == TOKEN_IF) {
             # foo if bar

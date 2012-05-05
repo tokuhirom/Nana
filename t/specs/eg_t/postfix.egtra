@@ -1,0 +1,15 @@
+say("OK")
+if 1 {
+    say("HO!");
+}
+
+say("HM");
+unless undef {
+    say("HP");
+}
+
+__END__
+OK
+HO!
+HM
+HP

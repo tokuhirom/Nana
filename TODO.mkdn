@@ -12,10 +12,3 @@ TODO list
 BUGS
 ----
 
-Following statement must be works.
-
-    my $f=0
-    if 3 {
-    }
-
-
