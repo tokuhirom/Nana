@@ -78,6 +78,13 @@ sub tora_open {
     return $TORA_BUILTIN_CLASSES{File}->create_instance($fh);
 }
 
+my @ATEXIT_CODE;
+END {
+    for (@ATEXIT_CODE) {
+        $_->();
+    }
+}
+
 our %TORA_BUILTIN_FUNCTIONS = (
     'say' => \&__say,
     'typeof' => \&typeof,
@@ -108,6 +115,10 @@ our %TORA_BUILTIN_FUNCTIONS = (
     oct => sub { oct(shift @_) },
     sin => sub { sin(shift @_) },
     atan2 => sub { atan2(shift @_, shift @_) },
+    atexit => sub {
+        my $code = shift;
+        push @ATEXIT_CODE, $code;
+    },
     getppid => sub {
         return getppid()
     },
