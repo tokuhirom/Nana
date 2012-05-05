@@ -1,0 +1,11 @@
+# nana<0.16 cannot contain empty lines in heredoc
+
+say(<<'...')
+
+3'''
+...
+
+__END__
+
+3'''
+

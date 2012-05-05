@@ -197,6 +197,9 @@ our %TORA_BUILTIN_FUNCTIONS = (
         self()->{$pkg} = Nana::Translator::Perl::PerlPackage->new($pkg);
         return undef;
     },
+    eval_perl => sub {
+        eval($_[0])
+    },
 );
 
 my $DIR_ITER_CLASS = do {

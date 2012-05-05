@@ -3,5 +3,18 @@ TODO list
 
     * Str#scan t/tra/object/string.tra
     * traits
-    * better perl integration
+    * open('foo.txt', 'rb', encoding => 'utf-8')
+    * overload
+    * ENV
+    * TSGI?
+
+BUGS
+----
+
+Following statement must be works.
+
+    my $f=0
+    if 3 {
+    }
+
 

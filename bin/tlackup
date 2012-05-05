@@ -1,0 +1,12 @@
+#!/usr/bin/env nana
+
+import_perl('Tlack::Runner')
+
+my $app = -> {
+    [200, [],['OK']]
+};
+
+my $runner = Tlack::Runner.new()
+$runner.parse_options(*$ARGV)
+$runner.run()
+

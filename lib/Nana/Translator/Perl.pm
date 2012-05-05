@@ -34,6 +34,7 @@ sub compile {
             'my $STDOUT=$Nana::Translator::Perl::Runtime::STDOUT;',
             'my $STDERR=$Nana::Translator::Perl::Runtime::STDERR;',
             'my $STDIN=$Nana::Translator::Perl::Runtime::STDIN;',
+            'my $ARGV=$Nana::Translator::Perl::Runtime::ARGV;',
             '$Nana::Translator::Perl::Runtime::CURRENT_PACKAGE = my $TORA_PACKAGE = {};',
             'local $Nana::Translator::Perl::Runtime::TORA_FILENAME="' . $FILENAME .'";',
         ) . "\n";
@@ -380,7 +381,7 @@ sub _compile {
         return 'do { no utf8; tora_bytes(qq!' . $str . '!) }';
     } elsif ($node->[0] eq NODE_HEREDOC) {
         my $buf = ${$node->[2]};
-        $buf =~ s/'/\\'/;
+        $buf =~ s/'/\\'/g;
         return qq{'$buf'};
     } elsif ($node->[0] eq NODE_INT) {
         return $node->[2];

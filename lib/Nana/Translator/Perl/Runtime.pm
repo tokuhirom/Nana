@@ -49,6 +49,7 @@ our $LIBPATH = [
 our $STDOUT = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->create_instance(*STDOUT);
 our $STDERR = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->create_instance(*STDERR);
 our $STDIN  = $Nana::Translator::Perl::Builtins::TORA_BUILTIN_CLASSES{'File'}->create_instance(*STDIN);
+our $ARGV = \@ARGV;
 
 sub add_libpath {
     my ($class, $libpaths) = @_;
