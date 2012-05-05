@@ -1,0 +1,12 @@
+use Test::More *;
+use JSON *;
+
+is(encode_json({hoge => 3}), '{"hoge":3}');
+is(encode_json([true]), '[true]');
+is(encode_json([false]), '[false]');
+
+is((decode_json('[true]'))[0], true);
+is((decode_json('[false]'))[0], false);
+is((decode_json(b'["わわわ"]'))[0], 'わわわ');
+
+done_testing();

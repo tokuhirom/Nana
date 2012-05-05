@@ -1,0 +1,9 @@
+import_perl("JSON");
+
+sub encode_json($dat) {
+    JSON.CALL('encode_json', $dat);
+}
+
+sub decode_json($json) {
+    JSON.CALL('decode_json', $json);
+}

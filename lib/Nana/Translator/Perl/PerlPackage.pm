@@ -18,8 +18,12 @@ sub __wrap {
 
 sub __wrap_inner {
     my $stuff = shift;
-    if (blessed $stuff) {
-        Nana::Translator::Perl::PerlObject->new($stuff);
+    if (my $klass = blessed $stuff) {
+        if ($klass eq 'JSON::XS::Boolean') {
+            $stuff;
+        } else {
+            Nana::Translator::Perl::PerlObject->new($stuff);
+        }
     } elsif (my $type = ref $stuff) {
         if ($type eq 'ARRAY') {
             +[map { __wrap_inner($_) } @$stuff];
