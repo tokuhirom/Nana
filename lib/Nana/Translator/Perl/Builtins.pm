@@ -430,7 +430,8 @@ my %built_class_src = (
             tora_open(@_);
         },
         print => sub {
-            self->data->print(@_);
+            my $fh = self->data;
+            print $fh @_;
         },
         printf => sub {
             my $fh = self->data;
