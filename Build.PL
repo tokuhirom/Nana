@@ -9,7 +9,17 @@ my $class = Module::Build->subclass(
         sub ACTION_test {
             my $self = shift;
             $self->depends_on('code');
-            exec($^X . q{ util/myprove --source T --source TRA --source EGTRA --source TCC -r t/ t/*/*/*.tcc t/*/*/*.egtra t/tra/*.tra t/tra/*/*.tra});
+            push @tests, qw(
+                t/
+                t/*/*/*.tcc
+                t/*/*/*.egtra
+                t/tra/*.tra
+                t/tra/*/*.tra
+            );
+            if (-d '.git') {
+                # xt
+            }
+            exec($^X . q{ util/myprove --source T --source TRA --source EGTRA --source TCC -r } . join(' ', @tests));
         }
         sub ACTION_code {
             my $self = shift;
