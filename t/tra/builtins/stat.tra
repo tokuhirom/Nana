@@ -9,3 +9,5 @@ note($stat.atime());
 note($stat.ctime());
 note($stat.mtime());
 note($stat.ino());
+
+done_testing();

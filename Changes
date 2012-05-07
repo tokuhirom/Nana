@@ -1,5 +1,9 @@
 Revision history for Perl extension nana
 
+0.21
+
+    - added stat() function
+
 0.20
 
     - portable Time class
