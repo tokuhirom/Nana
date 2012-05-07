@@ -1,5 +1,11 @@
 Revision history for Perl extension nana
 
+0.20
+
+    - portable Time class
+    - added Time.gmtime() method
+    - added Time.localtime() method
+
 0.19
 
     - install tlackup command to bin/
