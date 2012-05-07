@@ -99,7 +99,10 @@ my $build = $class->new(
             'TRA' => [],
         },
     },
-    script_files => 'bin/nana',
+    script_files => [
+        'bin/nana',
+        'bin/tlackup',
+    ],
     extra_compiler_flags => (($^O eq 'linux' && -d '.git') ? ['-std=c90', '-Wall'] : []),
 
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? 't/ xt/' : 't/',
