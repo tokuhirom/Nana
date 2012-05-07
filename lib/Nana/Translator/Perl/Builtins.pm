@@ -534,6 +534,18 @@ my %built_class_src = (
                     Time::Piece->new(@_)
                 );
             },
+            gmtime => sub {
+                require Time::Piece;
+                $TORA_BUILTIN_CLASSES{Time}->create_instance(
+                    scalar(Time::Piece::gmtime(@_))
+                );
+            },
+            localtime => sub {
+                require Time::Piece;
+                $TORA_BUILTIN_CLASSES{Time}->create_instance(
+                    scalar(Time::Piece::localtime(@_))
+                );
+            },
             strftime => sub {
                 self->data->strftime(@_)
             },
