@@ -33,3 +33,4 @@ nytprof.out
 *.o
 lib/Nana/Node.pm
 xs/operator.c
+nana-*.tar.gz
