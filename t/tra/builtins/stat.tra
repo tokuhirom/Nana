@@ -1,0 +1,11 @@
+use Test::More *;
+
+my $stat = stat('t/dat/filetest/foo');
+is(typeof($stat), 'File::Stat');
+note($stat.uid());
+note($stat.gid());
+note($stat.mode());
+note($stat.atime());
+note($stat.ctime());
+note($stat.mtime());
+note($stat.ino());

@@ -140,7 +140,9 @@ our %TORA_BUILTIN_FUNCTIONS = (
         printf(@_);
     },
     'stat' => sub {
-        return File::stat::stat(@_);
+        $TORA_BUILTIN_CLASSES{'File::Stat'}->get_method(
+            'new'
+        )->(@_);
     },
     'eval' => sub {
         my $src = shift;
@@ -564,6 +566,50 @@ my %built_class_src = (
         $hash;
     },
     Int => +{
+    },
+    'File::Stat' => do {
+        my %h = (
+            new => sub {
+                $TORA_BUILTIN_CLASSES{'File::Stat'}->create_instance(
+                    [stat(@_)]
+                )
+            },
+        );
+
+        #    0 dev      device number of filesystem
+        #    1 ino      inode number
+        #    2 mode     file mode  (type and permissions)
+        #    3 nlink    number of (hard) links to the file
+        #    4 uid      numeric user ID of file's owner
+        #    5 gid      numeric group ID of file's owner
+        #    6 rdev     the device identifier (special files only)
+        #    7 size     total size of file, in bytes
+        #    8 atime    last access time in seconds since the epoch
+        #    9 mtime    last modify time in seconds since the epoch
+        #   10 ctime    inode change time in seconds since the epoch (*)
+        #   11 blksize  preferred block size for file system I/O
+        #   12 blocks   actual number of blocks allocated
+        my @params = qw(
+            0 dev
+            1 ino
+            2 mode
+            3 nlink
+            4 uid
+            5 gid
+            6 rdev
+            7 size
+            8 atime
+            9 mtime
+           10 ctime
+           11 blksiz
+           12 blocks
+        );
+        while (my ($no, $method) = splice @params, 0, 2) {
+            $h{$method} = sub {
+                self->data->[$no]
+            };
+        }
+        \%h;
     },
 );
 while (my ($class_name, $methods) = each %built_class_src) {

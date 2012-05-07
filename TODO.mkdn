@@ -8,6 +8,8 @@ TODO list
     * ENV
     * TSGI?
     * split Tlack related things to another package
+    * DBI integration
+    * template engine(T::MT?)
 
 BUGS
 ----
