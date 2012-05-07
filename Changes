@@ -1,5 +1,10 @@
 Revision history for Perl extension nana
 
+0.19
+
+    - install tlackup command to bin/
+    - added JSON.tra
+
 0.18
 
     - make print function portable

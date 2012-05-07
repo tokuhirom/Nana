@@ -41,6 +41,7 @@ notes/funcall.tra
 ppport.h
 README
 share/lib/Config.tra
+share/lib/JSON.tra
 share/lib/Path.tra
 share/lib/Test/More.tra
 t/00_compile.t
@@ -181,6 +182,7 @@ t/tra/rand.tra
 t/tra/range.tra
 t/tra/return.tra
 t/tra/sprintf.tra
+t/tra/standard_lib/json.tra
 t/tra/stmt_scope.tra
 t/tra/string-copy.tra
 t/tra/string-embed-var.tra
