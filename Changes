@@ -1,5 +1,9 @@
 Revision history for Perl extension nana
 
+0.22
+
+    - fixed test case
+
 0.21
 
     - added stat() function
