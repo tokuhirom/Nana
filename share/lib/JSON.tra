@@ -1,9 +1,9 @@
-import_perl("JSON");
+import_perl("JSON::XS");
 
 sub encode_json($dat) {
-    JSON.CALL('encode_json', $dat);
+    JSON::XS.CALL('encode_json', $dat);
 }
 
 sub decode_json($json) {
-    JSON.CALL('decode_json', $json);
+    JSON::XS.CALL('decode_json', $json);
 }
