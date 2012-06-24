@@ -1,4 +1,5 @@
 import_perl("File::Path");
+import_perl("File::Spec");
 
 sub dir($dir) {
     return Path::Dir.new($dir);
@@ -13,6 +14,9 @@ class Path::Dir {
     }
     sub rmtree() {
         File::Path.CALL('rmtree', ${self});
+    }
+    sub absolute() {
+        File::Spec.rel2abs(${self});
     }
 }
 

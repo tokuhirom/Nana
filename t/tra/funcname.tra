@@ -1,0 +1,10 @@
+use Test::More *;
+
+sub abslllll($n) {
+    return 'x'+$n;
+}
+
+is(abslllll(3), 'x3');
+
+done_testing();
+
