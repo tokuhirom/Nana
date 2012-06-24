@@ -51,6 +51,8 @@ sub __say {
         if (defined $x) {
             if (ref $x eq 'ARRAY') {
                 __say(@$x);
+            } elsif (ref $x eq 'Nana::Translator::Perl::Bytes') {
+                __say(@$x);
             } else {
                 say($x);
             }
